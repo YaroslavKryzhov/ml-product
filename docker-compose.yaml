@@ -1,0 +1,38 @@
+version: "3"
+
+services:
+  server:
+    container_name: "ml-product-rest-api"
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    command: "uvicorn ml_api.main:app --reload --workers 1 --host 0.0.0.0 --port 8000"
+    restart: always
+    ports:
+      - "8005:8000"
+    depends_on:
+      - mongo_db
+    networks:
+      - ml-net
+
+  mongo_db:
+    image: mongo:5.0.3-focal
+    container_name: "ml-product-mongo"
+    environment:
+      - MONGO_INITDB_db=ml_product_mongo
+      - MONGO_INITDB_ROOT_USERNAME=root_mongo
+      - MONGO_INITDB_ROOT_PASSWORD=pass112930hbd7239809123
+    volumes:
+      - ./deploy/mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./volumes/mongo_db:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - ml-net
+
+networks:
+  ml-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.138.0.0/24
