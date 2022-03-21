@@ -11,22 +11,21 @@ services:
     ports:
       - "8005:8000"
     depends_on:
-      - mongo_db
+      - postgres_db
     networks:
       - ml-net
 
-  mongo_db:
-    image: mongo:5.0.3-focal
-    container_name: "ml-product-mongo"
+  postgres_db:
+    image: postgres:13-alpine
+    container_name: "ml-product-postgres"
     environment:
-      - MONGO_INITDB_db=ml_product_mongo
-      - MONGO_INITDB_ROOT_USERNAME=root_mongo
-      - MONGO_INITDB_ROOT_PASSWORD=pass112930hbd7239809123
+      POSTGRES_DB: "ml_project"
+      POSTGRES_USER: "userJBH134JHVA23"
+      POSTGRES_PASSWORD: "passJHHSFAJ652538HVJKJ"
     volumes:
-      - ./deploy/mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-      - ./volumes/mongo_db:/data/db
+      - ./volumes/postgres_data:/var/lib/postgresql/data/
     ports:
-      - "27017:27017"
+      - "5432:5432"
     networks:
       - ml-net
 

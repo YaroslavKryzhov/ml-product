@@ -1,11 +1,15 @@
-FROM python:3.8.12-alpine
+FROM python:3.9-slim-buster
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 WORKDIR /server
 
-RUN apk update && apk add make automake gcc g++ subversion python3-dev
+RUN apt-get update \
+  && apt-get -y install netcat gcc python-dev postgresql libpq-dev \
+  && apt-get clean
+
+RUN pip install --upgrade pip
 
 COPY ./requirements.txt .
 

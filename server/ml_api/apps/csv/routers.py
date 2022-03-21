@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File
 
 from ml_api.common.database.db_deps import get_db
 from ml_api.apps.csv.services import CsvService
@@ -12,13 +12,13 @@ csv_router = APIRouter(
 )
 
 
-@csv_router.get("", response_model=Csv)
-def load_csv(csv_path: str, db: get_db = Depends()):
-    result = CsvService(db).load_csv_to_db()
-    return result
+@csv_router.post("")
+def load_csv(file: UploadFile = File(...), db: get_db = Depends()):
+    CsvService(db).upload_csv_to_db(file=file.file, filename=file.filename)
+    return {"filename": file.filename}
 
 
-@csv_router.post("", response_model=Csv)
-def read_csv(csv_path: str, db: get_db = Depends()):
-    result = CsvService(db).read_csv_from_db()
-    return result
+@csv_router.get("")
+def read_csv(filename: str, db: get_db = Depends()):
+    result = CsvService(db).read_csv_from_db(filename)
+    return result.to_json()
