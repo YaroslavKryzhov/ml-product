@@ -4,8 +4,9 @@ from typing import List
 
 import pandas as pd
 from sqlalchemy.orm import Session
+from fastapi.responses import FileResponse
 
-
+from ml_api.common.config import ROOT_DIR
 from ml_api.apps.csv.models import Csv
 
 
@@ -35,23 +36,27 @@ class CsvPostgreCRUD:
 
 class CsvFileCRUD:
 
-    def __init__(self, user: str = 'admin'):
-        self.csv_path = f'ml_data/{user}/csv/'
+    def __init__(self, user: str):
+        self.user_path = os.path.join(ROOT_DIR, user)
+        if not os.path.exists(self.user_path):
+            os.makedirs(self.user_path)
 
     # CREATE
     def upload_csv(self, filename: str, file):
-        print(os.path.join(self.csv_path, filename))
-        with open(filename, 'wb') as buffer:
+        csv_path = os.path.join(self.user_path, filename)
+        print(csv_path)
+        with open(csv_path, 'wb') as buffer:
             shutil.copyfileobj(file, buffer)
 
     # READ
     def read_csv(self, filename: str) -> pd.DataFrame:
-        data = pd.read_csv(filename)
+        csv_path = os.path.join(self.user_path, filename)
+        data = pd.read_csv(csv_path)
         return data
 
     def download_csv(self, filename: str):
-        """ function for csv-file download """
-        pass
+        csv_path = os.path.join(self.user_path, filename)
+        return FileResponse(path=csv_path)
 
     # UPDATE
     def update_csv(self, filename: str, data: pd.DataFrame):

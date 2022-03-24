@@ -8,6 +8,9 @@ services:
       dockerfile: Dockerfile
     command: "uvicorn ml_api.main:app --reload --workers 1 --host 0.0.0.0 --port 8000"
     restart: always
+    volumes:
+      - ./volumes/server_data:/data/
+      - ./server:/server
     ports:
       - "8005:8000"
     depends_on:
