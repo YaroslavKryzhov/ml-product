@@ -12,7 +12,7 @@ services:
       - ./volumes/server_data:/data/
       - ./server:/server
     ports:
-      - "8005:8000"
+      - "8006:8000"
     depends_on:
       - postgres_db
     networks:

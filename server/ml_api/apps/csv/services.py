@@ -12,7 +12,7 @@ class CsvService:
 
     def upload_csv_to_db(self, file, filename: str):
         CsvFileCRUD(self._user).upload_csv(filename, file)
-        # CsvPostgreCRUD(self._db).new_csv(filename)
+        CsvPostgreCRUD(self._db).new_csv(filename)
         pass
 
     def download_csv_from_db(self, filename: str):
