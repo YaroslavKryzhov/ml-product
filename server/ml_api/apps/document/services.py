@@ -1,7 +1,7 @@
 import pandas as pd
 
-from ml_api.apps.csv.models import Csv
-from ml_api.apps.csv.repository import CsvFileCRUD, CsvPostgreCRUD
+from ml_api.apps.document.models import Document
+from ml_api.apps.document.repository import CsvFileCRUD, CsvPostgreCRUD
 
 
 class CsvService:

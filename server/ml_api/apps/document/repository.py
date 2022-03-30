@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from fastapi.responses import FileResponse
 
 from ml_api.common.config import ROOT_DIR
-from ml_api.apps.csv.models import Csv
+from ml_api.apps.document.models import Document
 
 
 class CsvPostgreCRUD:
@@ -17,16 +17,16 @@ class CsvPostgreCRUD:
 
     # CREATE
     def new_csv(self, filename: str):
-        new_obj = Csv(name=filename)
+        new_obj = Document(name=filename)
         self.session.add(new_obj)
         self.session.commit()
 
     # READ
-    def read_csv(self) -> List[Csv]:
-        return self.session.query(Csv).all()
+    def read_csv(self) -> List[Document]:
+        return self.session.query(Document).all()
 
     # UPDATE
-    def update_csv(self) -> Csv:
+    def update_csv(self) -> Document:
         pass
 
     # DELETE

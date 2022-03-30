@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from ml_api.common import config
-from ml_api.apps.csv.routers import csv_router
+from ml_api.apps.document.routers import csv_router
 
 app = FastAPI(title=config.PROJECT_NAME,
               version=config.VERSION)

@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, UploadFile, File
 
 from ml_api.common.database.db_deps import get_db
 from ml_api.common.database.users_deps import get_current_user
-from ml_api.apps.csv.services import CsvService
-from ml_api.apps.csv.schemas import Csv
+from ml_api.apps.document.services import CsvService
+from ml_api.apps.document.schemas import Csv
 
 
 csv_router = APIRouter(
