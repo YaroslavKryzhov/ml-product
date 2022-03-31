@@ -1,4 +1,5 @@
 import pandas as pd
+from datetime import datetime
 
 from ml_api.apps.documents.models import Document
 from ml_api.apps.documents.repository import DocumentFileCRUD, DocumentPostgreCRUD
@@ -33,10 +34,20 @@ class DocumentService:
     def delete_document_from_db(self, filename: str):
         DocumentFileCRUD(self._user).delete_document(filename)
 
-    def fill_spaces(self):
-        pass
+    def update_change_date_in_db(self, filename: str):
+        query = {
+            'change_date': str(datetime.now())
+        }
+        DocumentPostgreCRUD(self._db, self._user).update_document(filename, query)
 
-    def remove_duplicates(self):
+    # DOCUMENT CHANGING METHODS
+    def remove_duplicates(self, filename: str):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        document = document.drop_duplicates()
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_change_date_in_db(filename)
+
+    def fill_spaces(self):
         pass
 
     def remove_outlayers(self):
@@ -48,5 +59,5 @@ class DocumentService:
     def normalize_features(self):
         pass
 
-    def train_test_split(self):
-        pass
+    # def train_test_split(self):
+    #     pass
