@@ -17,7 +17,7 @@ current_active_user = fastapi_users.current_user(active=True)
 
 users_router = APIRouter(
     prefix="/users",
-    tags=["users"],
+    tags=["Users"],
     responses={404: {"description": "Not found"}}
 )
 

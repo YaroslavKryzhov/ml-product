@@ -50,7 +50,8 @@ class DocumentPostgreCRUD(BaseCrud):
     # UPDATE
     def update_document(self, filename: str, query: Dict):
         filepath = self.file_path(filename)
-        query['filepath'] = self.file_path(query['name'])
+        if query.get('name', None):
+            query['filepath'] = self.file_path(query['name'])
         self.session.query(Document).filter(Document.filepath == filepath).update(query)
         self.session.commit()
 

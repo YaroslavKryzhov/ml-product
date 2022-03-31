@@ -33,6 +33,7 @@ class DocumentService:
 
     def delete_document_from_db(self, filename: str):
         DocumentFileCRUD(self._user).delete_document(filename)
+        DocumentPostgreCRUD(self._db, self._user).delete_document(filename)
 
     def update_change_date_in_db(self, filename: str):
         query = {
