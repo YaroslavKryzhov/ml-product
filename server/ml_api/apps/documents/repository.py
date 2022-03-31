@@ -1,0 +1,93 @@
+import os
+import shutil
+from typing import List, Dict
+from datetime import datetime
+from uuid import UUID
+
+import pandas as pd
+from sqlalchemy.orm import Session
+from fastapi.responses import FileResponse
+
+from ml_api.common.config import ROOT_DIR
+from ml_api.apps.documents.models import Document
+
+
+class BaseCrud:
+
+    def __init__(self, user):
+        self.user_id = str(user.id)
+        self.user_path = os.path.join(ROOT_DIR, self.user_id)
+        if not os.path.exists(self.user_path):
+            os.makedirs(self.user_path)
+
+    def file_path(self, filename):
+        return os.path.join(self.user_path, filename)
+
+
+class DocumentPostgreCRUD(BaseCrud):
+
+    def __init__(self, session: Session, user):
+        super().__init__(user)
+        self.session = session
+
+    # CREATE
+    def new_document(self, filename: str):
+        new_obj = Document(
+            name=filename,
+            filepath=self.file_path(filename),
+            user_id=self.user_id,
+            upload_date=str(datetime.now()),
+            change_date=str(datetime.now()),
+            pipeline=[]
+        )
+        self.session.add(new_obj)
+        self.session.commit()
+
+    # READ
+    # def read_document(self) -> List[Document]:
+    #     return self.session.query(Document).all()
+
+    # UPDATE
+    def update_document(self, filename: str, query: Dict):
+        filepath = self.file_path(filename)
+        query['filepath'] = self.file_path(query['name'])
+        self.session.query(Document).filter(Document.filepath == filepath).update(query)
+        self.session.commit()
+
+    # DELETE
+    def delete_document(self, filename: str):
+        filepath = self.file_path(filename)
+        self.session.query(Document).filter(Document.filepath == filepath).delete()
+        self.session.commit()
+
+
+class DocumentFileCRUD(BaseCrud):
+
+    # CREATE
+    def upload_document(self, filename: str, file):
+        csv_path = self.file_path(filename)
+        with open(csv_path, 'wb') as buffer:
+            shutil.copyfileobj(file, buffer)
+
+    # READ
+    def read_document(self, filename: str) -> pd.DataFrame:
+        csv_path = self.file_path(filename)
+        data = pd.read_csv(csv_path)
+        return data
+
+    def download_document(self, filename: str):
+        csv_path = self.file_path(filename)
+        return FileResponse(path=csv_path, filename=filename, media_type='text/csv')
+
+    # UPDATE
+    def update_document(self, filename: str, data: pd.DataFrame):
+        data.to_csv(os.path.join(self.user_path, filename))
+
+    def rename_document(self, filename: str, new_filename: str):
+        old_path = self.file_path(filename)
+        new_path = self.file_path(new_filename)
+        shutil.move(old_path, new_path)
+
+    # DELETE
+    def delete_document(self, filename: str):
+        os.remove(self.file_path(filename))

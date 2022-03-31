@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from ml_api.common import config
-from ml_api.apps.document.routers import csv_router
+from ml_api.apps.documents.routers import documents_router
 from ml_api.apps.users.routers import fastapi_users, auth_backend, users_router
 
 
@@ -21,7 +21,7 @@ app.add_middleware(
 # async def custom_app_exception_handler(request, e):
 #     return await app_exception_handler(request, e)
 
-app.include_router(csv_router)
+app.include_router(documents_router)
 app.include_router(users_router)
 
 app.include_router(
