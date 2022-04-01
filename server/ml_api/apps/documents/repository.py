@@ -16,7 +16,7 @@ class BaseCrud:
 
     def __init__(self, user):
         self.user_id = str(user.id)
-        self.user_path = os.path.join(ROOT_DIR, self.user_id)
+        self.user_path = os.path.join(ROOT_DIR, self.user_id, 'documents')
         if not os.path.exists(self.user_path):
             os.makedirs(self.user_path)
 
@@ -44,8 +44,6 @@ class DocumentPostgreCRUD(BaseCrud):
         self.session.commit()
 
     # READ
-    # def read_document(self) -> List[Document]:
-    #     return self.session.query(Document).all()
 
     # UPDATE
     def update_document(self, filename: str, query: Dict):
@@ -72,6 +70,7 @@ class DocumentFileCRUD(BaseCrud):
 
     # READ
     def read_document(self, filename: str) -> pd.DataFrame:
+        """ DEV USE: Read CSV and return DataFrame object"""
         csv_path = self.file_path(filename)
         data = pd.read_csv(csv_path)
         return data
@@ -82,6 +81,7 @@ class DocumentFileCRUD(BaseCrud):
 
     # UPDATE
     def update_document(self, filename: str, data: pd.DataFrame):
+        """ DEV USE: Save DataFrame object in CSV format"""
         data.to_csv(os.path.join(self.user_path, filename))
 
     def rename_document(self, filename: str, new_filename: str):
