@@ -55,3 +55,9 @@ documents_method_router = APIRouter(
 def remove_duplicates(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
     DocumentService(db, user).remove_duplicates(filename)
     return {"filename": filename}
+
+
+@documents_method_router.put("/drop_na")
+def remove_duplicates(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
+    DocumentService(db, user).drop_na(filename)
+    return {"filename": filename}
