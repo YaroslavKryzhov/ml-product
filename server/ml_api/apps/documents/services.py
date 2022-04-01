@@ -48,6 +48,12 @@ class DocumentService:
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_change_date_in_db(filename)
 
+    def drop_na(self, filename: str):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        document = document.dropna()
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_change_date_in_db(filename)
+
     def fill_spaces(self):
         pass
 
