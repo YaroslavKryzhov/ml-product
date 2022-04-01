@@ -21,7 +21,7 @@ class BaseCrud:
             os.makedirs(self.user_path)
 
     def file_path(self, filename):
-        return os.path.join(self.user_path, filename, '.pickle')
+        return os.path.join(self.user_path, filename + '.pickle')
 
 
 class ModelPostgreCRUD(BaseCrud):
@@ -32,6 +32,7 @@ class ModelPostgreCRUD(BaseCrud):
 
     # CREATE
     def new_model(self, model_name: str):
+        """ DEV USE: Save model info to PostgreDB"""
         new_obj = Model(
             name=model_name,
             filepath=self.file_path(model_name),
