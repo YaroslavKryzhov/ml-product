@@ -79,7 +79,7 @@ class ModelPickleCRUD(BaseCrud):
 
     def download_pickled_model(self, model_name: str):
         model_path = self.file_path(model_name)
-        return FileResponse(path=model_path, filename=model_name)
+        return FileResponse(path=model_path, filename=str(model_name + '.pickle'))
 
     # UPDATE
     def rename_model(self, model_name: str, new_model_name: str):

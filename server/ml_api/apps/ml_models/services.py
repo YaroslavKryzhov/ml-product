@@ -51,6 +51,12 @@ class ModelService:
         ModelPostgreCRUD(self._db, self._user).new_model(model_name)
         return score
 
+    def predict_on_model(self, filename: str, model_name: str = 'tree'):
+        data = self.get_document(filename).iloc[-10:].drop('Species', axis=1)
+        model = ModelPickleCRUD(self._user).read_model(model_name)
+        predictions = model.predict(data)
+        return list(predictions)
+
 
 class SampleSplitter:
 

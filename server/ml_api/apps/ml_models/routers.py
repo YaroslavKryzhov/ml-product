@@ -13,10 +13,16 @@ models_router = APIRouter(
 )
 
 
-@models_router.post("/tree")
+@models_router.post("/train_tree")
 def load_document(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
     score = ModelService(db, user).train_model(filename)
     return {"score": score}
+
+
+@models_router.get("/predict_tree")
+def load_document(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
+    predictions = ModelService(db, user).predict_on_model(filename)
+    return {"predictions": predictions}
 
 
 @models_router.get("/download")
