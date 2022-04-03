@@ -1,5 +1,7 @@
 import pandas as pd
 from datetime import datetime
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
 
 from ml_api.apps.documents.models import Document
 from ml_api.apps.documents.repository import DocumentFileCRUD, DocumentPostgreCRUD
@@ -68,3 +70,9 @@ class DocumentService:
 
     # def train_test_split(self):
     #     pass
+
+    def miss_linear_imputer(self, filename: str) -> pd.DataFrame:
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        temp_df = pd.DataFrame(IterativeImputer().fit_transform(document)) # default estimator = BayesianRidge()
+        temp_df.columns = document.columns
+        return temp_df
