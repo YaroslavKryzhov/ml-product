@@ -71,7 +71,7 @@ class DocumentService:
     # def train_test_split(self):
     #     pass
 
-    def miss_linear_imputer(self, filename: str) -> pd.DataFrame:
+    def miss_linear_imputer(self, filename: str):
         document = DocumentFileCRUD(self._user).read_document(filename)
         temp_document = pd.DataFrame(IterativeImputer().fit_transform(document)) # default estimator = BayesianRidge()
         temp_document.columns = document.columns
