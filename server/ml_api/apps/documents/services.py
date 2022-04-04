@@ -73,6 +73,7 @@ class DocumentService:
 
     def miss_linear_imputer(self, filename: str) -> pd.DataFrame:
         document = DocumentFileCRUD(self._user).read_document(filename)
-        temp_df = pd.DataFrame(IterativeImputer().fit_transform(document)) # default estimator = BayesianRidge()
-        temp_df.columns = document.columns
-        return temp_df
+        temp_document = pd.DataFrame(IterativeImputer().fit_transform(document)) # default estimator = BayesianRidge()
+        temp_document.columns = document.columns
+        DocumentFileCRUD(self._user).update_document(filename, temp_document)
+        self.update_change_date_in_db(filename)  
