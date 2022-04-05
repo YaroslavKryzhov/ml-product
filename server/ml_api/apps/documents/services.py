@@ -73,4 +73,9 @@ class DocumentService:
 
     def outlier_grubbs(self, filename: str, alpha: float, numeric_cols: List[str]):
         document = DocumentFileCRUD(self._user).read_document(filename)
-        grubbs.test(document[numeric_cols], alpha=alpha)
+        for col in numeric_cols:
+            document = document.drop(
+                grubbs.two_sided_test_indices(document[col], alpha)
+            ).reset_index().drop('index', axis=1)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_change_date_in_db(filename)
