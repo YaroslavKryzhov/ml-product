@@ -65,5 +65,5 @@ def remove_duplicates(filename: str, db: get_db = Depends(), user: UserDB = Depe
 
 @documents_method_router.put("/miss_insert_mean_mode")
 def miss_insert_mean_mode(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
-    DocumentService(db, user).miss_insert_mean_mode(filename)
+    DocumentService(db, user).miss_insert_mean_mode(filename, threshold_unique=10) #Границу вводит юзер
     return {"filename": filename}
