@@ -61,3 +61,9 @@ def remove_duplicates(filename: str, db: get_db = Depends(), user: UserDB = Depe
 def remove_duplicates(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
     DocumentService(db, user).drop_na(filename)
     return {"filename": filename}
+
+@documents_method_router.put("/HZR_outlier_interquartile_distance")
+def outlier_interquartile_distance(filename: str, low_quantile: float, up_quantile: float, coef: float,\
+        db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
+    DocumentService(db, user).outlier_interquartile_distance(filename, low_quantile, up_quantile, coef)
+    return {"filename": filename}
