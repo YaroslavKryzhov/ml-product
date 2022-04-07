@@ -1,8 +1,11 @@
 import pandas as pd
 from datetime import datetime
+from outliers import smirnov_grubbs as grubbs
+from typing import List
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from scipy.stats import mode
+
 
 from ml_api.apps.documents.models import Document
 from ml_api.apps.documents.repository import DocumentFileCRUD, DocumentPostgreCRUD
@@ -72,6 +75,16 @@ class DocumentService:
     # def train_test_split(self):
     #     pass
 
+
+    def outlier_grubbs(self, filename: str, alpha: float, numeric_cols: List[str]):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        for col in numeric_cols:
+            document = document.drop(
+                grubbs.two_sided_test_indices(document[col], alpha)
+            ).reset_index().drop('index', axis=1)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_change_date_in_db(filename)
+        
     def miss_linear_imputer(self, filename: str):
         document = DocumentFileCRUD(self._user).read_document(filename)
         temp_document = pd.DataFrame(IterativeImputer().fit_transform(document)) # default estimator = BayesianRidge()
@@ -89,3 +102,4 @@ class DocumentService:
         document[feature].fillna(fill_value, inplace=True)
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_change_date_in_db(filename)  
+
