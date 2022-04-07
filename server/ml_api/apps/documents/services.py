@@ -60,6 +60,18 @@ class DocumentService:
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_change_date_in_db(filename)
 
+# OCSVM на выходе 1 - выброс, -1 - не выброс
+# iter - количество итераций, если -1, то нет ограничений
+    def outliers_OneClassSVM(self, filename: str, iters: float):
+        df = DocumentFileCRUD(self._user).read_document(filename)
+        dataset = df.copy()
+        OCSVM = OneClassSVM(kernel='rbf', gamma='auto', max_iter=iters)
+        df_with_svm = dataset.join(pd.DataFrame(OCSVM.fit_predict(dataset),
+                                                index=dataset.index, columns=['svm']), how='left')
+        df = df_with_svm.loc[df_with_svm['svm'] != 1].index
+        DocumentFileCRUD(self._user).update_document(filename, df)
+        self.update_change_date_in_db(filename)
+        
 #В обрабатываемом датафрейме значения должны быть только числовыми
 #В старом коде этот метод возвращал не то, что внутри квантилей, а наоборот то, что вне(то, что внутри - удалял)
     def outlier_interquartile_distance(self, filename: str, low_quantile: float, up_quantile: float, coef: float):

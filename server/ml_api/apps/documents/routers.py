@@ -63,6 +63,12 @@ def remove_duplicates(filename: str, db: get_db = Depends(), user: UserDB = Depe
     return {"filename": filename}
 
 
+@documents_method_router.put("/HZR_outliers_OneClassSVM")
+def outliers_OneClassSVM(filename: str, iters: float, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
+    DocumentService(db, user).outliers_OneClassSVM(filename, iters)
+    return {"filename": filename}
+
+
 @documents_method_router.put("/HZR_outlier_interquartile_distance")
 def outlier_interquartile_distance(filename: str, low_quantile: float, up_quantile: float, coef: float,\
         db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
@@ -80,4 +86,5 @@ def outlier_three_sigma(filename: str, db: get_db = Depends(), user: UserDB = De
 def miss_insert_mean_mode(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
     DocumentService(db, user).miss_insert_mean_mode(filename, threshold_unique=10) #Границу вводит юзер
     return {"filename": filename}
+
 
