@@ -100,11 +100,8 @@ class DocumentService:
 #Просто стандартизация, в старом коде был реализован непонятный лишний функционал
     def standartize_features(self, filename: str):
         df = DocumentFileCRUD(self._user).read_document(filename)
-        y = df.index
-        x = df.columns
         sc = StandardScaler()
-        df = sc.fit_transform(df)
-        df = pd.DataFrame(df, y, x)
+        df = pd.DataFrame(sc.fit_transform(df), df.index, df.columns)
         DocumentFileCRUD(self._user).update_document(filename, df)
         self.update_change_date_in_db(filename)
         
