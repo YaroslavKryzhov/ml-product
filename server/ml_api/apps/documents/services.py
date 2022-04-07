@@ -4,6 +4,7 @@ from outliers import smirnov_grubbs as grubbs
 from typing import List
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
+from scipy.stats import mode
 
 
 from ml_api.apps.documents.models import Document
@@ -89,5 +90,16 @@ class DocumentService:
         temp_document = pd.DataFrame(IterativeImputer().fit_transform(document)) # default estimator = BayesianRidge()
         temp_document.columns = document.columns
         DocumentFileCRUD(self._user).update_document(filename, temp_document)
+        self.update_change_date_in_db(filename)  
+
+    def miss_insert_mean_mode(self, filename: str,  threshold_unique: int):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        for feature in list(document):
+            if document[feature].nunique() < threshold_unique:
+                fill_value = mode(document[feature]).mode[0]
+            else:
+                fill_value = document[feature].mean()
+        document[feature].fillna(fill_value, inplace=True)
+        DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_change_date_in_db(filename)  
 
