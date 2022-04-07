@@ -6,6 +6,8 @@ from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import IsolationForest
 from scipy.stats import mode
+from sklearn.svm import OneClassSVM
+from sklearn.preprocessing import StandardScaler
 
 
 from ml_api.apps.documents.models import Document
@@ -69,7 +71,7 @@ class DocumentService:
         OCSVM = OneClassSVM(kernel='rbf', gamma='auto', max_iter=iters)
         df_with_svm = dataset.join(pd.DataFrame(OCSVM.fit_predict(dataset),
                                                 index=dataset.index, columns=['svm']), how='left')
-        df = df_with_svm.loc[df_with_svm['svm'] != 1].index
+        df = df_with_svm.loc[df_with_svm['svm'] != -1]
         DocumentFileCRUD(self._user).update_document(filename, df)
         self.update_change_date_in_db(filename)
         
@@ -86,22 +88,6 @@ class DocumentService:
         DocumentFileCRUD(self._user).update_document(filename, df)
         self.update_change_date_in_db(filename)
 
-    def fill_spaces(self):
-        pass
-
-    def remove_outlayers(self):
-        pass
-
-    def standartize_features(self):
-        pass
-
-    def normalize_features(self):
-        pass
-
-    # def train_test_split(self):
-    #     pass
-
-
     def outlier_grubbs(self, filename: str, alpha: float, numeric_cols: List[str]):
         document = DocumentFileCRUD(self._user).read_document(filename)
         for col in numeric_cols:
@@ -109,6 +95,17 @@ class DocumentService:
                 grubbs.two_sided_test_indices(document[col], alpha)
             ).reset_index().drop('index', axis=1)
         DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_change_date_in_db(filename)
+
+#Просто стандартизация, в старом коде был реализован непонятный лишний функционал
+    def standartize_features(self, filename: str):
+        df = DocumentFileCRUD(self._user).read_document(filename)
+        y = df.index
+        x = df.columns
+        sc = StandardScaler()
+        df = sc.fit_transform(df)
+        df = pd.DataFrame(df, y, x)
+        DocumentFileCRUD(self._user).update_document(filename, df)
         self.update_change_date_in_db(filename)
         
     def miss_linear_imputer(self, filename: str):
@@ -144,5 +141,6 @@ class DocumentService:
                 fill_value = document[feature].mean()
         document[feature].fillna(fill_value, inplace=True)
         DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename) 
- 
+        self.update_change_date_in_db(filename)
+
+

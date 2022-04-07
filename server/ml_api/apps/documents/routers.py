@@ -75,6 +75,10 @@ def outlier_interquartile_distance(filename: str, low_quantile: float, up_quanti
     DocumentService(db, user).outlier_interquartile_distance(filename, low_quantile, up_quantile, coef)
     return {"filename": filename}
 
+@documents_method_router.put("/HZR_standartize_features")
+def standartize_features(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
+    DocumentService(db, user).standartize_features(filename)
+    return {"filename": filename}
   
 @documents_method_router.put("/outlier_three_sigma")
 def outlier_three_sigma(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
