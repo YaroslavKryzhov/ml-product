@@ -61,3 +61,8 @@ def remove_duplicates(filename: str, db: get_db = Depends(), user: UserDB = Depe
 def remove_duplicates(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
     DocumentService(db, user).drop_na(filename)
     return {"filename": filename}
+
+@documents_method_router.put("/HZR_outliers_OneClassSVM")
+def outliers_OneClassSVM(filename: str, iters: float, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
+    DocumentService(db, user).outliers_OneClassSVM(filename, iters)
+    return {"filename": filename}
