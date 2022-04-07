@@ -1,13 +1,15 @@
 import pandas as pd
 from datetime import datetime
 from outliers import smirnov_grubbs as grubbs
-from typing import List
+from typing import List, Union
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import IsolationForest
 from scipy.stats import mode
 from sklearn.svm import OneClassSVM
 from sklearn.preprocessing import StandardScaler
+from sklearn.covariance import EllipticEnvelope
+from sklearn.neighbors import LocalOutlierFactor
 
 
 from ml_api.apps.documents.models import Document
@@ -140,4 +142,26 @@ class DocumentService:
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_change_date_in_db(filename)
 
-
+    def outliers_EllipticEnvelope(self, filename: str, contamination: float = 0.1):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        outliers = EllipticEnvelope(contamination=contamination).fit_predict(document)
+        document = document[outliers == 1].reset_index().drop('index', axis=1)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_change_date_in_db(filename) 
+    
+    def outliers_LocalFactor(
+        self,
+        filename: str,
+        n_neighbors: int = 20,
+        algorithm: str = 'auto',
+        contamination: Union[str, float] = 'auto'
+    ):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        outliers = LocalOutlierFactor(
+            n_neighbors=n_neighbors,
+            algorithm=algorithm,
+            contamination=contamination
+        ).fit_predict(document)
+        document = document[outliers == 1].reset_index().drop('index', axis=1)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_change_date_in_db(filename)
