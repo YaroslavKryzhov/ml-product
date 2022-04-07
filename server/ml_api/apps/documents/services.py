@@ -60,6 +60,19 @@ class DocumentService:
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_change_date_in_db(filename)
 
+#В обрабатываемом датафрейме значения должны быть только числовыми
+#В старом коде этот метод возвращал не то, что внутри квантилей, а наоборот то, что вне(то, что внутри - удалял)
+    def outlier_interquartile_distance(self, filename: str, low_quantile: float, up_quantile: float, coef: float):
+        df = DocumentFileCRUD(self._user).read_document(filename)
+        quantile = df.quantile([low_quantile, up_quantile])
+        for column in df:
+            low_lim = quantile[column][low_quantile]
+            up_lim = quantile[column][up_quantile]
+            df = df.loc[df[column] >= low_lim - coef * (up_lim - low_lim)]. \
+                loc[df[column] <= up_lim + coef * (up_lim - low_lim)]
+        DocumentFileCRUD(self._user).update_document(filename, df)
+        self.update_change_date_in_db(filename)
+
     def fill_spaces(self):
         pass
 
