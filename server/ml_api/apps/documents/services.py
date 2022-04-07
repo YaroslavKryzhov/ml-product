@@ -90,7 +90,14 @@ class DocumentService:
         temp_document = pd.DataFrame(IterativeImputer().fit_transform(document)) # default estimator = BayesianRidge()
         temp_document.columns = document.columns
         DocumentFileCRUD(self._user).update_document(filename, temp_document)
+        self.update_change_date_in_db(filename) 
+
+    def outlier_three_sigma(self, filename: str):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        document = document[(document - document.mean()).abs() < 3 * document.std()].dropna(axis=0, how='any')
+        DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_change_date_in_db(filename)  
+        
 
     def miss_insert_mean_mode(self, filename: str,  threshold_unique: int):
         document = DocumentFileCRUD(self._user).read_document(filename)
@@ -101,5 +108,5 @@ class DocumentService:
                 fill_value = document[feature].mean()
         document[feature].fillna(fill_value, inplace=True)
         DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename)  
-
+        self.update_change_date_in_db(filename) 
+ 
