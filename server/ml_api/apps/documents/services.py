@@ -64,7 +64,7 @@ class DocumentService:
         OCSVM = OneClassSVM(kernel='rbf', gamma='auto', max_iter=iters)
         df_with_svm = dataset.join(pd.DataFrame(OCSVM.fit_predict(dataset),
                                                 index=dataset.index, columns=['svm']), how='left')
-        df = df_with_svm.loc[df_with_svm['svm'] != 1].index
+        df = df_with_svm.loc[df_with_svm['svm'] != -1]
         DocumentFileCRUD(self._user).update_document(filename, df)
         self.update_change_date_in_db(filename)
 
