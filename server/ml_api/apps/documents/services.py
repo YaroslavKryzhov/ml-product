@@ -4,6 +4,7 @@ from outliers import smirnov_grubbs as grubbs
 from typing import List
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
+from sklearn.ensemble import IsolationForest
 from scipy.stats import mode
 
 
@@ -115,6 +116,16 @@ class DocumentService:
         temp_document = pd.DataFrame(IterativeImputer().fit_transform(document)) # default estimator = BayesianRidge()
         temp_document.columns = document.columns
         DocumentFileCRUD(self._user).update_document(filename, temp_document)
+        self.update_change_date_in_db(filename)  
+
+    def outliers_IsolationForest(self, filename: str, n_estimators : int, contamination : float):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        IF = IsolationForest(n_estimators=n_estimators, contamination=contamination)
+        document_with_forest = document.join(pd.DataFrame(IF.fit_predict(document),
+                                               index=document.index, columns=['isolation_forest']), how='left')
+        document_with_forest = document_with_forest.loc[document_with_forest['isolation_forest'] == 1]
+        document = document_with_forest.drop("isolation_forest", axis=1)
+        DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_change_date_in_db(filename) 
 
     def outlier_three_sigma(self, filename: str):
