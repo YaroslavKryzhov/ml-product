@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from datetime import datetime
 from outliers import smirnov_grubbs as grubbs
 from typing import List, Union
@@ -10,6 +11,7 @@ from sklearn.svm import OneClassSVM
 from sklearn.preprocessing import StandardScaler
 from sklearn.covariance import EllipticEnvelope
 from sklearn.neighbors import LocalOutlierFactor
+
 
 
 from ml_api.apps.documents.models import Document
@@ -131,7 +133,7 @@ class DocumentService:
         self.update_change_date_in_db(filename)  
         
 
-    def miss_insert_mean_mode(self, filename: str,  threshold_unique: int):
+    def miss_insert_mean_mode(self, filename: str,  threshold_unique: int = 10):
         document = DocumentFileCRUD(self._user).read_document(filename)
         for feature in list(document):
             if document[feature].nunique() < threshold_unique:
@@ -165,3 +167,15 @@ class DocumentService:
         document = document[outliers == 1].reset_index().drop('index', axis=1)
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_change_date_in_db(filename)
+
+    def outliers_Approximate(self, filename: str, deviation : int):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        M = document
+        u, s, vh = np.linalg.svd(M, full_matrices=True)
+        Mk_rank = np.linalg.matrix_rank(M) - deviation
+        Uk, Sk, VHk = u[:, :Mk_rank], np.diag(s)[:Mk_rank, :Mk_rank], vh[:Mk_rank, :]
+        Mk = pd.DataFrame(np.dot(np.dot(Uk, Sk), VHk), index=M.index, columns=M.columns)
+        delta = abs(Mk - M)
+        document = document.drop(delta.idxmax())
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_change_date_in_db(filename) 
