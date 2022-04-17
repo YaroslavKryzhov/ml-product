@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, String, DateTime, Integer, ForeignKey, Table, PickleType
+from sqlalchemy import Column, String, DateTime, ForeignKey, Table, PickleType, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -22,6 +22,7 @@ class Model(Base):
     filepath = Column(String, unique=True)
     user_id = Column(UUID, ForeignKey("user.id"))
     create_date = Column(DateTime)
+    composition = Column(Boolean)
     hyperparams = Column(PickleType)
 
     used_csv = relationship('Document', secondary=document_in_model, back_populates='used_in_models')

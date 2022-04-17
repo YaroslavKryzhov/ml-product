@@ -44,9 +44,16 @@ class DocumentPostgreCRUD(BaseCrud):
         self.session.commit()
 
     # READ
+
     def get_pipe(self, filename: str):
         pipe = pickle.dumps(self.session.query(Document.pipeline).filter(Document.name == filename).all())
         return pipe
+      
+      
+    def read_document_info(self, filename: str):
+        filepath = self.file_path(filename)
+        return self.session.query(Document).filter(Document.filepath == filepath).first()
+
 
     # UPDATE
     def update_document(self, filename: str, query: Dict):

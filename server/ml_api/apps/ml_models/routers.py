@@ -4,6 +4,8 @@ from ml_api.common.database.db_deps import get_db
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.schemas import UserDB
 from ml_api.apps.ml_models.services import ModelService
+from ml_api.apps.ml_models.configs.classification_models_config import DecisionTreeClassifierParameters, AvailableModels
+
 
 
 models_router = APIRouter(
@@ -13,14 +15,15 @@ models_router = APIRouter(
 )
 
 
-@models_router.post("/train_tree")
-def load_document(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
-    score = ModelService(db, user).train_model(filename)
-    return {"score": score}
+@models_router.post("/train")
+def train_model(filename: str, model: AvailableModels, model_name: str, params: DecisionTreeClassifierParameters,
+                db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
+    result = ModelService(db, user).train_model(filename, params=params, model=model, model_name=model_name)
+    return result
 
 
 @models_router.get("/predict_tree")
-def load_document(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
+def predict(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
     predictions = ModelService(db, user).predict_on_model(filename)
     return {"predictions": predictions}
 

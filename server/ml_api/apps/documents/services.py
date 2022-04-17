@@ -2,8 +2,10 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from outliers import smirnov_grubbs as grubbs
-from typing import List, Union
+from typing import List, Union, Dict
 from sklearn.experimental import enable_iterative_imputer
+from fastapi import status
+from fastapi.responses import JSONResponse
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import IsolationForest
 from scipy.stats import mode
@@ -26,17 +28,23 @@ class DocumentService:
         self._user = user
 
     def upload_document_to_db(self, file, filename: str):
+        document_info = DocumentPostgreCRUD(self._db, self._user).read_document_info(filename)
+        if document_info is not None:
+            return False
         DocumentFileCRUD(self._user).upload_document(filename, file)
         DocumentPostgreCRUD(self._db, self._user).new_document(filename)
-        pass
+        return True
 
     def download_document_from_db(self, filename: str):
         file = DocumentFileCRUD(self._user).download_document(filename)
         return file
 
     def read_document_from_db(self, filename: str) -> pd.DataFrame:
+        document_info = DocumentPostgreCRUD(self._db, self._user).read_document_info(filename)
+        if document_info is None:
+            return None
         df = DocumentFileCRUD(self._user).read_document(filename)
-        return df.head(10)
+        return df
 
     def update_pipeline(self, filename: str, method: str):
         pipe = DocumentPostgreCRUD(self._db, self._user).get_pipe(filename)
@@ -64,6 +72,20 @@ class DocumentService:
             'change_date': str(datetime.now())
         }
         DocumentPostgreCRUD(self._db, self._user).update_document(filename, query)
+
+    def return_documents_columns(self, filename: str):
+        df = DocumentFileCRUD(self._user).read_document(filename)
+        return df.columns
+
+    def save_column_marks_to_db(self,  filename: str, column_marks: Dict[str, Union[List[str], str]]):
+        query = {
+            'column_marks': column_marks
+        }
+        DocumentPostgreCRUD(self._db, self._user).update_document(filename, query)
+
+    def return_column_marks(self, filename: str):
+        document = DocumentPostgreCRUD(self._db, self._user).read_document_info(filename)
+        print(document)
 
     # DOCUMENT CHANGING METHODS
     def remove_duplicates(self, filename: str):
