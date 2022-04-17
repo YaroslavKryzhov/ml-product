@@ -9,11 +9,7 @@ class AvailableModels(Enum):
     catboost = 'CatBoostClassifier'
 
 
-class PythonMLModel(BaseModel):
-    pass
-
-
-class DecisionTreeClassifierParameters(PythonMLModel):
+class DecisionTreeClassifierParameters(BaseModel):
     criterion: Literal['gini', 'entropy'] = 'gini'
     splitter: Literal['best', 'random'] = 'best'
     max_depth: int = None
@@ -39,7 +35,7 @@ class DecisionTreeClassifierParameters(PythonMLModel):
         return value
 
 
-class CatBoostClassifierParameters(PythonMLModel):
+class CatBoostClassifierParameters(BaseModel):
     iterations: int = None
     learning_rate: int = None
     loss_function: Literal["Logloss", "MultiClass"] = None

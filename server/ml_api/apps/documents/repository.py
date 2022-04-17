@@ -38,7 +38,8 @@ class DocumentPostgreCRUD(BaseCrud):
             user_id=self.user_id,
             upload_date=str(datetime.now()),
             change_date=str(datetime.now()),
-            pipeline=[]
+            pipeline=[],
+            column_marks={}
         )
         self.session.add(new_obj)
         self.session.commit()
@@ -47,7 +48,7 @@ class DocumentPostgreCRUD(BaseCrud):
     def read_document_column(self, filename: str, column: Optional[str] = None):
         filepath = self.file_path(filename)
         if not column:
-            return self.session.query(Document).filter(Document.filepath == filepath).first()[0]
+            return self.session.query(Document.name).filter(Document.filepath == filepath).first()
         if column == 'pipeline':
             return self.session.query(Document.pipeline).filter(Document.filepath == filepath).first()[0]
         if column == 'column_marks':
@@ -92,7 +93,7 @@ class DocumentFileCRUD(BaseCrud):
     # UPDATE
     def update_document(self, filename: str, data: pd.DataFrame):
         """ DEV USE: Save DataFrame object in CSV format"""
-        data.to_csv(os.path.join(self.user_path, filename))
+        data.to_csv(os.path.join(self.user_path, filename), index=False)
 
     def rename_document(self, filename: str, new_filename: str):
         old_path = self.file_path(filename)

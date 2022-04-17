@@ -18,9 +18,9 @@ documents_crud_router = APIRouter(
 def load_document(filename: str, file: UploadFile = File(...), db: get_db = Depends(),
                   user: UserDB = Depends(current_active_user)):
     result = DocumentService(db, user).upload_document_to_db(file=file.file, filename=filename)
-    if result:
-        return JSONResponse(status_code=status.HTTP_200_OK, content="The document successfully added")
-    return JSONResponse(status_code=status.HTTP_409_CONFLICT, content="The document name is already taken")
+    if result == True:
+        return JSONResponse(status_code=status.HTTP_200_OK, content=f"The document '{filename}' successfully added")
+    return JSONResponse(status_code=status.HTTP_409_CONFLICT, content=f"The document name '{result}' is already taken")
 
 
 @documents_crud_router.get("")  # +
@@ -29,7 +29,7 @@ def read_document(filename: str, db: get_db = Depends(), user: UserDB = Depends(
     if result is None:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content="No such csv document")
     else:
-        return JSONResponse(status_code=status.HTTP_200_OK, content=result.to_json())
+        return JSONResponse(status_code=status.HTTP_200_OK, content=result.head(100).to_json())
 
 
 @documents_crud_router.get("/download")

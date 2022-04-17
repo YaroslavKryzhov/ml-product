@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import List, Dict
+from typing import List, Dict, Optional
 from datetime import datetime
 import pickle
 
@@ -45,9 +45,16 @@ class ModelPostgreCRUD(BaseCrud):
         self.session.commit()
 
     # READ
-    def read_model_info(self, model_name: str):
-        filepath = self.file_path(model_name)
-        return self.session.query(Model).filter(Model.filepath == filepath).first()
+    def read_model_info(self, filename: str, column: Optional[str] = None):
+        filepath = self.file_path(filename)
+        if not column:
+            return self.session.query(Model.name).filter(Model.filepath == filepath).first()
+        if column == 'composition':
+            return self.session.query(Model.composition).filter(Model.filepath == filepath).first()[0]
+        if column == 'hyperparams':
+            return self.session.query(Model.hyperparams).filter(Model.filepath == filepath).first()[0]
+        else:
+            return False
 
     # UPDATE
     def update_model(self, model_name: str, query: Dict):
@@ -94,3 +101,7 @@ class ModelPickleCRUD(BaseCrud):
     # DELETE
     def delete_model(self, model_name: str):
         os.remove(self.file_path(model_name))
+
+
+# class ReportCRUD(BaseCrud):
+#

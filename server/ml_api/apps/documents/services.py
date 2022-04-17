@@ -24,10 +24,9 @@ class DocumentService:
         self._user = user
 
     def upload_document_to_db(self, file, filename: str):
-        document_info = DocumentPostgreCRUD(self._db, self._user).read_document_column(filename, column=None)
-        print(document_info)
-        if document_info is not None:
-            return False
+        document_name = DocumentPostgreCRUD(self._db, self._user).read_document_column(filename, column=None)
+        if document_name is not None:
+            return document_name[0]
         DocumentFileCRUD(self._user).upload_document(filename, file)
         DocumentPostgreCRUD(self._db, self._user).new_document(filename)
         return True
