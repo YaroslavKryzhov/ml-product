@@ -3,11 +3,11 @@ import shutil
 from typing import List, Dict
 from datetime import datetime
 from uuid import UUID
+import pickle
 
 import pandas as pd
 from sqlalchemy.orm import Session
 from fastapi.responses import FileResponse
-
 from ml_api.common.config import ROOT_DIR
 from ml_api.apps.documents.models import Document
 
@@ -44,9 +44,16 @@ class DocumentPostgreCRUD(BaseCrud):
         self.session.commit()
 
     # READ
+
+    def get_pipe(self, filename: str):
+        pipe = pickle.dumps(self.session.query(Document.pipeline).filter(Document.name == filename).all())
+        return pipe
+      
+      
     def read_document_info(self, filename: str):
         filepath = self.file_path(filename)
         return self.session.query(Document).filter(Document.filepath == filepath).first()
+
 
     # UPDATE
     def update_document(self, filename: str, query: Dict):

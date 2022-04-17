@@ -13,6 +13,7 @@ from sklearn.svm import OneClassSVM
 from sklearn.preprocessing import StandardScaler
 from sklearn.covariance import EllipticEnvelope
 from sklearn.neighbors import LocalOutlierFactor
+import pickle
 
 
 
@@ -44,6 +45,16 @@ class DocumentService:
             return None
         df = DocumentFileCRUD(self._user).read_document(filename)
         return df
+
+    def update_pipeline(self, filename: str, method: str):
+        pipe = DocumentPostgreCRUD(self._db, self._user).get_pipe(filename)
+        dec_pipe = pickle.loads(pipe)
+        dec_pipe = dec_pipe.append(method)
+        pipe = pickle.dumps(dec_pipe)
+        query = {
+            'pipeline': pipe
+        }
+        DocumentPostgreCRUD(self._db, self._user).update_document(filename, query)
 
     def rename_document(self, filename: str, new_filename: str):
         DocumentFileCRUD(self._user).rename_document(filename, new_filename)
