@@ -1,4 +1,4 @@
-FROM python:3.9-slim-buster
+FROM amd64/python:3.9-buster
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
@@ -10,6 +10,8 @@ RUN apt-get update \
   && apt-get clean
 
 RUN pip install --upgrade pip
+RUN pip install --upgrade setuptools
+RUN pip install catboost
 
 COPY ./requirements.txt .
 

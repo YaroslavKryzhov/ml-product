@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from outliers import smirnov_grubbs as grubbs
-from typing import List, Union
+from typing import List, Union, Dict
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import IsolationForest
@@ -51,6 +51,16 @@ class DocumentService:
     def update_change_date_in_db(self, filename: str):
         query = {
             'change_date': str(datetime.now())
+        }
+        DocumentPostgreCRUD(self._db, self._user).update_document(filename, query)
+
+    def return_documents_columns(self, filename: str):
+        df = DocumentFileCRUD(self._user).read_document(filename)
+        return df.columns
+
+    def save_column_marks_to_db(self,  filename: str, column_marks: Dict[str, Union[List[str], str]]):
+        query = {
+            'column_marks': column_marks
         }
         DocumentPostgreCRUD(self._db, self._user).update_document(filename, query)
 

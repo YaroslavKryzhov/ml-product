@@ -4,7 +4,7 @@ from ml_api.common.database.db_deps import get_db
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.schemas import UserDB
 from ml_api.apps.documents.services import DocumentService
-from ml_api.apps.documents.schemas import DocumentDB
+from ml_api.apps.documents.schemas import DocumentDB, ColumnMarks
 
 
 documents_crud_router = APIRouter(
@@ -44,6 +44,19 @@ def delete_document(filename: str, db: get_db = Depends(), user: UserDB = Depend
     return {"filename": filename}
 
 
+@documents_crud_router.get("/columns")
+def get_column_names(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
+    result = DocumentService(db, user).return_documents_columns(filename)
+    return result
+
+
+@documents_crud_router.put("/columns")
+def save_column_marks(filename: str, column_marks: ColumnMarks,  db: get_db = Depends(),
+                      user: UserDB = Depends(current_active_user)):
+    result = DocumentService(db, user).save_column_marks_to_db(filename, column_marks)
+    return result
+
+
 documents_method_router = APIRouter(
     prefix="/document/process",
     tags=["Document Methods"],
@@ -75,11 +88,13 @@ def outlier_interquartile_distance(filename: str, low_quantile: float, up_quanti
     DocumentService(db, user).outlier_interquartile_distance(filename, low_quantile, up_quantile, coef)
     return {"filename": filename}
 
+
 @documents_method_router.put("/HZR_standartize_features")
 def standartize_features(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
     DocumentService(db, user).standartize_features(filename)
     return {"filename": filename}
-  
+
+
 @documents_method_router.put("/outlier_three_sigma")
 def outlier_three_sigma(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
     DocumentService(db, user).outlier_three_sigma(filename)
