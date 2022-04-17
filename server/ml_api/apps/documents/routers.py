@@ -37,6 +37,11 @@ def rename_document(filename: str, new_filename: str, db: get_db = Depends(), us
     DocumentService(db, user).rename_document(filename, new_filename)
     return {"filename": new_filename}
 
+@documents_crud_router.put("/update_pipeline")
+def update_pipeline(filename: str, method: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
+    DocumentService(db, user).update_pipeline(filename, method)
+    return {"added pipe": method}
+
 
 @documents_crud_router.delete("")
 def delete_document(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
