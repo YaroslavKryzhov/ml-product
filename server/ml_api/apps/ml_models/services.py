@@ -4,9 +4,11 @@ from datetime import datetime
 from sklearn.tree import DecisionTreeClassifier
 from catboost import CatBoostClassifier
 from sklearn.model_selection import train_test_split
+from fastapi.responses import JSONResponse
+from fastapi import status
 
 from ml_api.apps.ml_models.models import Model
-from ml_api.apps.documents.repository import DocumentFileCRUD
+from ml_api.apps.documents.services import DocumentService
 from ml_api.apps.ml_models.repository import ModelPostgreCRUD, ModelPickleCRUD
 from ml_api.apps.ml_models.configs.classification_models_config import DecisionTreeClassifierParameters, \
     CatBoostClassifierParameters, PythonMLModel, AvailableModels
@@ -41,19 +43,28 @@ class ModelService:
         return model
 
     def get_document(self, filename: str) -> pd.DataFrame:
-        data = DocumentFileCRUD(self._user).read_document(filename)
+        data = DocumentService(self._db, self._user).read_document_from_db(filename)
         return data
 
-    def train_model(self, filename: str, model: AvailableModels, model_name='tree', split_method: str = 'train/valid', params=DecisionTreeClassifierParameters):
+    def train_model(self, filename: str, model: AvailableModels, model_name: str, split_method: str = 'train/valid',
+                    params=DecisionTreeClassifierParameters):
+        model_info = ModelPostgreCRUD(self._db, self._user).read_model_info(model_name)
+        print(model_info)
+        if model_info is not None:
+            return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE, content="The model name is already taken")
         data = self.get_document(filename)
+        if data is None:
+            return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content="No such csv document")
+
         if split_method == 'train/valid':
             x_train, x_valid, y_train, y_valid = SampleSplitterService(data.drop('Species', axis=1), data['Species']).train_valid_split()
+
         if model.value == 'DecisionTreeClassifier':
             model = self.get_tree_classifier(params=params)
         model.fit(x_train, y_train)
         score = model.score(x_valid, y_valid)
         ModelPickleCRUD(self._user).save_model(model_name, model)
-        ModelPostgreCRUD(self._db, self._user).new_model(model_name, )
+        ModelPostgreCRUD(self._db, self._user).new_model(model_name)
         return score
 
     def predict_on_model(self, filename: str, model_name: str = 'tree'):

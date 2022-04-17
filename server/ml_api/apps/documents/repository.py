@@ -44,6 +44,9 @@ class DocumentPostgreCRUD(BaseCrud):
         self.session.commit()
 
     # READ
+    def read_document_info(self, filename: str):
+        filepath = self.file_path(filename)
+        return self.session.query(Document).filter(Document.filepath == filepath).first()
 
     # UPDATE
     def update_document(self, filename: str, query: Dict):

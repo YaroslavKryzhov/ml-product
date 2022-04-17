@@ -38,12 +38,16 @@ class ModelPostgreCRUD(BaseCrud):
             filepath=self.file_path(model_name),
             user_id=self.user_id,
             create_date=str(datetime.now()),
+            composition=False,
             hyperparams=[]
         )
         self.session.add(new_obj)
         self.session.commit()
 
     # READ
+    def read_model_info(self, model_name: str):
+        filepath = self.file_path(model_name)
+        return self.session.query(Model).filter(Model.filepath == filepath).first()
 
     # UPDATE
     def update_model(self, model_name: str, query: Dict):

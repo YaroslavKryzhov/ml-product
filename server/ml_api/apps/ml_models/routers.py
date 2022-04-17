@@ -15,10 +15,11 @@ models_router = APIRouter(
 )
 
 
-@models_router.post("/train_tree")
-def train_tree(filename: str, model: AvailableModels, params: DecisionTreeClassifierParameters, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
-    score = ModelService(db, user).train_model(filename, params=params, model=model)
-    return {"score": score}
+@models_router.post("/train")
+def train_model(filename: str, model: AvailableModels, model_name: str, params: DecisionTreeClassifierParameters,
+                db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
+    result = ModelService(db, user).train_model(filename, params=params, model=model, model_name=model_name)
+    return result
 
 
 @models_router.get("/predict_tree")
