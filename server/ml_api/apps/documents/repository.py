@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import List, Dict
+from typing import List, Dict, Optional
 from datetime import datetime
 from uuid import UUID
 import pickle
@@ -38,22 +38,22 @@ class DocumentPostgreCRUD(BaseCrud):
             user_id=self.user_id,
             upload_date=str(datetime.now()),
             change_date=str(datetime.now()),
-            pipeline=[]
+            pipeline=['base']
         )
         self.session.add(new_obj)
         self.session.commit()
 
     # READ
-
-    def get_pipe(self, filename: str):
-        pipe = pickle.dumps(self.session.query(Document.pipeline).filter(Document.name == filename).all())
-        return pipe
-      
-      
-    def read_document_info(self, filename: str):
+    def read_document_column(self, filename: str, column: Optional[str] = None):
         filepath = self.file_path(filename)
-        return self.session.query(Document).filter(Document.filepath == filepath).first()
-
+        if not column:
+            return self.session.query(Document).filter(Document.filepath == filepath).first()[0]
+        if column == 'pipeline':
+            return self.session.query(Document.pipeline).filter(Document.filepath == filepath).first()[0]
+        if column == 'column_marks':
+            return self.session.query(Document.column_marks).filter(Document.filepath == filepath).first()[0]
+        else:
+            return False
 
     # UPDATE
     def update_document(self, filename: str, query: Dict):

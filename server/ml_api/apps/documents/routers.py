@@ -44,10 +44,17 @@ def rename_document(filename: str, new_filename: str, db: get_db = Depends(), us
     DocumentService(db, user).rename_document(filename, new_filename)
     return {"filename": new_filename}
 
-@documents_crud_router.put("/update_pipeline")
+
+@documents_crud_router.put("/pipeline")
 def update_pipeline(filename: str, method: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
     DocumentService(db, user).update_pipeline(filename, method)
     return {"added pipe": method}
+
+
+@documents_crud_router.get("/pipeline")
+def read_pipeline(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
+    result = DocumentService(db, user).read_pipeline(filename)
+    return result
 
 
 @documents_crud_router.delete("")
@@ -58,14 +65,20 @@ def delete_document(filename: str, db: get_db = Depends(), user: UserDB = Depend
 
 @documents_crud_router.get("/columns")
 def get_column_names(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
-    result = DocumentService(db, user).return_documents_columns(filename)
+    result = DocumentService(db, user).read_documents_columns(filename)
     return result
 
 
-@documents_crud_router.put("/columns")
+@documents_crud_router.put("/column_marks")
 def save_column_marks(filename: str, column_marks: ColumnMarks,  db: get_db = Depends(),
                       user: UserDB = Depends(current_active_user)):
-    result = DocumentService(db, user).save_column_marks_to_db(filename, column_marks)
+    result = DocumentService(db, user).update_column_marks(filename, column_marks)
+    return result
+
+
+@documents_crud_router.get("/column_marks")
+def read_column_marks(filename: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
+    result = DocumentService(db, user).read_column_marks(filename)
     return result
 
 

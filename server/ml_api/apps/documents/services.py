@@ -4,8 +4,6 @@ from datetime import datetime
 from outliers import smirnov_grubbs as grubbs
 from typing import List, Union, Dict
 from sklearn.experimental import enable_iterative_imputer
-from fastapi import status
-from fastapi.responses import JSONResponse
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import IsolationForest
 from scipy.stats import mode
@@ -14,8 +12,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.covariance import EllipticEnvelope
 from sklearn.neighbors import LocalOutlierFactor
 import pickle
-
-
 
 from ml_api.apps.documents.models import Document
 from ml_api.apps.documents.repository import DocumentFileCRUD, DocumentPostgreCRUD
@@ -28,33 +24,24 @@ class DocumentService:
         self._user = user
 
     def upload_document_to_db(self, file, filename: str):
-        document_info = DocumentPostgreCRUD(self._db, self._user).read_document_info(filename)
+        document_info = DocumentPostgreCRUD(self._db, self._user).read_document_column(filename, column=None)
+        print(document_info)
         if document_info is not None:
             return False
         DocumentFileCRUD(self._user).upload_document(filename, file)
         DocumentPostgreCRUD(self._db, self._user).new_document(filename)
         return True
 
-    def download_document_from_db(self, filename: str):
-        file = DocumentFileCRUD(self._user).download_document(filename)
-        return file
-
     def read_document_from_db(self, filename: str) -> pd.DataFrame:
-        document_info = DocumentPostgreCRUD(self._db, self._user).read_document_info(filename)
+        document_info = DocumentPostgreCRUD(self._db, self._user).read_document_column(filename, column=None)
         if document_info is None:
             return None
         df = DocumentFileCRUD(self._user).read_document(filename)
         return df
 
-    def update_pipeline(self, filename: str, method: str):
-        pipe = DocumentPostgreCRUD(self._db, self._user).get_pipe(filename)
-        dec_pipe = pickle.loads(pipe)
-        dec_pipe = dec_pipe.append(method)
-        pipe = pickle.dumps(dec_pipe)
-        query = {
-            'pipeline': pipe
-        }
-        DocumentPostgreCRUD(self._db, self._user).update_document(filename, query)
+    def download_document_from_db(self, filename: str):
+        file = DocumentFileCRUD(self._user).download_document(filename)
+        return file
 
     def rename_document(self, filename: str, new_filename: str):
         DocumentFileCRUD(self._user).rename_document(filename, new_filename)
@@ -63,29 +50,42 @@ class DocumentService:
         }
         DocumentPostgreCRUD(self._db, self._user).update_document(filename, query)
 
-    def delete_document_from_db(self, filename: str):
-        DocumentFileCRUD(self._user).delete_document(filename)
-        DocumentPostgreCRUD(self._db, self._user).delete_document(filename)
-
     def update_change_date_in_db(self, filename: str):
         query = {
             'change_date': str(datetime.now())
         }
         DocumentPostgreCRUD(self._db, self._user).update_document(filename, query)
 
-    def return_documents_columns(self, filename: str):
-        df = DocumentFileCRUD(self._user).read_document(filename)
-        return df.columns
+    def delete_document_from_db(self, filename: str):
+        DocumentFileCRUD(self._user).delete_document(filename)
+        DocumentPostgreCRUD(self._db, self._user).delete_document(filename)
 
-    def save_column_marks_to_db(self,  filename: str, column_marks: Dict[str, Union[List[str], str]]):
+    def read_pipeline(self, filename: str):
+        pipeline = DocumentPostgreCRUD(self._db, self._user).read_document_column(filename, column='pipeline')
+        return pipeline
+
+    def update_pipeline(self, filename: str, method: str):
+        pipeline = self.read_pipeline(filename)
+        pipeline.append(method)
+        query = {
+            'pipeline': pipeline
+        }
+        DocumentPostgreCRUD(self._db, self._user).update_document(filename, query)
+
+    def read_documents_columns(self, filename: str):
+        df = DocumentFileCRUD(self._user).read_document(filename)
+        return df.columns.to_list()
+
+    def read_column_marks(self, filename: str):
+        column_marks = dict(DocumentPostgreCRUD(self._db, self._user).read_document_column(filename,
+                                                                                           column='column_marks'))
+        return column_marks
+
+    def update_column_marks(self, filename: str, column_marks: Dict[str, Union[List[str], str]]):
         query = {
             'column_marks': column_marks
         }
         DocumentPostgreCRUD(self._db, self._user).update_document(filename, query)
-
-    def return_column_marks(self, filename: str):
-        document = DocumentPostgreCRUD(self._db, self._user).read_document_info(filename)
-        print(document)
 
     # DOCUMENT CHANGING METHODS
     def remove_duplicates(self, filename: str):
@@ -100,8 +100,27 @@ class DocumentService:
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_change_date_in_db(filename)
 
-# OCSVM на выходе 1 - выброс, -1 - не выброс
-# iter - количество итераций, если -1, то нет ограничений
+    def standardize_features(self, filename: str):
+        df = DocumentFileCRUD(self._user).read_document(filename)
+        numeric_columns = self.read_column_marks(filename)['numeric']
+        sc = StandardScaler()
+        df[numeric_columns] = pd.DataFrame(sc.fit_transform(df[numeric_columns]), df.index, numeric_columns)
+        DocumentFileCRUD(self._user).update_document(filename, df)
+        self.update_change_date_in_db(filename)
+        self.update_pipeline(filename, method='standardize_features')
+
+
+
+
+### ---------------------------------------------UNCHECKED--------------------------------------------------------------
+
+
+
+
+
+
+    # OCSVM на выходе 1 - выброс, -1 - не выброс
+    # iter - количество итераций, если -1, то нет ограничений
     def outliers_OneClassSVM(self, filename: str, iters: float):
         df = DocumentFileCRUD(self._user).read_document(filename)
         dataset = df.copy()
@@ -111,9 +130,9 @@ class DocumentService:
         df = df_with_svm.loc[df_with_svm['svm'] != -1]
         DocumentFileCRUD(self._user).update_document(filename, df)
         self.update_change_date_in_db(filename)
-        
-#В обрабатываемом датафрейме значения должны быть только числовыми
-#В старом коде этот метод возвращал не то, что внутри квантилей, а наоборот то, что вне(то, что внутри - удалял)
+
+    # В обрабатываемом датафрейме значения должны быть только числовыми
+    # В старом коде этот метод возвращал не то, что внутри квантилей, а наоборот то, что вне(то, что внутри - удалял)
     def outlier_interquartile_distance(self, filename: str, low_quantile: float, up_quantile: float, coef: float):
         df = DocumentFileCRUD(self._user).read_document(filename)
         quantile = df.quantile([low_quantile, up_quantile])
@@ -134,39 +153,31 @@ class DocumentService:
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_change_date_in_db(filename)
 
-#Просто стандартизация, в старом коде был реализован непонятный лишний функционал
-    def standartize_features(self, filename: str):
-        df = DocumentFileCRUD(self._user).read_document(filename)
-        sc = StandardScaler()
-        df = pd.DataFrame(sc.fit_transform(df), df.index, df.columns)
-        DocumentFileCRUD(self._user).update_document(filename, df)
-        self.update_change_date_in_db(filename)
-        
     def miss_linear_imputer(self, filename: str):
         document = DocumentFileCRUD(self._user).read_document(filename)
-        temp_document = pd.DataFrame(IterativeImputer().fit_transform(document)) # default estimator = BayesianRidge()
+        temp_document = pd.DataFrame(IterativeImputer().fit_transform(document))  # default estimator = BayesianRidge()
         temp_document.columns = document.columns
         DocumentFileCRUD(self._user).update_document(filename, temp_document)
-        self.update_change_date_in_db(filename)  
+        self.update_change_date_in_db(filename)
 
-    def outliers_IsolationForest(self, filename: str, n_estimators : int, contamination : float):
+    def outliers_IsolationForest(self, filename: str, n_estimators: int, contamination: float):
         document = DocumentFileCRUD(self._user).read_document(filename)
         IF = IsolationForest(n_estimators=n_estimators, contamination=contamination)
         document_with_forest = document.join(pd.DataFrame(IF.fit_predict(document),
-                                               index=document.index, columns=['isolation_forest']), how='left')
+                                                          index=document.index, columns=['isolation_forest']),
+                                             how='left')
         document_with_forest = document_with_forest.loc[document_with_forest['isolation_forest'] == 1]
         document = document_with_forest.drop("isolation_forest", axis=1)
         DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename) 
+        self.update_change_date_in_db(filename)
 
     def outlier_three_sigma(self, filename: str):
         document = DocumentFileCRUD(self._user).read_document(filename)
         document = document[(document - document.mean()).abs() < 3 * document.std()].dropna(axis=0, how='any')
         DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename)  
-        
+        self.update_change_date_in_db(filename)
 
-    def miss_insert_mean_mode(self, filename: str,  threshold_unique: int = 10):
+    def miss_insert_mean_mode(self, filename: str, threshold_unique: int = 10):
         document = DocumentFileCRUD(self._user).read_document(filename)
         for feature in list(document):
             if document[feature].nunique() < threshold_unique:
@@ -182,14 +193,14 @@ class DocumentService:
         outliers = EllipticEnvelope(contamination=contamination).fit_predict(document)
         document = document[outliers == 1].reset_index().drop('index', axis=1)
         DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename) 
-    
+        self.update_change_date_in_db(filename)
+
     def outliers_LocalFactor(
-        self,
-        filename: str,
-        n_neighbors: int = 20,
-        algorithm: str = 'auto',
-        contamination: Union[str, float] = 'auto'
+            self,
+            filename: str,
+            n_neighbors: int = 20,
+            algorithm: str = 'auto',
+            contamination: Union[str, float] = 'auto'
     ):
         document = DocumentFileCRUD(self._user).read_document(filename)
         outliers = LocalOutlierFactor(
@@ -201,7 +212,7 @@ class DocumentService:
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_change_date_in_db(filename)
 
-    def outliers_Approximate(self, filename: str, deviation : int):
+    def outliers_Approximate(self, filename: str, deviation: int):
         document = DocumentFileCRUD(self._user).read_document(filename)
         M = document
         u, s, vh = np.linalg.svd(M, full_matrices=True)
@@ -211,4 +222,4 @@ class DocumentService:
         delta = abs(Mk - M)
         document = document.drop(delta.idxmax())
         DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename) 
+        self.update_change_date_in_db(filename)
