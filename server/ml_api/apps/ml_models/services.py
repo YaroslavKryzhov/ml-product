@@ -81,7 +81,7 @@ class ModelService:
 
         metrics = {}
         if split_type.value == 'train/valid':
-            x_train, x_valid, y_train, y_valid = train_test_split(features, target, test_size=test_size)
+            x_train, x_valid, y_train, y_valid = train_test_split(features, target, test_size=test_size, stratify=target)
             model.fit(x_train, y_train)
             preds = model.predict(x_valid)
             probs = model.predict_proba(x_valid)[:, 1]
@@ -90,6 +90,8 @@ class ModelService:
             metrics['precision'] = precision_score(y_valid, preds)
             metrics['f1'] = f1_score(y_valid, preds)
             metrics['roc_auc'] = roc_auc_score(y_valid, probs)
+
+
         if split_type.value == 'cross validation':
             cv_results = cross_validate(model, features, target, cv=cv_groups, scoring=('accuracy', 'recall',
                                                                                         'precision', 'f1', 'roc_auc'))
