@@ -38,7 +38,7 @@ class DocumentPostgreCRUD(BaseCrud):
             user_id=self.user_id,
             upload_date=str(datetime.now()),
             change_date=str(datetime.now()),
-            pipeline=['base']
+            pipeline=[]
         )
         self.session.add(new_obj)
         self.session.commit()
