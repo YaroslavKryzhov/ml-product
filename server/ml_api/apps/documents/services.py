@@ -108,15 +108,53 @@ class DocumentService:
         self.update_change_date_in_db(filename)
         self.update_pipeline(filename, method='standardize_features')
 
+    def outliers_IsolationForest(self, filename: str, n_estimators: int, contamination: float):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        numeric_columns = self.read_column_marks(filename)['numeric']
+        IF = IsolationForest(n_estimators=n_estimators, contamination=contamination)
+        document_with_forest = document.join(pd.DataFrame(IF.fit_predict(document[numeric_columns]),
+                                                          index=document.index, columns=['isolation_forest']),
+                                             how='left')
+        document_with_forest = document_with_forest.loc[document_with_forest['isolation_forest'] == 1]
+        document = document_with_forest.drop("isolation_forest", axis=1)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_change_date_in_db(filename)
 
+    def outlier_three_sigma(self, filename: str):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        numeric_columns = self.read_column_marks(filename)['numeric']
+        document[numeric_columns] = document.loc[(document[numeric_columns] - document[numeric_columns].mean()).abs() < 3 * document.std(), numeric_columns].dropna(axis=0, how='any')
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_change_date_in_db(filename)
 
+    def miss_insert_mean_mode(self, filename: str):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        numeric_columns = self.read_column_marks(filename)['numeric']
+        categorical = self.read_column_marks(filename)['categorical']
+        for feature in list(document):
+            if feature in categorical:
+                fill_value = mode(document[feature]).mode[0]
+            elif feature in numeric_columns:
+                fill_value = document[feature].mean()
+            document[feature].fillna(fill_value, inplace=True)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_change_date_in_db(filename)
 
+    def outliers_Approximate(self, filename: str, deviation: int):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        numeric_columns = self.read_column_marks(filename)['numeric']
+        M = document[numeric_columns]
+        u, s, vh = np.linalg.svd(M, full_matrices=True)
+        Mk_rank = np.linalg.matrix_rank(M) - deviation
+        Uk, Sk, VHk = u[:, :Mk_rank], np.diag(s)[:Mk_rank, :Mk_rank], vh[:Mk_rank, :]
+        Mk = pd.DataFrame(np.dot(np.dot(Uk, Sk), VHk), index=M.index, columns=M.columns)
+        delta = abs(Mk - M)
+        document = document.drop(delta.idxmax())
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_change_date_in_db(filename)
+          
+          
 ### ---------------------------------------------UNCHECKED--------------------------------------------------------------
-
-
-
-
-
 
     # OCSVM на выходе 1 - выброс, -1 - не выброс
     # iter - количество итераций, если -1, то нет ограничений
@@ -159,34 +197,6 @@ class DocumentService:
         DocumentFileCRUD(self._user).update_document(filename, temp_document)
         self.update_change_date_in_db(filename)
 
-    def outliers_IsolationForest(self, filename: str, n_estimators: int, contamination: float):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        IF = IsolationForest(n_estimators=n_estimators, contamination=contamination)
-        document_with_forest = document.join(pd.DataFrame(IF.fit_predict(document),
-                                                          index=document.index, columns=['isolation_forest']),
-                                             how='left')
-        document_with_forest = document_with_forest.loc[document_with_forest['isolation_forest'] == 1]
-        document = document_with_forest.drop("isolation_forest", axis=1)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename)
-
-    def outlier_three_sigma(self, filename: str):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        document = document[(document - document.mean()).abs() < 3 * document.std()].dropna(axis=0, how='any')
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename)
-
-    def miss_insert_mean_mode(self, filename: str, threshold_unique: int = 10):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        for feature in list(document):
-            if document[feature].nunique() < threshold_unique:
-                fill_value = mode(document[feature]).mode[0]
-            else:
-                fill_value = document[feature].mean()
-        document[feature].fillna(fill_value, inplace=True)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename)
-
     def outliers_EllipticEnvelope(self, filename: str, contamination: float = 0.1):
         document = DocumentFileCRUD(self._user).read_document(filename)
         outliers = EllipticEnvelope(contamination=contamination).fit_predict(document)
@@ -211,14 +221,4 @@ class DocumentService:
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_change_date_in_db(filename)
 
-    def outliers_Approximate(self, filename: str, deviation: int):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        M = document
-        u, s, vh = np.linalg.svd(M, full_matrices=True)
-        Mk_rank = np.linalg.matrix_rank(M) - deviation
-        Uk, Sk, VHk = u[:, :Mk_rank], np.diag(s)[:Mk_rank, :Mk_rank], vh[:Mk_rank, :]
-        Mk = pd.DataFrame(np.dot(np.dot(Uk, Sk), VHk), index=M.index, columns=M.columns)
-        delta = abs(Mk - M)
-        document = document.drop(delta.idxmax())
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename)
+
