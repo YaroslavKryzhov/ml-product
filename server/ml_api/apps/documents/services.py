@@ -1,3 +1,4 @@
+from unicodedata import numeric
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -12,6 +13,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.covariance import EllipticEnvelope
 from sklearn.neighbors import LocalOutlierFactor
 import pickle
+
+from sympy import numer
 
 from ml_api.apps.documents.models import Document
 from ml_api.apps.documents.repository import DocumentFileCRUD, DocumentPostgreCRUD
@@ -108,8 +111,48 @@ class DocumentService:
         self.update_change_date_in_db(filename)
         self.update_pipeline(filename, method='standardize_features')
 
+    def outlier_grubbs(self, filename: str, alpha: float):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        numeric_columns = self.read_column_marks(filename)['numeric']
+        for col in numeric_columns:
+            document = document.drop(
+                grubbs.two_sided_test_indices(document[col], alpha)
+            ).reset_index().drop('index', axis=1)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_change_date_in_db(filename)
 
+    def miss_linear_imputer(self, filename: str):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        numeric_columns = self.read_column_marks(filename)['numeric']
+        document[numeric_columns] = pd.DataFrame(IterativeImputer().fit_transform(document[numeric_columns]))  # default estimator = BayesianRidge()
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_change_date_in_db(filename)
 
+    def outliers_EllipticEnvelope(self, filename: str, contamination: float = 0.1):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        numeric_columns = self.read_column_marks(filename)['numeric']
+        outliers = EllipticEnvelope(contamination=contamination).fit_predict(document[numeric_columns])
+        document[numeric_columns] = document[numeric_columns][outliers == 1].reset_index().drop('index', axis=1)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_change_date_in_db(filename)
+    
+    def outliers_LocalFactor(
+            self,
+            filename: str,
+            n_neighbors: int = 20,
+            algorithm: str = 'auto',
+            contamination: Union[str, float] = 'auto'
+    ):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        numeric_columns = self.read_column_marks(filename)['numeric']
+        outliers = LocalOutlierFactor(
+            n_neighbors=n_neighbors,
+            algorithm=algorithm,
+            contamination=contamination
+        ).fit_predict(document[numeric_columns])
+        document[numeric_columns] = document[numeric_columns][outliers == 1].reset_index().drop('index', axis=1)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_change_date_in_db(filename)
 
 ### ---------------------------------------------UNCHECKED--------------------------------------------------------------
 
@@ -143,22 +186,6 @@ class DocumentService:
         DocumentFileCRUD(self._user).update_document(filename, df)
         self.update_change_date_in_db(filename)
 
-    def outlier_grubbs(self, filename: str, alpha: float, numeric_cols: List[str]):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        for col in numeric_cols:
-            document = document.drop(
-                grubbs.two_sided_test_indices(document[col], alpha)
-            ).reset_index().drop('index', axis=1)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename)
-
-    def miss_linear_imputer(self, filename: str):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        temp_document = pd.DataFrame(IterativeImputer().fit_transform(document))  # default estimator = BayesianRidge()
-        temp_document.columns = document.columns
-        DocumentFileCRUD(self._user).update_document(filename, temp_document)
-        self.update_change_date_in_db(filename)
-
     def outliers_IsolationForest(self, filename: str, n_estimators: int, contamination: float):
         document = DocumentFileCRUD(self._user).read_document(filename)
         IF = IsolationForest(n_estimators=n_estimators, contamination=contamination)
@@ -184,30 +211,6 @@ class DocumentService:
             else:
                 fill_value = document[feature].mean()
         document[feature].fillna(fill_value, inplace=True)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename)
-
-    def outliers_EllipticEnvelope(self, filename: str, contamination: float = 0.1):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        outliers = EllipticEnvelope(contamination=contamination).fit_predict(document)
-        document = document[outliers == 1].reset_index().drop('index', axis=1)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename)
-
-    def outliers_LocalFactor(
-            self,
-            filename: str,
-            n_neighbors: int = 20,
-            algorithm: str = 'auto',
-            contamination: Union[str, float] = 'auto'
-    ):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        outliers = LocalOutlierFactor(
-            n_neighbors=n_neighbors,
-            algorithm=algorithm,
-            contamination=contamination
-        ).fit_predict(document)
-        document = document[outliers == 1].reset_index().drop('index', axis=1)
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_change_date_in_db(filename)
 
