@@ -3,7 +3,8 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from outliers import smirnov_grubbs as grubbs
-from typing import List, Union, Dict
+from typing import List, Union, Dict, Callable, Tuple
+from regex import D
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import IsolationForest
@@ -12,6 +13,7 @@ from sklearn.svm import OneClassSVM
 from sklearn.preprocessing import StandardScaler
 from sklearn.covariance import EllipticEnvelope
 from sklearn.neighbors import LocalOutlierFactor
+from sklearn.feature_selection import SelectKBest, f_classif
 import pickle
 
 from sympy import numer
@@ -162,16 +164,16 @@ class DocumentService:
         document = DocumentFileCRUD(self._user).read_document(filename)
         numeric_columns = self.read_column_marks(filename)['numeric']
         outliers = EllipticEnvelope(contamination=contamination).fit_predict(document[numeric_columns])
-        document[numeric_columns] = document[numeric_columns][outliers == 1].reset_index().drop('index', axis=1)
+        document[numeric_columns] = document.loc[outliers == 1, numeric_columns].reset_index().drop('index', axis=1)
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_change_date_in_db(filename)
     
     def outliers_LocalFactor(
-            self,
-            filename: str,
-            n_neighbors: int = 20,
-            algorithm: str = 'auto',
-            contamination: Union[str, float] = 'auto'
+        self,
+        filename: str,
+        n_neighbors: int = 20,
+        algorithm: str = 'auto',
+        contamination: Union[str, float] = 'auto'
     ):
         document = DocumentFileCRUD(self._user).read_document(filename)
         numeric_columns = self.read_column_marks(filename)['numeric']
@@ -180,7 +182,7 @@ class DocumentService:
             algorithm=algorithm,
             contamination=contamination
         ).fit_predict(document[numeric_columns])
-        document[numeric_columns] = document[numeric_columns][outliers == 1].reset_index().drop('index', axis=1)
+        document[numeric_columns] = document.loc[outliers == 1, numeric_columns].reset_index().drop('index', axis=1)
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_change_date_in_db(filename)
 
@@ -196,7 +198,26 @@ class DocumentService:
         document = document.drop(delta.idxmax())
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_change_date_in_db(filename)
-          
+    
+    def fs_select_k_best(
+        self,
+        filename: str,
+        score_func: Callable[
+            [np.ndarray, np.ndarray],
+            Tuple[np.ndarray, np.ndarray]
+        ] = f_classif,
+        k: Union[int, str] = 10
+    ):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        X, y = document.drop('target', axis=1), document['target']
+        selector = SelectKBest(score_func=score_func, k=k)
+        selector.fit(X, y)
+        document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
+        self.update_change_date_in_db(filename)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_pipeline(filename, method='fs_select_k_best')         
+
+        
           
 ### ---------------------------------------------UNCHECKED--------------------------------------------------------------
 
