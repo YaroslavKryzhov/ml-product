@@ -1,21 +1,15 @@
-import pandas as pd
-from typing import Dict, Union, Optional, Any
-from datetime import datetime
+from typing import Dict, Optional, Any
 from sklearn.tree import DecisionTreeClassifier
 from catboost import CatBoostClassifier
 from sklearn.model_selection import train_test_split, cross_validate
 from fastapi.responses import JSONResponse
 from fastapi import status
-from sklearn.metrics import recall_score, precision_score, f1_score, roc_curve, roc_auc_score, \
-accuracy_score, confusion_matrix, precision_recall_curve
+from sklearn.metrics import recall_score, precision_score, f1_score, roc_auc_score, accuracy_score
+from sklearn.ensemble import VotingClassifier, StackingClassifier, GradientBoostingClassifier
 
-from ml_api.apps.ml_models.models import Model
-from ml_api.apps.documents.services import DocumentService
 from ml_api.apps.ml_models.repository import ModelPostgreCRUD, ModelPickleCRUD
 from ml_api.apps.ml_models.configs.classification_models_config import DecisionTreeClassifierParameters, \
     CatBoostClassifierParameters, AvailableModels
-from ml_api.apps.ml_models.configs.compositions_config import AvailableCompositions
-from ml_api.apps.ml_models.schemas import AvailableSplits
 from ml_api.apps.documents.services import DocumentService
 
 
@@ -40,70 +34,44 @@ class ModelService:
         ModelPickleCRUD(self._user).delete_model(model_name)
         ModelPostgreCRUD(self._db, self._user).delete_model(model_name)
 
-    # MODEL TRAINING METHODS
+    def train_model(self, task_type: str, composition_type: str,
+                    model_params: Dict[AvailableModels, Dict[str, Any]], params_type: str,
+                    document_name: str, model_name: str, test_size: Optional[float] = 0.2):
 
-    def get_tree_classifier(self, params: DecisionTreeClassifierParameters):
-        print(params.dict())
-        model = DecisionTreeClassifier(**params.dict())
-        return model
-
-    def get_catboost_classifier(self, params: CatBoostClassifierParameters):
-        print(params.dict())
-        model = CatBoostClassifier(**params.dict())
-        return model
-
-    def get_document(self, filename: str) -> pd.DataFrame:
-        data = DocumentService(self._db, self._user).read_document_from_db(filename)
-        return data
-
-    def train_classification_model(self, filename: str, model_type: AvailableModels, model_name: str,
-                                   split_type: AvailableSplits,
-                                   test_size: Optional[float] = 0.2, cv_groups: Optional[int] = 4,
-                                   params=Dict[str, Any]):
         model_info = ModelPostgreCRUD(self._db, self._user).read_model_info(model_name)
         if model_info is not None:
             return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE, content=f"The model name '{model_info[0]}' "
                                                                                     f"is already taken")
 
-        data = self.get_document(filename)
+        data = DocumentService(self._db, self._user).read_document_from_db(document_name)
         if data is None:
             return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content="No such csv document")
 
-        target_column = DocumentService(self._db, self._user).read_column_marks(filename)['target']
-        print(target_column)
+        target_column = DocumentService(self._db, self._user).read_column_marks(document_name)['target']
         features = data.drop(target_column, axis=1)
         target = data[target_column]
 
-        if model_type.value == 'DecisionTreeClassifier':
-            model = self.get_tree_classifier(params=DecisionTreeClassifierParameters(**params))
-        if model_type.value == 'CatBoostClassifier':
-            model = self.get_catboost_classifier(params=CatBoostClassifierParameters(**params))
+        composition = CompositionConstructor(task_type=task_type, composition_type=composition_type,
+                                             models_with_params=model_params).build_composition()
 
-        metrics = {}
-        if split_type.value == 'train/valid':
-            x_train, x_valid, y_train, y_valid = train_test_split(features, target, test_size=test_size, stratify=target)
-            model.fit(x_train, y_train)
-            preds = model.predict(x_valid)
-            probs = model.predict_proba(x_valid)[:, 1]
-            metrics['accuracy'] = accuracy_score(y_valid, preds)
-            metrics['recall'] = recall_score(y_valid, preds)
-            metrics['precision'] = precision_score(y_valid, preds)
-            metrics['f1'] = f1_score(y_valid, preds)
-            metrics['roc_auc'] = roc_auc_score(y_valid, probs)
+        trainer = ModelTrainer(self._user, self._db, model=composition, model_name=model_name, features=features,
+                               target=target)
 
+        model, metrics = trainer.train()
 
-        if split_type.value == 'cross validation':
-            cv_results = cross_validate(model, features, target, cv=cv_groups, scoring=('accuracy', 'recall',
-                                                                                        'precision', 'f1', 'roc_auc'))
-            metrics['accuracy'] = list(cv_results['test_accuracy'])
-            metrics['recall'] = list(cv_results['test_recall'])
-            metrics['precision'] = list(cv_results['test_precision'])
-            metrics['f1'] = list(cv_results['test_f1'])
-            metrics['roc_auc'] = list(cv_results['test_roc_auc'])
-
-        ModelPickleCRUD(self._user).save_model(model_name, model)
-        ModelPostgreCRUD(self._db, self._user).new_model(model_name)
-        print(metrics)
+        # if target.nunique() == 2:
+        #     if split_type.value == 'train/valid':
+        #         metrics = trainer.process_binary_train_split_classification(test_size=test_size)
+        #     if split_type.value == 'cross validation':
+        #         metrics = trainer.process_binary_cross_validate_classification(cv_groups=cv_groups)
+        # elif target.nunique() > 2:
+        #     if split_type.value == 'train/valid':
+        #         metrics = trainer.process_multiclass_train_split_classification(test_size=test_size)
+        #     if split_type.value == 'cross validation':
+        #         metrics = trainer.process_multiclass_cross_validate_classification(cv_groups=cv_groups)
+        # else:
+        #     return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE, content="Only one "
+        #                                                                             "target class label in sample")
         return metrics
 
     def predict_on_model(self, filename: str, model_name: str = 'tree'):
@@ -113,37 +81,143 @@ class ModelService:
         return list(predictions)
 
 
-class SampleSplitterService:
+class ModelTrainer:
 
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
+    def __init__(self, user, db, model, model_name, features, target):
+        self._db = db
+        self._user = user
+        self.model = model
+        self.model_name = model_name
+        self.features = features
+        self.target = target
 
-    def train_valid_split(self, test_size: float = 0.3):
-        return train_test_split(self.x, self.y, test_size=test_size)
+    def process_binary_train_split_classification(self, test_size: int):
+        metrics = {}
+        features_train, features_valid, target_train, target_valid = train_test_split(self.features, self.target,
+                                                                                      test_size=test_size,
+                                                                                      stratify=self.target)
+        self.model.fit(features_train, target_train)
+        predictions = self.model.predict(features_valid)
+        probabilities = self.model.predict_proba(features_train)[:, 1]
+        metrics['accuracy'] = accuracy_score(target_valid, predictions)
+        metrics['recall'] = recall_score(target_valid, predictions)
+        metrics['precision'] = precision_score(target_valid, predictions)
+        metrics['f1'] = f1_score(target_valid, predictions)
+        metrics['roc_auc'] = roc_auc_score(target_valid, probabilities)
+
+        return metrics
+
+    def process_multiclass_train_split_classification(self, test_size: int):
+        metrics = {}
+        features_train, features_valid, target_train, target_valid = train_test_split(self.features, self.target,
+                                                                                      test_size=test_size,
+                                                                                      stratify=self.target)
+        self.model.fit(features_train, target_train)
+        predictions = self.model.predict(features_valid)
+        probabilities = self.model.predict_proba(features_train)[:, 1]
+        metrics['accuracy'] = accuracy_score(target_valid, predictions)
+        metrics['recall'] = recall_score(target_valid, predictions, average='weighted')
+        metrics['precision'] = precision_score(target_valid, predictions, average='weighted')
+        metrics['f1'] = f1_score(target_valid, predictions, average='weighted')
+        metrics['roc_auc'] = roc_auc_score(target_valid, probabilities, average='weighted')
+
+        ModelPickleCRUD(self._user).save_model(self.model_name, self.model)
+        ModelPostgreCRUD(self._db, self._user).new_model(self.model_name)
+
+        return metrics
+
+    def process_binary_cross_validate_classification(self, cv_groups: int):
+        metrics = {}
+        cv_results = cross_validate(self.model, self.features, self.target, cv=cv_groups, scoring=('accuracy', 'recall',
+                                                                                                   'precision', 'f1',
+                                                                                                   'roc_auc'))
+
+        metrics['accuracy'] = list(cv_results['test_accuracy'])
+        metrics['recall'] = list(cv_results['test_recall'])
+        metrics['precision'] = list(cv_results['test_precision'])
+        metrics['f1'] = list(cv_results['test_f1'])
+        metrics['roc_auc'] = list(cv_results['test_roc_auc'])
+
+        return metrics
+
+    def process_multiclass_cross_validate_classification(self, cv_groups: int):
+        metrics = {}
+        cv_results = cross_validate(self.model, self.features, self.target, cv=cv_groups, scoring=('accuracy',
+                                                                                                   'recall_weighted',
+                                                                                                   'precision_weighted',
+                                                                                                   'f1_weighted',
+                                                                                                   'roc_auc_ovr_weighted'))
+
+        metrics['accuracy'] = list(cv_results['test_accuracy'])
+        metrics['recall'] = list(cv_results['test_recall_weighted'])
+        metrics['precision'] = list(cv_results['test_precision_weighted'])
+        metrics['f1'] = list(cv_results['test_f1_weighted'])
+        metrics['roc_auc'] = list(cv_results['test_roc_auc_ovr_weighted'])
+
+        return metrics
 
 
-class CompositionService:
+class CompositionConstructor:
+    """
+        Returns sklearn composition model with fit(), predict() methods
+    """
 
-    # def build_composition(self, models: Dict[AvailableModels: PythonMLModel], composition_type: AvailableCompositions):
-    #     if composition_type.value == 'simple_voting':
-    #         self.build_simple_voting()
-    #     if composition_type.value == 'weighted_voting':
-    #         self.build_weighted_voting()
-    #     if composition_type.value == 'bagging':
-    #         self.build_bagging()
-    #     if composition_type.value == 'stacking':
-    #         self.build_stacking()
-    #     print(models)
+    def __init__(self, task_type: str, composition_type: str,
+                 models_with_params: Dict[AvailableModels: Dict[str, Any]]):
+        self.task_type = task_type
+        self.composition_type = composition_type
+        self.models_with_params = models_with_params
 
-    def build_simple_voting(self):
-        pass
+    def build_composition(self):
+        models = []
+        for model, params in self.models_with_params.items():
+            models.append((model, ModelConstructor(task_type=self.task_type, model_type=model, params=params).model))
+        if self.composition_type == 'simple_voting':
+            composition = VotingClassifier(estimators=models, voting='hard')
+            return composition
+        elif self.composition_type == 'weighted_voting':
+            composition = VotingClassifier(estimators=models, voting='soft')
+            return composition
+        elif self.composition_type == 'stacking':
+            final_estimator = GradientBoostingClassifier()
+            composition = StackingClassifier(estimators=models, final_estimator=final_estimator)
+            return composition
+        elif self.composition_type == 'none':
+            composition = models[0]
+            return composition
 
-    def build_weighted_voting(self):
-        pass
 
-    def build_bagging(self):
-        pass
+class ModelConstructor:
+    """
+        Create sklearn model from hyper-parameters
+    """
 
-    def build_stacking(self):
-        pass
+    def __init__(self, task_type: str, model_type: AvailableModels, params=Dict[str, Any]):
+        self.model_type = model_type
+        self.params = params
+        if task_type == 'classification':
+            self.model = self.construct_classification_model()
+        elif task_type == 'regression':
+            self.model = self.construct_regression_model()
+
+    def construct_classification_model(self):
+        if self.model_type.value == 'DecisionTreeClassifier':
+            model = self.get_tree_classifier()
+        if self.model_type.value == 'CatBoostClassifier':
+            model = self.get_catboost_classifier()
+        return model
+
+    def construct_regression_model(self):
+        return None
+
+    def get_tree_classifier(self):
+        params = DecisionTreeClassifierParameters(**self.params)
+        print(params.dict())
+        model = DecisionTreeClassifier(**params.dict())
+        return model
+
+    def get_catboost_classifier(self):
+        params = CatBoostClassifierParameters(**self.params)
+        print(params.dict())
+        model = CatBoostClassifier(**params.dict())
+        return model

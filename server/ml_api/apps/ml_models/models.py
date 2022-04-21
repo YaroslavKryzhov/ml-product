@@ -23,6 +23,7 @@ class Model(Base):
     user_id = Column(UUID, ForeignKey("user.id"))
     create_date = Column(DateTime)
     composition = Column(Boolean)
+    # in_composition = Column(Boolean)
     hyperparams = Column(PickleType)
 
     used_csv = relationship('Document', secondary=document_in_model, back_populates='used_in_models')
