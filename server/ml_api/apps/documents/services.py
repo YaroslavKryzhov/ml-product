@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from outliers import smirnov_grubbs as grubbs
-from typing import List, Union, Dict, Callable, Tuple
+from typing import List, Union, Dict, Callable, Tuple, Optional
 from regex import D
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
@@ -14,6 +14,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.covariance import EllipticEnvelope
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.decomposition import PCA
 import pickle
 
 from sympy import numer
@@ -213,10 +214,25 @@ class DocumentService:
         selector = SelectKBest(score_func=score_func, k=k)
         selector.fit(X, y)
         document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
+        document['target'] = y
         self.update_change_date_in_db(filename)
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_pipeline(filename, method='fs_select_k_best')         
 
+    def fs_pca(self, filename: str, n_components: Optional[int]):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        X, y = document.drop('target', axis=1), document['target'] 
+        if n_components is None:
+            pca = PCA().fit(X)
+            n_components = len(pca.singular_values_[pca.singular_values_ > 1])
+        document = pd.DataFrame(
+            PCA(n_components=n_components).fit_transform(X),
+            columns=[f'PC{i}' for i in range(1, n_components + 1)]
+        )
+        document['target'] = y
+        self.update_change_date_in_db(filename)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_pipeline(filename, mehtod='fs_pca')
         
           
 ### ---------------------------------------------UNCHECKED--------------------------------------------------------------
