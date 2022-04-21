@@ -12,3 +12,4 @@ fastapi-users[sqlalchemy2]
 asyncpg==0.24.0
 outlier_utils==0.0.3
 pickleshare==0.7.5
+sympy==1.10.1

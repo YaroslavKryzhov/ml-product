@@ -11,6 +11,7 @@ from ml_api.apps.ml_models.repository import ModelPostgreCRUD, ModelPickleCRUD
 from ml_api.apps.ml_models.configs.classification_models_config import DecisionTreeClassifierParameters, \
     CatBoostClassifierParameters, AvailableModels
 from ml_api.apps.documents.services import DocumentService
+from ml_api.apps.ml_models.configs.classification_searchers_config import CLASSIFICATION_SEARCHERS_CONFIG
 
 
 class ModelService:
@@ -51,13 +52,19 @@ class ModelService:
         features = data.drop(target_column, axis=1)
         target = data[target_column]
 
+        if params_type == 'auto':
+            model_params = AutoParamsSearch(model_params=model_params, features=features, target=target)
+
         composition = CompositionConstructor(task_type=task_type, composition_type=composition_type,
                                              models_with_params=model_params).build_composition()
 
-        trainer = ModelTrainer(self._user, self._db, model=composition, model_name=model_name, features=features,
-                               target=target)
+        trainer = ModelTrainer(model=composition, model_name=model_name, features=features,
+                               target=target, test_size=test_size)
 
-        model, metrics = trainer.train()
+        model, metrics = trainer.process_multiclass_train_split_classification()
+
+        ModelPickleCRUD(self._user).save_model(model_name, model)
+        ModelPostgreCRUD(self._db, self._user).new_model(model_name)
 
         # if target.nunique() == 2:
         #     if split_type.value == 'train/valid':
@@ -74,87 +81,27 @@ class ModelService:
         #                                                                             "target class label in sample")
         return metrics
 
-    def predict_on_model(self, filename: str, model_name: str = 'tree'):
-        data = self.get_document(filename).iloc[-10:].drop('Species', axis=1)
-        model = ModelPickleCRUD(self._user).read_model(model_name)
-        predictions = model.predict(data)
-        return list(predictions)
+    # def predict_on_model(self, filename: str, model_name: str = 'tree'):
+    #     data = self.get_document(filename).iloc[-10:].drop('Species', axis=1)
+    #     model = ModelPickleCRUD(self._user).read_model(model_name)
+    #     predictions = model.predict(data)
+    #     return list(predictions)
 
 
-class ModelTrainer:
+class AutoParamsSearch:
 
-    def __init__(self, user, db, model, model_name, features, target):
-        self._db = db
-        self._user = user
-        self.model = model
-        self.model_name = model_name
+    def __init__(self, model_params, features, target):
+        self.model_params = model_params
         self.features = features
         self.target = target
 
-    def process_binary_train_split_classification(self, test_size: int):
-        metrics = {}
-        features_train, features_valid, target_train, target_valid = train_test_split(self.features, self.target,
-                                                                                      test_size=test_size,
-                                                                                      stratify=self.target)
-        self.model.fit(features_train, target_train)
-        predictions = self.model.predict(features_valid)
-        probabilities = self.model.predict_proba(features_train)[:, 1]
-        metrics['accuracy'] = accuracy_score(target_valid, predictions)
-        metrics['recall'] = recall_score(target_valid, predictions)
-        metrics['precision'] = precision_score(target_valid, predictions)
-        metrics['f1'] = f1_score(target_valid, predictions)
-        metrics['roc_auc'] = roc_auc_score(target_valid, probabilities)
+    def search_params(self):
+        for model in self.model_params.keys():
+            self.model_params[model] = self.validate_model_params(model)
 
-        return metrics
-
-    def process_multiclass_train_split_classification(self, test_size: int):
-        metrics = {}
-        features_train, features_valid, target_train, target_valid = train_test_split(self.features, self.target,
-                                                                                      test_size=test_size,
-                                                                                      stratify=self.target)
-        self.model.fit(features_train, target_train)
-        predictions = self.model.predict(features_valid)
-        probabilities = self.model.predict_proba(features_train)[:, 1]
-        metrics['accuracy'] = accuracy_score(target_valid, predictions)
-        metrics['recall'] = recall_score(target_valid, predictions, average='weighted')
-        metrics['precision'] = precision_score(target_valid, predictions, average='weighted')
-        metrics['f1'] = f1_score(target_valid, predictions, average='weighted')
-        metrics['roc_auc'] = roc_auc_score(target_valid, probabilities, average='weighted')
-
-        ModelPickleCRUD(self._user).save_model(self.model_name, self.model)
-        ModelPostgreCRUD(self._db, self._user).new_model(self.model_name)
-
-        return metrics
-
-    def process_binary_cross_validate_classification(self, cv_groups: int):
-        metrics = {}
-        cv_results = cross_validate(self.model, self.features, self.target, cv=cv_groups, scoring=('accuracy', 'recall',
-                                                                                                   'precision', 'f1',
-                                                                                                   'roc_auc'))
-
-        metrics['accuracy'] = list(cv_results['test_accuracy'])
-        metrics['recall'] = list(cv_results['test_recall'])
-        metrics['precision'] = list(cv_results['test_precision'])
-        metrics['f1'] = list(cv_results['test_f1'])
-        metrics['roc_auc'] = list(cv_results['test_roc_auc'])
-
-        return metrics
-
-    def process_multiclass_cross_validate_classification(self, cv_groups: int):
-        metrics = {}
-        cv_results = cross_validate(self.model, self.features, self.target, cv=cv_groups, scoring=('accuracy',
-                                                                                                   'recall_weighted',
-                                                                                                   'precision_weighted',
-                                                                                                   'f1_weighted',
-                                                                                                   'roc_auc_ovr_weighted'))
-
-        metrics['accuracy'] = list(cv_results['test_accuracy'])
-        metrics['recall'] = list(cv_results['test_recall_weighted'])
-        metrics['precision'] = list(cv_results['test_precision_weighted'])
-        metrics['f1'] = list(cv_results['test_f1_weighted'])
-        metrics['roc_auc'] = list(cv_results['test_roc_auc_ovr_weighted'])
-
-        return metrics
+    def validate_model_params(self, model: str) -> Dict[str, Any]:
+        search_space = CLASSIFICATION_SEARCHERS_CONFIG.get(model)
+        return {}
 
 
 class CompositionConstructor:
@@ -221,3 +168,77 @@ class ModelConstructor:
         print(params.dict())
         model = CatBoostClassifier(**params.dict())
         return model
+
+
+class ModelTrainer:
+
+    def __init__(self, model, model_name, features, target, test_size):
+
+        self.model = model
+        self.model_name = model_name
+        self.features = features
+        self.target = target
+        self.test_size = test_size
+
+    def process_binary_train_split_classification(self, test_size: int):
+        metrics = {}
+        features_train, features_valid, target_train, target_valid = train_test_split(self.features, self.target,
+                                                                                      test_size=test_size,
+                                                                                      stratify=self.target)
+        self.model.fit(features_train, target_train)
+        predictions = self.model.predict(features_valid)
+        probabilities = self.model.predict_proba(features_train)[:, 1]
+        metrics['accuracy'] = accuracy_score(target_valid, predictions)
+        metrics['recall'] = recall_score(target_valid, predictions)
+        metrics['precision'] = precision_score(target_valid, predictions)
+        metrics['f1'] = f1_score(target_valid, predictions)
+        metrics['roc_auc'] = roc_auc_score(target_valid, probabilities)
+
+        return self.model, metrics
+
+    def process_multiclass_train_split_classification(self, test_size: int):
+        metrics = {}
+        features_train, features_valid, target_train, target_valid = train_test_split(self.features, self.target,
+                                                                                      test_size=test_size,
+                                                                                      stratify=self.target)
+        self.model.fit(features_train, target_train)
+        predictions = self.model.predict(features_valid)
+        probabilities = self.model.predict_proba(features_train)[:, 1]
+        metrics['accuracy'] = accuracy_score(target_valid, predictions)
+        metrics['recall'] = recall_score(target_valid, predictions, average='weighted')
+        metrics['precision'] = precision_score(target_valid, predictions, average='weighted')
+        metrics['f1'] = f1_score(target_valid, predictions, average='weighted')
+        metrics['roc_auc'] = roc_auc_score(target_valid, probabilities, average='weighted')
+
+
+        return metrics
+
+    def process_binary_cross_validate_classification(self, cv_groups: int):
+        metrics = {}
+        cv_results = cross_validate(self.model, self.features, self.target, cv=cv_groups, scoring=('accuracy', 'recall',
+                                                                                                   'precision', 'f1',
+                                                                                                   'roc_auc'))
+
+        metrics['accuracy'] = list(cv_results['test_accuracy'])
+        metrics['recall'] = list(cv_results['test_recall'])
+        metrics['precision'] = list(cv_results['test_precision'])
+        metrics['f1'] = list(cv_results['test_f1'])
+        metrics['roc_auc'] = list(cv_results['test_roc_auc'])
+
+        return metrics
+
+    def process_multiclass_cross_validate_classification(self, cv_groups: int):
+        metrics = {}
+        cv_results = cross_validate(self.model, self.features, self.target, cv=cv_groups, scoring=('accuracy',
+                                                                                                   'recall_weighted',
+                                                                                                   'precision_weighted',
+                                                                                                   'f1_weighted',
+                                                                                                   'roc_auc_ovr_weighted'))
+
+        metrics['accuracy'] = list(cv_results['test_accuracy'])
+        metrics['recall'] = list(cv_results['test_recall_weighted'])
+        metrics['precision'] = list(cv_results['test_precision_weighted'])
+        metrics['f1'] = list(cv_results['test_f1_weighted'])
+        metrics['roc_auc'] = list(cv_results['test_roc_auc_ovr_weighted'])
+
+        return metrics

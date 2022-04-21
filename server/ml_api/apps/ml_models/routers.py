@@ -26,10 +26,10 @@ def train_composition(task_type: AvailableTaskTypes, composition_type: Available
     return result
 
 
-@models_router.get("/predict_tree")
-def predict(document_name: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
-    predictions = ModelService(db, user).predict_on_model(document_name)
-    return {"predictions": predictions}
+# @models_router.get("/predict_tree")
+# def predict(document_name: str, db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
+#     predictions = ModelService(db, user).predict_on_model(document_name)
+#     return {"predictions": predictions}
 
 
 @models_router.get("/download")
