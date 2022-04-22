@@ -1,4 +1,6 @@
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, List
+from functools import partial
+
 from sklearn.tree import DecisionTreeClassifier
 from catboost import CatBoostClassifier
 from sklearn.model_selection import train_test_split, cross_validate
@@ -6,12 +8,15 @@ from fastapi.responses import JSONResponse
 from fastapi import status
 from sklearn.metrics import recall_score, precision_score, f1_score, roc_auc_score, accuracy_score
 from sklearn.ensemble import VotingClassifier, StackingClassifier, GradientBoostingClassifier
+from sklearn.model_selection import cross_val_score, StratifiedKFold
+from hyperopt import hp, fmin, tpe, Trials, STATUS_OK, space_eval
 
 from ml_api.apps.ml_models.repository import ModelPostgreCRUD, ModelPickleCRUD
 from ml_api.apps.ml_models.configs.classification_models_config import DecisionTreeClassifierParameters, \
     CatBoostClassifierParameters, AvailableModels
 from ml_api.apps.documents.services import DocumentService
 from ml_api.apps.ml_models.configs.classification_searchers_config import CLASSIFICATION_SEARCHERS_CONFIG
+from ml_api.apps.ml_models.schemas import ModelWithParams
 
 
 class ModelService:
@@ -36,7 +41,7 @@ class ModelService:
         ModelPostgreCRUD(self._db, self._user).delete_model(model_name)
 
     def train_model(self, task_type: str, composition_type: str,
-                    model_params: Dict[AvailableModels, Dict[str, Any]], params_type: str,
+                    model_params: List[ModelWithParams], params_type: str,
                     document_name: str, model_name: str, test_size: Optional[float] = 0.2):
 
         model_info = ModelPostgreCRUD(self._db, self._user).read_model_info(model_name)
@@ -52,33 +57,25 @@ class ModelService:
         features = data.drop(target_column, axis=1)
         target = data[target_column]
 
+        if task_type == 'classification' and target.nunique() == 1:
+            return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE, content="Only one class label in csv")
+
+        print(model_params)
         if params_type == 'auto':
-            model_params = AutoParamsSearch(model_params=model_params, features=features, target=target)
+            model_params = AutoParamsSearch(task_type=task_type, model_params=model_params,
+                                            features=features, target=target).search_params()
 
         composition = CompositionConstructor(task_type=task_type, composition_type=composition_type,
                                              models_with_params=model_params).build_composition()
 
-        trainer = ModelTrainer(model=composition, model_name=model_name, features=features,
-                               target=target, test_size=test_size)
+        print(composition)
 
-        model, metrics = trainer.process_multiclass_train_split_classification()
+        model, metrics = CompositionValidator(task_type=task_type, composition=composition, model_name=model_name,
+                                              features=features, target=target, test_size=test_size).validate_model()
 
         ModelPickleCRUD(self._user).save_model(model_name, model)
         ModelPostgreCRUD(self._db, self._user).new_model(model_name)
 
-        # if target.nunique() == 2:
-        #     if split_type.value == 'train/valid':
-        #         metrics = trainer.process_binary_train_split_classification(test_size=test_size)
-        #     if split_type.value == 'cross validation':
-        #         metrics = trainer.process_binary_cross_validate_classification(cv_groups=cv_groups)
-        # elif target.nunique() > 2:
-        #     if split_type.value == 'train/valid':
-        #         metrics = trainer.process_multiclass_train_split_classification(test_size=test_size)
-        #     if split_type.value == 'cross validation':
-        #         metrics = trainer.process_multiclass_cross_validate_classification(cv_groups=cv_groups)
-        # else:
-        #     return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE, content="Only one "
-        #                                                                             "target class label in sample")
         return metrics
 
     # def predict_on_model(self, filename: str, model_name: str = 'tree'):
@@ -90,18 +87,62 @@ class ModelService:
 
 class AutoParamsSearch:
 
-    def __init__(self, model_params, features, target):
+    def __init__(self, task_type, model_params, features, target):
+        self.task_type = task_type
         self.model_params = model_params
         self.features = features
         self.target = target
 
     def search_params(self):
-        for model in self.model_params.keys():
-            self.model_params[model] = self.validate_model_params(model)
+        for i, model_data in enumerate(self.model_params):
+            self.model_params[i] = list(model_data[0], self.validate_model_params(model_data[0]))
+        return self.model_params
 
-    def validate_model_params(self, model: str) -> Dict[str, Any]:
-        search_space = CLASSIFICATION_SEARCHERS_CONFIG.get(model)
+    def validate_model_params(self, model_type: AvailableModels) -> Dict[str, Any]:
+        if self.task_type == 'classification':
+            search_space = CLASSIFICATION_SEARCHERS_CONFIG.get(model_type.value)
+            if self.target.nunique() == 2:
+                best = fmin(
+                    fn=partial(self.objective_binary, model_type=model_type),
+                    space=search_space,
+                    algo=tpe.suggest,
+                    max_evals=50,
+                    show_progressbar=True
+                )
+                return space_eval(search_space, best)
+            else:
+                best = fmin(
+                    fn=partial(self.objective_multiclass, model_type=model_type),
+                    space=search_space,
+                    algo=tpe.suggest,
+                    max_evals=50,
+                    show_progressbar=True
+                )
+                return space_eval(search_space, best)
         return {}
+
+    def objective_multiclass(self, params, model_type):
+        model = ModelConstructor(task_type=self.task_type, model_type=model_type, params=params).model
+        skf = StratifiedKFold(n_splits=4, shuffle=True, random_state=1)
+        score = cross_val_score(estimator=model, X=self.features, y=self.target,
+                                scoring='roc_auc_ovr_weighted', cv=skf, n_jobs=-1, error_score="raise")
+        return {'loss': -score.mean(), 'params': params, 'status': STATUS_OK}
+
+    def objective_binary(self, params, model_type):
+        model = ModelConstructor(task_type=self.task_type, model_type=model_type, params=params).model
+        skf = StratifiedKFold(n_splits=4, shuffle=True, random_state=1)
+        score = cross_val_score(estimator=model, X=self.features, y=self.target,
+                                scoring='roc_auc', cv=skf, n_jobs=-1, error_score="raise")
+        return {'loss': -score.mean(), 'params': params, 'status': STATUS_OK}
+
+
+    # def objective_regression(self, params, task_type, model_type, features, target):
+    #     model = ModelConstructor(task_type=task_type, model_type=model_type, params=params).model
+    #     skf = StratifiedKFold(n_splits=4, shuffle=True, random_state=1)
+    #     score = cross_val_score(estimator=model, X=features, y=target,
+    #                             scoring='roc_auc_ovr_weighted', cv=skf, n_jobs=-1, error_score="raise")
+    #
+    #     return {'loss': -score.mean(), 'params': params, 'status': STATUS_OK}
 
 
 class CompositionConstructor:
@@ -109,16 +150,19 @@ class CompositionConstructor:
         Returns sklearn composition model with fit(), predict() methods
     """
 
-    def __init__(self, task_type: str, composition_type: str,
-                 models_with_params: Dict[AvailableModels: Dict[str, Any]]):
+    def __init__(self, task_type: str, composition_type: str, models_with_params: Dict[AvailableModels, Dict[str, Any]]):
         self.task_type = task_type
         self.composition_type = composition_type
         self.models_with_params = models_with_params
 
     def build_composition(self):
         models = []
-        for model, params in self.models_with_params.items():
-            models.append((model, ModelConstructor(task_type=self.task_type, model_type=model, params=params).model))
+        if self.composition_type == 'none':
+            for model, params in self.models_with_params:
+                composition = ModelConstructor(task_type=self.task_type, model_type=model, params=params).model
+            return composition
+        for model, params in self.models_with_params:
+            models.append((model.value, ModelConstructor(task_type=self.task_type, model_type=model, params=params).model))
         if self.composition_type == 'simple_voting':
             composition = VotingClassifier(estimators=models, voting='hard')
             return composition
@@ -128,9 +172,6 @@ class CompositionConstructor:
         elif self.composition_type == 'stacking':
             final_estimator = GradientBoostingClassifier()
             composition = StackingClassifier(estimators=models, final_estimator=final_estimator)
-            return composition
-        elif self.composition_type == 'none':
-            composition = models[0]
             return composition
 
 
@@ -144,101 +185,79 @@ class ModelConstructor:
         self.params = params
         if task_type == 'classification':
             self.model = self.construct_classification_model()
-        elif task_type == 'regression':
-            self.model = self.construct_regression_model()
+        # elif task_type == 'regression':
+        #     self.model = self.construct_regression_model()
 
     def construct_classification_model(self):
         if self.model_type.value == 'DecisionTreeClassifier':
             model = self.get_tree_classifier()
+            return model
         if self.model_type.value == 'CatBoostClassifier':
             model = self.get_catboost_classifier()
-        return model
-
-    def construct_regression_model(self):
+            return model
         return None
+
+    # def construct_regression_model(self):
+    #     return None
 
     def get_tree_classifier(self):
         params = DecisionTreeClassifierParameters(**self.params)
-        print(params.dict())
+        # print(params.dict())
         model = DecisionTreeClassifier(**params.dict())
         return model
 
     def get_catboost_classifier(self):
         params = CatBoostClassifierParameters(**self.params)
-        print(params.dict())
+        # print(params.dict())
         model = CatBoostClassifier(**params.dict())
         return model
 
 
-class ModelTrainer:
+class CompositionValidator:
 
-    def __init__(self, model, model_name, features, target, test_size):
-
-        self.model = model
+    def __init__(self, task_type, composition, model_name, features, target, test_size):
+        self.task_type = task_type
+        self.composition = composition
         self.model_name = model_name
         self.features = features
         self.target = target
         self.test_size = test_size
 
-    def process_binary_train_split_classification(self, test_size: int):
+    def validate_model(self):
+        if self.task_type == 'classification':
+            if self.target.nunique() == 2:
+                return self.process_binary_classification()
+            else:
+                return self.process_multiclass__classification()
+
+    def process_binary_classification(self):
         metrics = {}
         features_train, features_valid, target_train, target_valid = train_test_split(self.features, self.target,
-                                                                                      test_size=test_size,
+                                                                                      test_size=self.test_size,
                                                                                       stratify=self.target)
-        self.model.fit(features_train, target_train)
-        predictions = self.model.predict(features_valid)
-        probabilities = self.model.predict_proba(features_train)[:, 1]
+        self.composition.fit(features_train, target_train)
+        predictions = self.composition.predict(features_valid)
+        probabilities = self.composition.predict_proba(features_valid)[:, 1]
         metrics['accuracy'] = accuracy_score(target_valid, predictions)
         metrics['recall'] = recall_score(target_valid, predictions)
         metrics['precision'] = precision_score(target_valid, predictions)
         metrics['f1'] = f1_score(target_valid, predictions)
         metrics['roc_auc'] = roc_auc_score(target_valid, probabilities)
 
-        return self.model, metrics
+        return self.composition, metrics
 
-    def process_multiclass_train_split_classification(self, test_size: int):
+    def process_multiclass__classification(self):
         metrics = {}
         features_train, features_valid, target_train, target_valid = train_test_split(self.features, self.target,
-                                                                                      test_size=test_size,
+                                                                                      test_size=self.test_size,
                                                                                       stratify=self.target)
-        self.model.fit(features_train, target_train)
-        predictions = self.model.predict(features_valid)
-        probabilities = self.model.predict_proba(features_train)[:, 1]
+        self.composition.fit(features_train, target_train)
+        predictions = self.composition.predict(features_valid)
+        probabilities = self.composition.predict_proba(features_valid)
         metrics['accuracy'] = accuracy_score(target_valid, predictions)
         metrics['recall'] = recall_score(target_valid, predictions, average='weighted')
         metrics['precision'] = precision_score(target_valid, predictions, average='weighted')
         metrics['f1'] = f1_score(target_valid, predictions, average='weighted')
-        metrics['roc_auc'] = roc_auc_score(target_valid, probabilities, average='weighted')
+        metrics['roc_auc'] = roc_auc_score(target_valid, probabilities, average='weighted', multi_class='ovr')
 
-
-        return metrics
-
-    def process_binary_cross_validate_classification(self, cv_groups: int):
-        metrics = {}
-        cv_results = cross_validate(self.model, self.features, self.target, cv=cv_groups, scoring=('accuracy', 'recall',
-                                                                                                   'precision', 'f1',
-                                                                                                   'roc_auc'))
-
-        metrics['accuracy'] = list(cv_results['test_accuracy'])
-        metrics['recall'] = list(cv_results['test_recall'])
-        metrics['precision'] = list(cv_results['test_precision'])
-        metrics['f1'] = list(cv_results['test_f1'])
-        metrics['roc_auc'] = list(cv_results['test_roc_auc'])
-
-        return metrics
-
-    def process_multiclass_cross_validate_classification(self, cv_groups: int):
-        metrics = {}
-        cv_results = cross_validate(self.model, self.features, self.target, cv=cv_groups, scoring=('accuracy',
-                                                                                                   'recall_weighted',
-                                                                                                   'precision_weighted',
-                                                                                                   'f1_weighted',
-                                                                                                   'roc_auc_ovr_weighted'))
-
-        metrics['accuracy'] = list(cv_results['test_accuracy'])
-        metrics['recall'] = list(cv_results['test_recall_weighted'])
-        metrics['precision'] = list(cv_results['test_precision_weighted'])
-        metrics['f1'] = list(cv_results['test_f1_weighted'])
-        metrics['roc_auc'] = list(cv_results['test_roc_auc_ovr_weighted'])
-
-        return metrics
+        return self.composition, metrics

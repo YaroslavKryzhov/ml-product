@@ -1,5 +1,6 @@
-from typing import Union, Literal, Dict
+from typing import Union, Literal, Dict, Any
 from enum import Enum
+from ml_api.apps.ml_models.configs.classification_models_config import AvailableModels
 
 from pydantic import BaseModel, validator
 
@@ -20,4 +21,9 @@ class AvailableCompositions(Enum):
     SIMPLE_VOTING = 'simple_voting'
     WEIGHTED_VOTING = 'weighted_voting'
     STACKING = 'stacking'
+
+
+class ModelWithParams(BaseModel):
+    type: AvailableModels
+    params: Dict[str, Any]
 

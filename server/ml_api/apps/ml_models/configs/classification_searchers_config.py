@@ -1,12 +1,15 @@
 from hyperopt import hp
+import numpy as np
+
 
 CLASSIFICATION_SEARCHERS_CONFIG = {
     'DecisionTreeClassifier': {
-        'DecisionTreeClassifier__criterion': hp.choice(label='criterion', options=['gini', 'entropy']),
-        'DecisionTreeClassifier__max_depth': hp.uniform(label='criterion', low=1, high=30),
+        'criterion': hp.choice(label='criterion', options=['gini', 'entropy']),
+        'max_depth': hp.randint(label='max_depth', low=1, high=30),
     },
     'CatBoostClassifier': {
-        'CatBoostClassifier__iterations': hp.uniform(label='iterations', low=10, high=3000),
-        'CatBoostClassifier__learning_rate': hp.uniform(label='learning_rate', low=0.0001, high=0.5),
+        'learning_rate':     hp.uniform('learning_rate', 0.001, 0.1),
+        'max_depth':         hp.randint('max_depth', 5, 16),
+        'colsample_bylevel': hp.uniform('colsample_bylevel', 0.3, 0.8)
     }
 }
