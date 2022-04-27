@@ -4,7 +4,7 @@ import numpy as np
 from datetime import datetime
 from outliers import smirnov_grubbs as grubbs
 from typing import List, Union, Dict, Callable, Tuple, Optional
-from regex import D
+# from regex import D
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import IsolationForest
@@ -13,7 +13,7 @@ from sklearn.svm import OneClassSVM
 from sklearn.preprocessing import StandardScaler
 from sklearn.covariance import EllipticEnvelope
 from sklearn.neighbors import LocalOutlierFactor
-from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.feature_selection import SelectKBest, f_classif, SelectFpr, SelectFwe, SelectFdr
 from sklearn.decomposition import PCA
 import pickle
 
@@ -217,7 +217,64 @@ class DocumentService:
         document['target'] = y
         self.update_change_date_in_db(filename)
         DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_pipeline(filename, method='fs_select_k_best')         
+        self.update_pipeline(filename, method='fs_select_k_best')
+
+    def fs_select_fpr(
+        self,
+        filename: str,
+        score_func: Callable[
+            [np.ndarray, np.ndarray],
+            Tuple[np.ndarray, np.ndarray]
+        ] = f_classif,
+        alpha: Union[int, str] = 0.05
+    ):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        X, y = document.drop('target', axis=1), document['target']
+        selector = SelectFpr(score_func=score_func, alpha=alpha)
+        selector.fit(X, y)
+        document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
+        document['target'] = y
+        self.update_change_date_in_db(filename)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_pipeline(filename, method='fs_select_fpr')
+
+    def fs_select_fwe(
+        self,
+        filename: str,
+        score_func: Callable[
+            [np.ndarray, np.ndarray],
+            Tuple[np.ndarray, np.ndarray]
+        ] = f_classif,
+        alpha: Union[int, str] = 0.05
+    ):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        X, y = document.drop('target', axis=1), document['target']
+        selector = SelectFwe(score_func=score_func, alpha=alpha)
+        selector.fit(X, y)
+        document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
+        document['target'] = y
+        self.update_change_date_in_db(filename)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_pipeline(filename, method='fs_select_fwe')
+
+    def fs_select_fdr(
+        self,
+        filename: str,
+        score_func: Callable[
+            [np.ndarray, np.ndarray],
+            Tuple[np.ndarray, np.ndarray]
+        ] = f_classif,
+        alpha: Union[int, str] = 0.05
+    ):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        X, y = document.drop('target', axis=1), document['target']
+        selector = SelectFdr(score_func=score_func, alpha=alpha)
+        selector.fit(X, y)
+        document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
+        document['target'] = y
+        self.update_change_date_in_db(filename)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_pipeline(filename, method='fs_select_fdr')
 
     def fs_pca(self, filename: str, n_components: Optional[int]):
         document = DocumentFileCRUD(self._user).read_document(filename)
@@ -232,7 +289,7 @@ class DocumentService:
         document['target'] = y
         self.update_change_date_in_db(filename)
         DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_pipeline(filename, mehtod='fs_pca')
+        self.update_pipeline(filename, method='fs_pca')
         
           
 ### ---------------------------------------------UNCHECKED--------------------------------------------------------------
