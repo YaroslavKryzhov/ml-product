@@ -32,24 +32,26 @@ class DocumentService:
         self._user = user
 
     def upload_document_to_db(self, file, filename: str):
-        document_name = DocumentPostgreCRUD(self._db, self._user).read_document_column(filename, column=None)
-        if document_name is not None:
-            return document_name[0]
+        document = DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename)
+        if document is not None:
+            return document['name']
         DocumentFileCRUD(self._user).upload_document(filename, file)
         DocumentPostgreCRUD(self._db, self._user).new_document(filename)
         return True
 
     def read_document_from_db(self, filename: str) -> pd.DataFrame:
-        if self.read_document_id(filename=filename):
+        if DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename) is not None:
             df = DocumentFileCRUD(self._user).read_document(filename)
             return df
         return None
 
-    def read_document_id(self, filename: str) -> pd.DataFrame:
-        document_id = DocumentPostgreCRUD(self._db, self._user).read_document_column(filename, column=None)
-        if document_id is None:
-            return None
-        return str(document_id[0])
+    def read_document_info(self, filename: str):
+        document = DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename)
+        return document
+
+    def read_documents_info(self):
+        documents = DocumentPostgreCRUD(self._db, self._user).read_all_documents_by_user()
+        return documents
 
     def download_document_from_db(self, filename: str):
         file = DocumentFileCRUD(self._user).download_document(filename)
@@ -73,7 +75,7 @@ class DocumentService:
         DocumentPostgreCRUD(self._db, self._user).delete_document(filename)
 
     def read_pipeline(self, filename: str):
-        pipeline = DocumentPostgreCRUD(self._db, self._user).read_document_column(filename, column='pipeline')
+        pipeline = DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename)['pipeline']
         return pipeline
 
     def update_pipeline(self, filename: str, method: str):
@@ -89,8 +91,7 @@ class DocumentService:
         return df.columns.to_list()
 
     def read_column_marks(self, filename: str):
-        column_marks = dict(DocumentPostgreCRUD(self._db, self._user).read_document_column(filename,
-                                                                                           column='column_marks'))
+        column_marks = dict(DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename)['column_marks'])
         return column_marks
 
     def update_column_marks(self, filename: str, column_marks: Dict[str, Union[List[str], str]]):
@@ -98,6 +99,15 @@ class DocumentService:
             'column_marks': column_marks
         }
         DocumentPostgreCRUD(self._db, self._user).update_document(filename, query)
+
+    def apply_pipeline_to_csv(self, filename: str, pipeline: List[str]):
+        for function in pipeline:
+            if function == 'standardize_features':
+                self.standardize_features(filename=filename)
+            elif function == 'fs_select_k_best':
+                self.fs_select_k_best(filename=filename)
+            else:
+                raise Exception("Error in pipeline")
 
     # DOCUMENT CHANGING METHODS
     def remove_duplicates(self, filename: str):
