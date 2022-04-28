@@ -5,7 +5,7 @@ from sklearn.tree import DecisionTreeClassifier
 from catboost import CatBoostClassifier
 from sklearn.model_selection import train_test_split, cross_validate
 from fastapi.responses import JSONResponse
-from fastapi import status
+from fastapi import status, BackgroundTasks
 from sklearn.metrics import recall_score, precision_score, f1_score, roc_auc_score, accuracy_score, roc_curve, auc
 from sklearn.ensemble import VotingClassifier, StackingClassifier, GradientBoostingClassifier
 from sklearn.model_selection import cross_val_score, StratifiedKFold
@@ -43,16 +43,16 @@ class ModelService:
         ModelPostgreCRUD(self._db, self._user).delete_model(model_name)
 
     def train_model(self, task_type: str, composition_type: str,
-                    model_params: List[ModelWithParams], params_type: str,
-                    document_name: str, model_name: str, test_size: Optional[float] = 0.2):
+                    model_params: List[ModelWithParams], params_type: str, document_name: str,
+                    model_name: str, background_tasks: BackgroundTasks, test_size: Optional[float] = 0.2):
         # checks if name is available
         model_info = ModelPostgreCRUD(self._db, self._user).read_model_info(model_name)
         if model_info is not None:
             return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE, content=f"The model name '{model_info[0]}' "
                                                                                     f"is already taken")
         # checks if data exists
-        data = DocumentService(self._db, self._user).read_document_from_db(document_name)
-        if data is None:
+        document_id = DocumentService(self._db, self._user).read_document_id(filename=document_name)
+        if document_id is None:
             return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content="No such csv document")
 
         # checks composition settings
@@ -61,6 +61,7 @@ class ModelService:
                                                                                     "there should be one model")
 
         # load data
+        data = DocumentService(self._db, self._user).read_document_from_db(document_name)
         target_column = DocumentService(self._db, self._user).read_column_marks(document_name)['target']
         features = data.drop(target_column, axis=1)
         target = data[target_column]
@@ -69,7 +70,19 @@ class ModelService:
         if task_type == 'classification' and target.nunique() == 1:
             return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE, content="Only one class label in csv")
 
-        # starts auto-search of params
+        ModelPostgreCRUD(self._db, self._user).new_model(model_name=model_name, csv_id=document_id,
+                                                         task_type=task_type, composition_type=composition_type,
+                                                         hyperparams=[], metrics={})
+
+        background_tasks.add_task(self.validate_training, features, target, task_type, composition_type, model_params,
+                                  params_type, model_name, test_size)
+
+        return JSONResponse(status_code=status.HTTP_200_OK, content=f"Training of model {model_name} "
+                                                                    f"starts at background")
+
+    def validate_training(self, features, target, task_type: str, composition_type: str,
+                          model_params: List[ModelWithParams], params_type: str,
+                          model_name: str, test_size: Optional[float] = 0.2):
         if params_type == 'auto':
             model_params = AutoParamsSearch(task_type=task_type, model_params=model_params,
                                             features=features, target=target).search_params()
@@ -80,10 +93,19 @@ class ModelService:
         model, metrics = CompositionValidator(task_type=task_type, composition=composition, model_name=model_name,
                                               features=features, target=target, test_size=test_size).validate_model()
 
+        self.save_trained_model(model_name=model_name, model=model, model_params=model_params, metrics=metrics)
+
+    def save_trained_model(self, model_name: str, model, model_params: List[ModelWithParams], metrics):
         ModelPickleCRUD(self._user).save_model(model_name, model)
-        ModelPostgreCRUD(self._db, self._user).new_model(model_name)
-        print(metrics)
-        return metrics
+
+        hyperparams = []
+        for i, model in enumerate(model_params):
+            hyperparams.append({model.type.value: model.params})
+        query = {
+            'hyperparams': hyperparams,
+            'metrics': metrics
+        }
+        ModelPostgreCRUD(self._db, self._user).update_model(model_name=model_name, query=query)
 
     # def predict_on_model(self, filename: str, model_name: str = 'tree'):
     #     data = self.get_document(filename).iloc[-10:].drop('Species', axis=1)
@@ -234,7 +256,7 @@ class ModelConstructor:
     def get_catboost_classifier(self):
         params = CatBoostClassifierParameters(**self.params)
         # print(params.dict())
-        model = CatBoostClassifier(**params.dict())
+        model = CatBoostClassifier(**params.dict(), verbose=100)
         return model
 
 

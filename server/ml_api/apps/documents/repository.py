@@ -48,7 +48,7 @@ class DocumentPostgreCRUD(BaseCrud):
     def read_document_column(self, filename: str, column: Optional[str] = None):
         filepath = self.file_path(filename)
         if not column:
-            return self.session.query(Document.name).filter(Document.filepath == filepath).first()
+            return self.session.query(Document.id).filter(Document.filepath == filepath).first()
         if column == 'pipeline':
             return self.session.query(Document.pipeline).filter(Document.filepath == filepath).first()[0]
         if column == 'column_marks':

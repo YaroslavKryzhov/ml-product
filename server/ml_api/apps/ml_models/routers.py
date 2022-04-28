@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from typing import Dict, Any, List
 
 from ml_api.common.database.db_deps import get_db
@@ -18,11 +18,13 @@ models_router = APIRouter(
 @models_router.post("/train")
 def train_composition(task_type: AvailableTaskTypes, composition_type: AvailableCompositions,
                       model_params: List[ModelWithParams], params_type: AvailableParams,
-                      document_name: str, model_name: str, test_size: float = 0.2,
-                      db: get_db = Depends(), user: UserDB = Depends(current_active_user)):
+                      document_name: str, model_name: str, background_tasks: BackgroundTasks, test_size: float = 0.2,
+                      db: get_db = Depends(), user: UserDB = Depends(current_active_user),
+                      ):
     result = ModelService(db, user).train_model(task_type=task_type.value, composition_type=composition_type.value,
                                                 model_params=model_params, params_type=params_type.value,
-                                                document_name=document_name, model_name=model_name, test_size=test_size)
+                                                document_name=document_name, model_name=model_name,
+                                                background_tasks=background_tasks, test_size=test_size)
     return result
 
 

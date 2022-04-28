@@ -16,8 +16,7 @@ sleep_5:
 
 build_server:
 	make start_server sleep_5 && \
-	make migrate sleep_5 && \
-	make migrations sleep_5 && \
+	make migrations message='1' sleep_5 && \
 	make migrate sleep_5
 
 stop_server:

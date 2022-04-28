@@ -3,6 +3,7 @@ import shutil
 from typing import List, Dict, Optional
 from datetime import datetime
 import pickle
+from uuid import UUID
 
 import pandas as pd
 from sqlalchemy.orm import Session
@@ -31,15 +32,19 @@ class ModelPostgreCRUD(BaseCrud):
         self.session = session
 
     # CREATE
-    def new_model(self, model_name: str):
+    def new_model(self, model_name: str, csv_id: str, task_type: str,
+                  composition_type: str, hyperparams: List, metrics: Dict):
         """ DEV USE: Save model info to PostgreDB"""
         new_obj = Model(
             name=model_name,
             filepath=self.file_path(model_name),
             user_id=self.user_id,
+            csv_id=csv_id,
             create_date=str(datetime.now()),
-            composition=False,
-            hyperparams=[]
+            task_type=task_type,
+            composition_type=composition_type,
+            hyperparams=hyperparams,
+            metrics=metrics
         )
         self.session.add(new_obj)
         self.session.commit()
@@ -59,7 +64,7 @@ class ModelPostgreCRUD(BaseCrud):
     # UPDATE
     def update_model(self, model_name: str, query: Dict):
         filepath = self.file_path(model_name)
-        if query.get('name', None):
+        if query.get('name'):
             query['filepath'] = self.file_path(query['name'])
         self.session.query(Model).filter(Model.filepath == filepath).update(query)
         self.session.commit()

@@ -40,11 +40,16 @@ class DocumentService:
         return True
 
     def read_document_from_db(self, filename: str) -> pd.DataFrame:
-        document_info = DocumentPostgreCRUD(self._db, self._user).read_document_column(filename, column=None)
-        if document_info is None:
+        if self.read_document_id(filename=filename):
+            df = DocumentFileCRUD(self._user).read_document(filename)
+            return df
+        return None
+
+    def read_document_id(self, filename: str) -> pd.DataFrame:
+        document_id = DocumentPostgreCRUD(self._db, self._user).read_document_column(filename, column=None)
+        if document_id is None:
             return None
-        df = DocumentFileCRUD(self._user).read_document(filename)
-        return df
+        return str(document_id[0])
 
     def download_document_from_db(self, filename: str):
         file = DocumentFileCRUD(self._user).download_document(filename)
