@@ -6,7 +6,6 @@ import numpy as np
 from datetime import datetime
 from outliers import smirnov_grubbs as grubbs
 from typing import List, Union, Dict, Callable, Tuple, Optional
-# from regex import D
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import IsolationForest
@@ -294,7 +293,7 @@ class DocumentService:
         DocumentFileCRUD(self._user).update_document(filename, document)
 
         self.update_pipeline(filename, method='fs_pca')
-    
+
     def fs_rfe(
         self,
         filename: str,

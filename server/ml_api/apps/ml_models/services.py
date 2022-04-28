@@ -6,10 +6,12 @@ from catboost import CatBoostClassifier
 from sklearn.model_selection import train_test_split, cross_validate
 from fastapi.responses import JSONResponse
 from fastapi import status
-from sklearn.metrics import recall_score, precision_score, f1_score, roc_auc_score, accuracy_score
+from sklearn.metrics import recall_score, precision_score, f1_score, roc_auc_score, accuracy_score, roc_curve, auc
 from sklearn.ensemble import VotingClassifier, StackingClassifier, GradientBoostingClassifier
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 from hyperopt import hp, fmin, tpe, Trials, STATUS_OK, space_eval
+from sklearn.preprocessing import label_binarize
+import numpy as np
 
 from ml_api.apps.ml_models.repository import ModelPostgreCRUD, ModelPickleCRUD
 from ml_api.apps.ml_models.configs.classification_models_config import DecisionTreeClassifierParameters, \
@@ -43,24 +45,31 @@ class ModelService:
     def train_model(self, task_type: str, composition_type: str,
                     model_params: List[ModelWithParams], params_type: str,
                     document_name: str, model_name: str, test_size: Optional[float] = 0.2):
-
+        # checks if name is available
         model_info = ModelPostgreCRUD(self._db, self._user).read_model_info(model_name)
         if model_info is not None:
             return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE, content=f"The model name '{model_info[0]}' "
                                                                                     f"is already taken")
-
+        # checks if data exists
         data = DocumentService(self._db, self._user).read_document_from_db(document_name)
         if data is None:
             return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content="No such csv document")
 
+        # checks composition settings
+        if composition_type == 'none' and len(model_params) > 1:
+            return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE, content="If composition type is 'NONE' "
+                                                                                    "there should be one model")
+
+        # load data
         target_column = DocumentService(self._db, self._user).read_column_marks(document_name)['target']
         features = data.drop(target_column, axis=1)
         target = data[target_column]
 
+        # checks if classification sample is wrong
         if task_type == 'classification' and target.nunique() == 1:
             return JSONResponse(status_code=status.HTTP_406_NOT_ACCEPTABLE, content="Only one class label in csv")
 
-        print(model_params)
+        # starts auto-search of params
         if params_type == 'auto':
             model_params = AutoParamsSearch(task_type=task_type, model_params=model_params,
                                             features=features, target=target).search_params()
@@ -68,14 +77,12 @@ class ModelService:
         composition = CompositionConstructor(task_type=task_type, composition_type=composition_type,
                                              models_with_params=model_params).build_composition()
 
-        print(composition)
-
         model, metrics = CompositionValidator(task_type=task_type, composition=composition, model_name=model_name,
                                               features=features, target=target, test_size=test_size).validate_model()
 
         ModelPickleCRUD(self._user).save_model(model_name, model)
         ModelPostgreCRUD(self._db, self._user).new_model(model_name)
-
+        print(metrics)
         return metrics
 
     # def predict_on_model(self, filename: str, model_name: str = 'tree'):
@@ -87,7 +94,7 @@ class ModelService:
 
 class AutoParamsSearch:
 
-    def __init__(self, task_type, model_params, features, target):
+    def __init__(self, task_type: str, model_params: List[ModelWithParams], features, target):
         self.task_type = task_type
         self.model_params = model_params
         self.features = features
@@ -95,7 +102,7 @@ class AutoParamsSearch:
 
     def search_params(self):
         for i, model_data in enumerate(self.model_params):
-            self.model_params[i] = list(model_data[0], self.validate_model_params(model_data[0]))
+            self.model_params[i].params = self.validate_model_params(model_data.type)
         return self.model_params
 
     def validate_model_params(self, model_type: AvailableModels) -> Dict[str, Any]:
@@ -121,14 +128,29 @@ class AutoParamsSearch:
                 return space_eval(search_space, best)
         return {}
 
-    def objective_multiclass(self, params, model_type):
+    def objective_multiclass(self, params, model_type: AvailableModels):
+        """
+            Auxiliary function for scoring of checking iterating parameters. Multiclass classification task type.
+
+            :param params: checking parameters;
+            :param model_type: AvailableModels type string model name;
+            :return: dict(loss, params, status)
+        """
+        print(params)
         model = ModelConstructor(task_type=self.task_type, model_type=model_type, params=params).model
         skf = StratifiedKFold(n_splits=4, shuffle=True, random_state=1)
         score = cross_val_score(estimator=model, X=self.features, y=self.target,
                                 scoring='roc_auc_ovr_weighted', cv=skf, n_jobs=-1, error_score="raise")
         return {'loss': -score.mean(), 'params': params, 'status': STATUS_OK}
 
-    def objective_binary(self, params, model_type):
+    def objective_binary(self, params, model_type: AvailableModels):
+        """
+            Auxiliary function for scoring of checking iterating parameters. Binary classification task type.
+
+            :param params: checking parameters;
+            :param model_type: AvailableModels type string model name;
+            :return: dict(loss, params, status)
+        """
         model = ModelConstructor(task_type=self.task_type, model_type=model_type, params=params).model
         skf = StratifiedKFold(n_splits=4, shuffle=True, random_state=1)
         score = cross_val_score(estimator=model, X=self.features, y=self.target,
@@ -150,7 +172,7 @@ class CompositionConstructor:
         Returns sklearn composition model with fit(), predict() methods
     """
 
-    def __init__(self, task_type: str, composition_type: str, models_with_params: Dict[AvailableModels, Dict[str, Any]]):
+    def __init__(self, task_type: str, composition_type: str, models_with_params: List[ModelWithParams]):
         self.task_type = task_type
         self.composition_type = composition_type
         self.models_with_params = models_with_params
@@ -158,11 +180,14 @@ class CompositionConstructor:
     def build_composition(self):
         models = []
         if self.composition_type == 'none':
-            for model, params in self.models_with_params:
-                composition = ModelConstructor(task_type=self.task_type, model_type=model, params=params).model
+            for model in self.models_with_params:
+                composition = ModelConstructor(task_type=self.task_type, model_type=model.type,
+                                               params=model.params).model
             return composition
-        for model, params in self.models_with_params:
-            models.append((model.value, ModelConstructor(task_type=self.task_type, model_type=model, params=params).model))
+        for i, model in enumerate(self.models_with_params):
+            models.append((str(i) + "_" + model.type.value, ModelConstructor(task_type=self.task_type,
+                                                                             model_type=model.type,
+                                                                             params=model.params).model))
         if self.composition_type == 'simple_voting':
             composition = VotingClassifier(estimators=models, voting='hard')
             return composition
@@ -231,33 +256,90 @@ class CompositionValidator:
                 return self.process_multiclass__classification()
 
     def process_binary_classification(self):
-        metrics = {}
+        report = dict(task_type='binary_classification')
+        probabilities_ok = True
+
         features_train, features_valid, target_train, target_valid = train_test_split(self.features, self.target,
                                                                                       test_size=self.test_size,
                                                                                       stratify=self.target)
         self.composition.fit(features_train, target_train)
         predictions = self.composition.predict(features_valid)
-        probabilities = self.composition.predict_proba(features_valid)[:, 1]
-        metrics['accuracy'] = accuracy_score(target_valid, predictions)
-        metrics['recall'] = recall_score(target_valid, predictions)
-        metrics['precision'] = precision_score(target_valid, predictions)
-        metrics['f1'] = f1_score(target_valid, predictions)
-        metrics['roc_auc'] = roc_auc_score(target_valid, probabilities)
-
-        return self.composition, metrics
+        try:
+            probabilities = self.composition.predict_proba(features_valid)[:, 1]
+        except AttributeError:
+            probabilities_ok = False
+        # except Exception:
+        #     probabilities = self.composition.decision_function(features_valid)[:, 1]
+        report['accuracy'] = accuracy_score(target_valid, predictions)
+        report['recall'] = recall_score(target_valid, predictions)
+        report['precision'] = precision_score(target_valid, predictions)
+        report['f1'] = f1_score(target_valid, predictions)
+        if probabilities_ok:
+            report['roc_auc'] = roc_auc_score(target_valid, probabilities)
+            fpr, tpr, _ = roc_curve(target_valid, probabilities)
+            report['fpr'] = list(fpr)
+            report['tpr'] = list(tpr)
+        return self.composition, report
 
     def process_multiclass__classification(self):
-        metrics = {}
+        report = dict(task_type='multiclass_classification')
+        probabilities_ok = True
+
         features_train, features_valid, target_train, target_valid = train_test_split(self.features, self.target,
                                                                                       test_size=self.test_size,
                                                                                       stratify=self.target)
         self.composition.fit(features_train, target_train)
         predictions = self.composition.predict(features_valid)
-        probabilities = self.composition.predict_proba(features_valid)
-        metrics['accuracy'] = accuracy_score(target_valid, predictions)
-        metrics['recall'] = recall_score(target_valid, predictions, average='weighted')
-        metrics['precision'] = precision_score(target_valid, predictions, average='weighted')
-        metrics['f1'] = f1_score(target_valid, predictions, average='weighted')
-        metrics['roc_auc'] = roc_auc_score(target_valid, probabilities, average='weighted', multi_class='ovr')
+        try:
+            probabilities = self.composition.predict_proba(features_valid)
+        except AttributeError:
+            probabilities_ok = False
+        # except Exception:
+        #     probabilities = self.composition.decision_function(features_valid)
 
-        return self.composition, metrics
+        report['accuracy'] = accuracy_score(target_valid, predictions)
+        report['recall'] = recall_score(target_valid, predictions, average='weighted')
+        report['precision'] = precision_score(target_valid, predictions, average='weighted')
+        report['f1'] = f1_score(target_valid, predictions, average='weighted')
+
+        if probabilities_ok:
+            classes = list(self.target.unique())
+            target_valid = label_binarize(target_valid, classes=classes)
+            n_classes = len(classes)
+
+            report['roc_auc_weighted'] = roc_auc_score(target_valid, probabilities, average='weighted', multi_class='ovr')
+
+            fpr = dict()
+            tpr = dict()
+            roc_auc = dict()
+
+            for i in range(n_classes):
+                fpr[i], tpr[i], _ = roc_curve(target_valid[:, i], probabilities[:, i])
+                roc_auc[i] = auc(fpr[i], tpr[i])
+
+            fpr["micro"], tpr["micro"], _ = roc_curve(target_valid.ravel(), probabilities.ravel())
+            roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+
+            # First aggregate all false positive rates
+            all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
+
+            # Then interpolate all ROC curves at this points
+            mean_tpr = np.zeros_like(all_fpr)
+            for i in range(n_classes):
+                mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
+
+            # Finally average it and compute AUC
+            mean_tpr /= n_classes
+
+            fpr["macro"] = all_fpr
+            tpr["macro"] = mean_tpr
+            roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+
+            report['frp_micro'] = list(fpr["micro"])
+            report['trp_micro'] = list(tpr["micro"])
+            report['frp_macro'] = list(fpr["macro"])
+            report['trp_macro'] = list(tpr["macro"])
+            report['roc_auc_micro'] = roc_auc["micro"]
+            report['roc_auc_macro'] = roc_auc["macro"]
+
+        return self.composition, report

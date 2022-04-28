@@ -37,6 +37,6 @@ class DecisionTreeClassifierParameters(BaseModel):
 
 class CatBoostClassifierParameters(BaseModel):
     iterations: int = None
-    learning_rate: int = None
+    learning_rate: float = None
     loss_function: Literal["Logloss", "MultiClass"] = None
     depth: int = None
