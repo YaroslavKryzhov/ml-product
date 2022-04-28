@@ -1,3 +1,5 @@
+from calendar import c
+from nis import cat
 from unicodedata import numeric
 import pandas as pd
 import numpy as np
@@ -9,12 +11,13 @@ from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 from sklearn.ensemble import IsolationForest
 from scipy.stats import mode
-from sklearn.svm import OneClassSVM
-from sklearn.preprocessing import StandardScaler
+from sklearn.svm import OneClassSVM, SVR
+from sklearn.preprocessing import OrdinalEncoder, StandardScaler
 from sklearn.covariance import EllipticEnvelope
 from sklearn.neighbors import LocalOutlierFactor
-from sklearn.feature_selection import SelectKBest, f_classif, SelectFpr, SelectFwe, SelectFdr
+from sklearn.feature_selection import SelectKBest, f_classif, SelectFpr, SelectFwe, SelectFdr, RFE, SelectFromModel
 from sklearn.decomposition import PCA
+from sklearn.base import BaseEstimator
 import pickle
 
 from sympy import numer
@@ -289,8 +292,49 @@ class DocumentService:
         document['target'] = y
         self.update_change_date_in_db(filename)
         DocumentFileCRUD(self._user).update_document(filename, document)
+
         self.update_pipeline(filename, method='fs_pca')
-        
+    
+    def fs_rfe(
+        self,
+        filename: str,
+        estimator: BaseEstimator = SVR(kernel='linear'),
+        n_features: Optional[int] = None,
+    ):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        X, y = document.drop('target', axis=1), document['target']
+        selector = RFE(estimator=estimator, n_features_to_select=n_features)
+        selector.fit(X, y)
+        document = pd.DataFrame(selector.transform(X), columns=X.columns[selector.support_])
+        document['target'] = y
+        self.update_change_date_in_db(filename)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_pipeline(filename, method='fs_rfe')
+
+    def fs_select_from_model(
+        self,
+        filename: str,
+        estimator: BaseEstimator,
+        threshold: Optional[Union[str, float]] = None,
+        max_features: Optional[int] = None,
+    ):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        X, y = document.drop('target', axis=1), document['target']
+        selector = SelectFromModel(estimator=estimator, threshold=threshold, max_features=max_features)
+        selector.fit(X, y)
+        document = pd.DataFrame(selector.transform(X), columns=X.columns[selector.get_support()])
+        document['target'] = y
+        self.update_change_date_in_db(filename)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_pipeline(filename, method='fs_select_from_model')
+
+    def encoding_Ordinal(self, filename: str):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        categorical = self.read_column_marks(filename)['categorical']
+        document[categorical] = OrdinalEncoder().fit_transform(document[categorical])
+        self.update_change_date_in_db(filename)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_pipeline(filename, method='encoding_Ordinal')
           
 ### ---------------------------------------------UNCHECKED--------------------------------------------------------------
 
