@@ -247,10 +247,12 @@ class DocumentService:
         alpha: Union[int, str] = 0.05
     ):
         document = DocumentFileCRUD(self._user).read_document(filename)
-        X, y = document.drop('target', axis=1), document['target']
+        columns_dict = self.read_column_marks(filename)
+        x = columns_dict['numeric'].append(columns_dict['categorical'])
+        y = columns_dict['target']
         selector = SelectFpr(score_func=score_func, alpha=alpha)
-        selector.fit(X, y)
-        document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
+        selector.fit(x, y)
+        document = pd.DataFrame(selector.transform(x), columns=document.columns[selector.get_support(indices=True)])
         document['target'] = y
         self.update_change_date_in_db(filename)
         DocumentFileCRUD(self._user).update_document(filename, document)
@@ -266,10 +268,12 @@ class DocumentService:
         alpha: Union[int, str] = 0.05
     ):
         document = DocumentFileCRUD(self._user).read_document(filename)
-        X, y = document.drop('target', axis=1), document['target']
+        columns_dict = self.read_column_marks(filename)
+        x = columns_dict['numeric'].append(columns_dict['categorical'])
+        y = columns_dict['target']
         selector = SelectFwe(score_func=score_func, alpha=alpha)
-        selector.fit(X, y)
-        document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
+        selector.fit(x, y)
+        document = pd.DataFrame(selector.transform(x), columns=document.columns[selector.get_support(indices=True)])
         document['target'] = y
         self.update_change_date_in_db(filename)
         DocumentFileCRUD(self._user).update_document(filename, document)
@@ -285,10 +289,12 @@ class DocumentService:
         alpha: Union[int, str] = 0.05
     ):
         document = DocumentFileCRUD(self._user).read_document(filename)
-        X, y = document.drop('target', axis=1), document['target']
+        columns_dict = self.read_column_marks(filename)
+        x = columns_dict['numeric'].append(columns_dict['categorical'])
+        y = columns_dict['target']
         selector = SelectFdr(score_func=score_func, alpha=alpha)
-        selector.fit(X, y)
-        document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
+        selector.fit(x, y)
+        document = pd.DataFrame(selector.transform(x), columns=document.columns[selector.get_support(indices=True)])
         document['target'] = y
         self.update_change_date_in_db(filename)
         DocumentFileCRUD(self._user).update_document(filename, document)
@@ -422,7 +428,7 @@ class DocumentService:
     # iter - количество итераций, если -1, то нет ограничений
     def outliers_OneClassSVM(self, filename: str, iters: float):
         df = DocumentFileCRUD(self._user).read_document(filename)
-        dataset = df.copy()
+        dataset = self.read_column_marks(filename)['numeric']
         OCSVM = OneClassSVM(kernel='rbf', gamma='auto', max_iter=iters)
         df_with_svm = dataset.join(pd.DataFrame(OCSVM.fit_predict(dataset),
                                                 index=dataset.index, columns=['svm']), how='left')
@@ -430,12 +436,11 @@ class DocumentService:
         DocumentFileCRUD(self._user).update_document(filename, df)
         self.update_change_date_in_db(filename)
 
-    # В обрабатываемом датафрейме значения должны быть только числовыми
-    # В старом коде этот метод возвращал не то, что внутри квантилей, а наоборот то, что вне(то, что внутри - удалял)
     def outlier_interquartile_distance(self, filename: str, low_quantile: float, up_quantile: float, coef: float):
         df = DocumentFileCRUD(self._user).read_document(filename)
-        quantile = df.quantile([low_quantile, up_quantile])
-        for column in df:
+        numeric_columns = self.read_column_marks(filename)['numeric']
+        quantile = numeric_columns.quantile([low_quantile, up_quantile])
+        for column in numeric_columns:
             low_lim = quantile[column][low_quantile]
             up_lim = quantile[column][up_quantile]
             df = df.loc[df[column] >= low_lim - coef * (up_lim - low_lim)]. \
