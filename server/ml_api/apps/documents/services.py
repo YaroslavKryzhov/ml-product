@@ -11,15 +11,16 @@ from sklearn.impute import IterativeImputer
 from sklearn.ensemble import IsolationForest
 from scipy.stats import mode
 from sklearn.svm import OneClassSVM, SVR
-from sklearn.preprocessing import OrdinalEncoder, StandardScaler
+from sklearn.preprocessing import OrdinalEncoder, StandardScaler, OneHotEncoder
 from sklearn.covariance import EllipticEnvelope
 from sklearn.neighbors import LocalOutlierFactor
-from sklearn.feature_selection import SelectKBest, f_classif, SelectFpr, SelectFwe, SelectFdr, RFE, SelectFromModel
+from sklearn.feature_selection import SelectKBest, f_classif, SelectFpr, SelectFwe, SelectFdr, RFE, SelectFromModel, \
+    SelectPercentile, VarianceThreshold, GenericUnivariateSelect
 from sklearn.decomposition import PCA
 from sklearn.base import BaseEstimator
 import pickle
 
-from sympy import numer
+from sympy import numer, per
 
 from ml_api.apps.documents.models import Document
 from ml_api.apps.documents.repository import DocumentFileCRUD, DocumentPostgreCRUD
@@ -342,6 +343,60 @@ class DocumentService:
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_pipeline(filename, method='fs_select_from_model')
 
+    def fs_select_percentile(
+            self,
+            filename: str,
+            score_func: Callable[
+                [np.ndarray, np.ndarray],
+                Tuple[np.ndarray, np.ndarray]
+            ] = f_classif,
+            percentile: int = 10
+    ):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        X, y = document.drop('target', axis=1), document['target']
+        selector = SelectPercentile(score_func=score_func, percentile=percentile)
+        selector.fit(X, y)
+        document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
+        document['target'] = y
+        self.update_change_date_in_db(filename)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_pipeline(filename, method='fs_select_percentile')
+
+    def fs_variance_threshold(
+            self,
+            filename: str,
+            threshold: float = 0.0
+    ):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        X, y = document.drop('target', axis=1), document['target']
+        selector = VarianceThreshold(threshold=threshold)
+        selector.fit(X, y)
+        document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
+        document['target'] = y
+        self.update_change_date_in_db(filename)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_pipeline(filename, method='fs_variance_threshold')
+
+    def fs_generic_univariate_select(
+            self,
+            filename: str,
+            score_func: Callable[
+                [np.ndarray, np.ndarray],
+                Tuple[np.ndarray, np.ndarray]
+            ] = f_classif,
+            mode: str = 'percentile',
+            param: Union[int, float] = 1e-5
+    ):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        X, y = document.drop('target', axis=1), document['target']
+        selector = GenericUnivariateSelect(score_func=score_func, mode=mode, param=param)
+        selector.fit(X, y)
+        document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
+        document['target'] = y
+        self.update_change_date_in_db(filename)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_pipeline(filename, method='fs_generic_univariate_select')
+
     def encoding_Ordinal(self, filename: str):
         document = DocumentFileCRUD(self._user).read_document(filename)
         categorical = self.read_column_marks(filename)['categorical']
@@ -349,6 +404,17 @@ class DocumentService:
         self.update_change_date_in_db(filename)
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_pipeline(filename, method='encoding_Ordinal')
+
+    def one_hot_encoding(self, filename: str):
+        document = DocumentFileCRUD(self._user).read_document(filename)
+        categorical = self.read_column_marks(filename)['categorical']
+        enc = OneHotEncoder()
+        enc.fit(document[categorical])
+        document[enc.get_feature_names(categorical)] = enc.transform(document[categorical]).toarray()
+        document.drop(categorical, axis=1, inplace=True)
+        self.update_change_date_in_db(filename)
+        DocumentFileCRUD(self._user).update_document(filename, document)
+        self.update_pipeline(filename, method='one_hot_encoding')
           
 ### ---------------------------------------------UNCHECKED--------------------------------------------------------------
 
