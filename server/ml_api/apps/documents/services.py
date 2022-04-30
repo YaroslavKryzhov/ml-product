@@ -228,11 +228,12 @@ class DocumentService:
         k: Union[int, str] = 10
     ):
         document = DocumentFileCRUD(self._user).read_document(filename)
-        X, y = document.drop('target', axis=1), document['target']
+        target = self.read_column_marks(filename)['target']
+        X, y = document.drop(target, axis=1), document[target]
         selector = SelectKBest(score_func=score_func, k=k)
         selector.fit(X, y)
         document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
-        document['target'] = y
+        document[target] = y
         self.update_change_date_in_db(filename)
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_pipeline(filename, method='fs_select_k_best')
@@ -302,7 +303,8 @@ class DocumentService:
 
     def fs_pca(self, filename: str, n_components: Optional[int]):
         document = DocumentFileCRUD(self._user).read_document(filename)
-        X, y = document.drop('target', axis=1), document['target'] 
+        target = self.read_column_marks(filename)['target']
+        X, y = document.drop(target, axis=1), document[target] 
         if n_components is None:
             pca = PCA().fit(X)
             n_components = len(pca.singular_values_[pca.singular_values_ > 1])
@@ -310,7 +312,7 @@ class DocumentService:
             PCA(n_components=n_components).fit_transform(X),
             columns=[f'PC{i}' for i in range(1, n_components + 1)]
         )
-        document['target'] = y
+        document[target] = y
         self.update_change_date_in_db(filename)
         DocumentFileCRUD(self._user).update_document(filename, document)
 
@@ -323,11 +325,12 @@ class DocumentService:
         n_features: Optional[int] = None,
     ):
         document = DocumentFileCRUD(self._user).read_document(filename)
-        X, y = document.drop('target', axis=1), document['target']
+        target = self.read_column_marks(filename)['target']
+        X, y = document.drop(target, axis=1), document[target]
         selector = RFE(estimator=estimator, n_features_to_select=n_features)
         selector.fit(X, y)
         document = pd.DataFrame(selector.transform(X), columns=X.columns[selector.support_])
-        document['target'] = y
+        document[target] = y
         self.update_change_date_in_db(filename)
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_pipeline(filename, method='fs_rfe')
@@ -340,11 +343,12 @@ class DocumentService:
         max_features: Optional[int] = None,
     ):
         document = DocumentFileCRUD(self._user).read_document(filename)
-        X, y = document.drop('target', axis=1), document['target']
+        target = self.read_column_marks(filename)['target']
+        X, y = document.drop(target, axis=1), document[target]
         selector = SelectFromModel(estimator=estimator, threshold=threshold, max_features=max_features)
         selector.fit(X, y)
         document = pd.DataFrame(selector.transform(X), columns=X.columns[selector.get_support()])
-        document['target'] = y
+        document[target] = y
         self.update_change_date_in_db(filename)
         DocumentFileCRUD(self._user).update_document(filename, document)
         self.update_pipeline(filename, method='fs_select_from_model')
