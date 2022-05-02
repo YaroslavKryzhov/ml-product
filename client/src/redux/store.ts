@@ -1,9 +1,11 @@
 import { configureStore, ThunkAction, Action } from "@reduxjs/toolkit";
 import { sideEffectsMiddleware } from "./middleware/sideEffects";
 import authApi, { authApi as authApiSlice } from "./reducers/api/auth.api";
+import auth from "./reducers/auth";
+import main from "./reducers/main";
 
 export const store = configureStore({
-  reducer: { authApi },
+  reducer: { authApi, main, auth },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }).concat([
       authApiSlice.middleware,
