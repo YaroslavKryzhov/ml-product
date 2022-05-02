@@ -10,9 +10,9 @@ const themeOptions: ThemeOptions = {
     },
   },
   typography: {
-    fontSize: 24,
+    fontSize: 20,
     fontFamily: "Jost",
-    htmlFontSize: 24,
+    htmlFontSize: 20,
   },
 };
 

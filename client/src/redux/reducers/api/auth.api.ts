@@ -1,7 +1,13 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { ROUTES } from "../../constants";
 import { addAuthHeader } from "./helpers";
-import { AuthPayload, EmittedToken, RegisterPayload } from "../types";
+import { AuthPage, AuthPayload, EmittedToken, RegisterPayload } from "../types";
+import {
+  changeAuthPage,
+  changeEmail,
+  changePasswordInput,
+  changeSecondPasswordInput,
+} from "../auth";
 
 export const authApi = createApi({
   reducerPath: "authApi",
@@ -25,12 +31,29 @@ export const authApi = createApi({
         }
       },
     }),
+    // TODO: unsafe register, rework after back ready
     register: builder.mutation<EmittedToken, RegisterPayload>({
       query: (body) => ({
         url: ROUTES.AUTH.REGISTER,
         method: "POST",
-        body,
+        body: {
+          ...body,
+          is_active: true,
+          is_superuser: false,
+          is_verified: false,
+        },
       }),
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        try {
+          const { meta } = await queryFulfilled;
+          if (meta?.response?.ok) {
+            dispatch(changeEmail(""));
+            dispatch(changePasswordInput(""));
+            dispatch(changeSecondPasswordInput(""));
+            dispatch(changeAuthPage(AuthPage.auth));
+          }
+        } catch {}
+      },
     }),
   }),
 });
