@@ -12,6 +12,10 @@ export enum AuthPage {
   register = "register",
 }
 
+export enum WorkPage {
+  Documents = "Documents",
+}
+
 export type AuthSlice = {
   page: AuthPage;
   passwordInput: string;
@@ -26,10 +30,12 @@ export type DecodedToken = {
 
 export enum AppPage {
   Authentication = "Authentication",
+  Workplace = "Workplace",
 }
 
 export type MainSlice = {
   page: AppPage;
+  isBlockingLoader: boolean;
 };
 
 declare global {
@@ -37,3 +43,22 @@ declare global {
     localStorage: { authToken: string };
   }
 }
+
+export type DocumentsSlice = {};
+
+export type Document = {
+  [key: string]: string[] | number[];
+};
+
+export type DocumentInfo = {
+  id: string;
+  name: string;
+  upload_date: string;
+  change_date: string;
+  pipeline: string[];
+  column_marks: {
+    numeric: string[];
+    categorical: string[];
+    target: string;
+  };
+};

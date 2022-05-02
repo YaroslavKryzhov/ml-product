@@ -8,4 +8,13 @@ export const ROUTES = {
     REGISTER: "register",
     LOGOUT: "jwt/logout",
   },
+  DOCUMENTS: {
+    BASE: BASE_API + "/document",
+    INFO: "/info",
+    DOWNLOAD: "/download",
+    PIPE: "/pipeline",
+    ALL: "/all",
+    RENAME: "/rename",
+    COLUMNS: "/column_marks",
+  },
 };

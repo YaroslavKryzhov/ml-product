@@ -27,6 +27,9 @@
       "components/*": [
         "components/*"
       ],
+      "globalStyle/*": [
+        "globalStyle/*"
+      ],
       "crypto": [
         "./node_modules/crypto-browserify"
       ]

@@ -3,6 +3,7 @@ import { AppPage, MainSlice } from "./types";
 
 const initialState: MainSlice = {
   page: AppPage.Authentication,
+  isBlockingLoader: true,
 };
 
 const mainSlice = createSlice({
@@ -11,6 +12,8 @@ const mainSlice = createSlice({
   reducers: {
     changeAppPage: (state, action: PayloadAction<AppPage>) =>
       void (state.page = action.payload),
+    changeIsBlockingLoader: (state, action: PayloadAction<boolean>) =>
+      void (state.isBlockingLoader = action.payload),
     logout: (state) => {
       localStorage.authToken = "";
       state.page = AppPage.Authentication;
@@ -18,6 +21,7 @@ const mainSlice = createSlice({
   },
 });
 
-export const { changeAppPage, logout } = mainSlice.actions;
+export const { changeAppPage, logout, changeIsBlockingLoader } =
+  mainSlice.actions;
 
 export default mainSlice.reducer;
