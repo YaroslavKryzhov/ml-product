@@ -62,3 +62,9 @@ export type DocumentInfo = {
     target: string;
   };
 };
+
+export type ColumnMarksPayload = {
+  numeric: string[];
+  categorical: string[];
+  target: string;
+};

@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { ROUTES } from "../../constants";
 import { addAuthHeader } from "./helpers";
-import { DocumentInfo } from "../types";
+import { ColumnMarksPayload, DocumentInfo } from "../types";
 
 const buildFileForm = (file: File) => {
   const form = new FormData();
@@ -53,6 +53,51 @@ export const documentsApi = createApi({
       query: ({ document_from, document_to }) => ({
         url: ROUTES.DOCUMENTS.PIPE,
         params: { document_from, document_to },
+      }),
+    }),
+    allDocuments: builder.query<string, void>({
+      query: () => ({
+        url: ROUTES.DOCUMENTS.ALL,
+      }),
+    }),
+    downloadDocument: builder.query<string, string>({
+      query: (filename) => ({
+        url: ROUTES.DOCUMENTS.DOWNLOAD,
+        params: { filename },
+      }),
+    }),
+    renameDocument: builder.mutation<
+      string,
+      { filename: string; new_filename: string }
+    >({
+      query: ({ filename, new_filename }) => ({
+        url: ROUTES.DOCUMENTS.RENAME,
+        params: { filename, new_filename },
+        method: "PUT",
+      }),
+    }),
+    columnsDocument: builder.query<string, string>({
+      query: (filename) => ({
+        url: ROUTES.DOCUMENTS.COLUMNS,
+        params: { filename },
+      }),
+    }),
+
+    columnMarksDocument: builder.query<string, string>({
+      query: (filename) => ({
+        url: ROUTES.DOCUMENTS.COLUMN_MARKS,
+        params: { filename },
+      }),
+    }),
+    changeColumnMarks: builder.mutation<
+      string,
+      { filename: string; body: ColumnMarksPayload }
+    >({
+      query: ({ filename, body }) => ({
+        url: ROUTES.DOCUMENTS.COLUMN_MARKS,
+        params: { filename },
+        body,
+        method: "PUT",
       }),
     }),
   }),
