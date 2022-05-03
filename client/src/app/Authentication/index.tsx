@@ -1,6 +1,5 @@
 import {
   AppBar,
-  Button,
   Checkbox,
   Chip,
   FormControlLabel,
@@ -10,6 +9,7 @@ import {
   TextField,
   Toolbar,
 } from "@mui/material";
+import LoadingButton from "@mui/lab/LoadingButton";
 import MenuIcon from "@mui/icons-material/Menu";
 import React, { useCallback, useEffect, useState } from "react";
 import { CenteredContainer } from "components/muiOverride";
@@ -48,7 +48,8 @@ export const Authentication: React.FC = () => {
   const dispatch = useAppDispatch();
   const [isFirstTry, setIsFirstTry] = useState(true);
   const [register, { isLoading: isRegLoading }] = useRegisterMutation();
-  const [auth] = useAuthMutation();
+  const [auth, { isLoading: isAuthLoading }] = useAuthMutation();
+  const isLoading = isRegLoading || isAuthLoading;
 
   const isEmailError = !EmailValidator.validate(emailInput);
   const isPasswordError =
@@ -161,8 +162,8 @@ export const Authentication: React.FC = () => {
                 sx={{ mt: "20px" }}
               />
             )}
-            <Button
-              disabled={isRegLoading}
+            <LoadingButton
+              loading={isLoading}
               size="small"
               variant="contained"
               onClick={authCallback}
@@ -171,7 +172,7 @@ export const Authentication: React.FC = () => {
               }}
             >
               {page === AuthPage.auth ? "Войти" : "Зарегистрироваться"}
-            </Button>
+            </LoadingButton>
           </Stack>
         </Paper>
       </CenteredContainer>

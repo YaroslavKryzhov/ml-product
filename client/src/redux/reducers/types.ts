@@ -1,4 +1,4 @@
-export type AuthPayload = {};
+export type AuthPayload = { username: string; password: string };
 
 export type RegisterPayload = {};
 

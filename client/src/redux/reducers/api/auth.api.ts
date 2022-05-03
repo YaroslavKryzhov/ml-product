@@ -1,13 +1,21 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { ROUTES } from "../../constants";
 import { addAuthHeader } from "./helpers";
-import { AuthPage, AuthPayload, EmittedToken, RegisterPayload } from "../types";
+import {
+  AppPage,
+  AuthPage,
+  AuthPayload,
+  EmittedToken,
+  RegisterPayload,
+} from "../types";
 import {
   changeAuthPage,
   changeEmail,
   changePasswordInput,
   changeSecondPasswordInput,
 } from "../auth";
+import { store } from "ducks/store";
+import { changeAppPage } from "../main";
 
 export const authApi = createApi({
   reducerPath: "authApi",
@@ -17,15 +25,19 @@ export const authApi = createApi({
   }),
   endpoints: (builder) => ({
     auth: builder.mutation<EmittedToken, AuthPayload>({
-      query: (body) => ({
+      query: (data) => ({
         url: ROUTES.AUTH.LOGIN,
         method: "POST",
-        body,
+        body: new URLSearchParams({
+          username: data.username,
+          password: data.password,
+        }),
       }),
       async onQueryStarted(_, { queryFulfilled }) {
         try {
           const token = await queryFulfilled;
           localStorage.authToken = token.data.access_token;
+          store.dispatch(changeAppPage(AppPage.Workplace));
         } catch {
           localStorage.authToken = "";
         }
