@@ -15,6 +15,7 @@ export const ROUTES = {
     PIPE: "/pipeline",
     ALL: "/all",
     RENAME: "/rename",
-    COLUMNS: "/column_marks",
+    COLUMNS: "/columns",
+    COLUMN_MARKS: "/column_marks",
   },
 };
