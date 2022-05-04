@@ -1,14 +1,19 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { DocumentsSlice } from "./types";
+import { DocumentPage, DocumentsSlice } from "./types";
 
-const initialState: DocumentsSlice = {};
+const initialState: DocumentsSlice = {
+  page: DocumentPage.List,
+};
 
 const documentsSlice = createSlice({
   name: "documents",
   initialState,
-  reducers: {},
+  reducers: {
+    changeDocumentPage: (state, action: PayloadAction<DocumentPage>) =>
+      void (state.page = action.payload),
+  },
 });
 
-export const {} = documentsSlice.actions;
+export const { changeDocumentPage } = documentsSlice.actions;
 
 export default documentsSlice.reducer;

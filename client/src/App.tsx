@@ -1,4 +1,4 @@
-import { Box, ThemeProvider } from "@mui/material";
+import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 import { Authentication } from "./app/Authentication";
 import { useSESelector } from "ducks/hooks";
 import { AppPage } from "ducks/reducers/types";
@@ -10,12 +10,15 @@ import { CenteredContainer } from "components/muiOverride";
 import { Circles } from "react-loader-spinner";
 import { withOpacity } from "./globalStyle/theme";
 import { Workplace } from "./app/Workplace";
+import { DialogContainerClass } from "components/Dialog";
 
 const App: React.FC = () => {
   const { page, isBlockingLoader } = useSESelector((state) => state.main);
 
   return (
     <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <div className={DialogContainerClass} />
       <Box sx={{ backgroundColor: "secondary.main" }}>
         {isBlockingLoader && (
           <CenteredContainer
@@ -33,7 +36,6 @@ const App: React.FC = () => {
         {cond<AppPage[], JSX.Element>([
           [equals<AppPage>(AppPage.Authentication), always(<Authentication />)],
           [equals<AppPage>(AppPage.Workplace), always(<Workplace />)],
-
           [T, always(<Authentication />)],
         ])(page)}
       </Box>

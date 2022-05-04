@@ -1,19 +1,19 @@
-export type AuthPayload = { username: string; password: string };
-
-export type RegisterPayload = {};
-
-export type EmittedToken = {
-  access_token: string;
-  token_type: string;
-};
-
 export enum AuthPage {
   auth = "auth",
   register = "register",
 }
 
+export enum AppPage {
+  Authentication = "Authentication",
+  Workplace = "Workplace",
+}
+
 export enum WorkPage {
   Documents = "Documents",
+}
+
+export enum DocumentPage {
+  List = "List",
 }
 
 export type AuthSlice = {
@@ -23,19 +23,28 @@ export type AuthSlice = {
   emailInput: string;
 };
 
+export type MainSlice = {
+  page: AppPage;
+  workPage: WorkPage;
+  isBlockingLoader: boolean;
+};
+
 export type DecodedToken = {
   user_id: string;
   exp: number;
 };
 
-export enum AppPage {
-  Authentication = "Authentication",
-  Workplace = "Workplace",
-}
+export type DocumentsSlice = {
+  page: DocumentPage;
+};
 
-export type MainSlice = {
-  page: AppPage;
-  isBlockingLoader: boolean;
+export type AuthPayload = { username: string; password: string };
+
+export type RegisterPayload = {};
+
+export type EmittedToken = {
+  access_token: string;
+  token_type: string;
 };
 
 declare global {
@@ -43,8 +52,6 @@ declare global {
     localStorage: { authToken: string };
   }
 }
-
-export type DocumentsSlice = {};
 
 export type Document = {
   [key: string]: string[] | number[];

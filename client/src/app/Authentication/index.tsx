@@ -104,9 +104,6 @@ export const Authentication: React.FC = () => {
             }}
             label={page === AuthPage.auth ? "Регистрация" : "Авторизация"}
           />
-          <IconButton color="secondary" size="large">
-            <MenuIcon />
-          </IconButton>
         </Toolbar>
       </AppBar>
       <CenteredContainer sx={{ flexGrow: 1 }}>
