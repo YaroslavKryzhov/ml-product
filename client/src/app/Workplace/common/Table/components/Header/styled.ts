@@ -58,12 +58,17 @@ export const HeadCellContent = styled.div`
 export const SortedArrowUp = styled.span<{ isFlipped?: boolean }>`
   position: relative;
   margin-left: 10px;
-  top: 50%;
-  background: url(${arrowUpIcon}) no-repeat center;
+  top: 52%;
+  background-color: ${theme.palette.primary.main};
   transform: translateY(-50%)
     ${({ isFlipped }) => (isFlipped ? "rotate(180deg)" : "")};
-  width: 9px;
-  height: 5px;
+  mask-image: url(${arrowUpIcon});
+  -webkit-mask-image: url(${arrowUpIcon});
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  width: 12px;
+  height: 9px;
 `;
 
 export const StyledResizer = styled.span<{ resizable?: boolean }>`

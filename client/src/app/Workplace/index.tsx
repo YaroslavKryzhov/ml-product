@@ -25,7 +25,7 @@ import { useAppDispatch, useSESelector } from "ducks/hooks";
 import { changeWorkPage, logout } from "ducks/reducers/main";
 import { WorkPageHeader } from "./common/WorkPageHeader";
 import LogoutIcon from "@mui/icons-material/Logout";
-import { ShowDialog } from "components/Dialog";
+import { setDialog } from "ducks/reducers/dialog";
 
 export const MenuContext = createContext({ menuOpened: false });
 
@@ -52,11 +52,13 @@ export const Workplace: React.FC = () => {
           <IconButtonCustom
             color="secondary"
             onClick={() =>
-              ShowDialog({
-                text: "Вы действительно хотите выйти?",
-                onAccept: () => dispatch(logout()),
-                title: "Выход",
-              })
+              dispatch(
+                setDialog({
+                  text: "Вы действительно хотите выйти?",
+                  onAccept: () => dispatch(logout()),
+                  title: "Выход",
+                })
+              )
             }
             edge="end"
           >

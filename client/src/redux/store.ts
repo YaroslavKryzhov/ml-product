@@ -6,11 +6,11 @@ import documents from "./reducers/documents";
 import documentsApi, {
   documentsApi as documentsApiSlice,
 } from "./reducers/api/documents.api";
-
 import main from "./reducers/main";
+import dialog from "./reducers/dialog";
 
 export const store = configureStore({
-  reducer: { authApi, main, auth, documents, documentsApi },
+  reducer: { authApi, main, auth, documents, documentsApi, dialog },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }).concat([
       authApiSlice.middleware,

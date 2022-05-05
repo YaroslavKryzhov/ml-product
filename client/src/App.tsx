@@ -10,7 +10,7 @@ import { CenteredContainer } from "components/muiOverride";
 import { Circles } from "react-loader-spinner";
 import { withOpacity } from "./globalStyle/theme";
 import { Workplace } from "./app/Workplace";
-import { DialogContainerClass } from "components/Dialog";
+import { DialogCustom } from "components/Dialog";
 
 const App: React.FC = () => {
   const { page, isBlockingLoader } = useSESelector((state) => state.main);
@@ -18,7 +18,7 @@ const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <div className={DialogContainerClass} />
+      <DialogCustom />
       <Box sx={{ backgroundColor: "secondary.main" }}>
         {isBlockingLoader && (
           <CenteredContainer
