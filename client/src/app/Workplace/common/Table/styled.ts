@@ -5,8 +5,8 @@ const fixedTableCellStyles = `
   position: sticky!important;
   left: 0;
   text-align: left;
-  border-right: 1px solid ${theme.palette.secondary.dark};
-  z-index: 100
+  border-right: ${theme.additional.borderWidth} solid ${theme.palette.secondary.dark};
+  z-index: ${theme.zIndex.appBar};
 `;
 
 export const StyledTable = styled.table<{

@@ -6,6 +6,7 @@ import { useAppDispatch, useSESelector } from "ducks/hooks";
 import { DocumentPage, WorkPage } from "ducks/reducers/types";
 import { changeWorkPage } from "ducks/reducers/main";
 import { changeDocumentPage } from "ducks/reducers/documents";
+import { theme } from "globalStyle/theme";
 
 const pageToHeader = {
   [WorkPage.Documents]: "Документы",
@@ -47,10 +48,10 @@ export const WorkPageHeader: React.FC = () => {
 
   return (
     <>
-      <Typography sx={{ mb: "10px" }} variant="h5">
+      <Typography sx={{ mb: theme.spacing(2) }} variant="h5">
         {pageToHeader[workPage]}
       </Typography>
-      <Breadcrumbs sx={{ mb: "20px" }}>
+      <Breadcrumbs sx={{ mb: theme.spacing(2) }}>
         <StyledBreadcrumb
           color="secondary"
           label="Домой"
@@ -68,7 +69,7 @@ export const WorkPageHeader: React.FC = () => {
           label={subpageToHeader(workPage, documentsPage)}
         />
       </Breadcrumbs>
-      <Divider />
+      <Divider sx={{ mb: theme.spacing(3) }} />
     </>
   );
 };

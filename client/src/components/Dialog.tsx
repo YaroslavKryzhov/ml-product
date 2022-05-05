@@ -10,6 +10,8 @@ import { TransitionProps } from "@mui/material/transitions";
 import { useAppDispatch, useSESelector } from "ducks/hooks";
 import { useEffect, useState } from "react";
 import { setDialog } from "ducks/reducers/dialog";
+import { Typography } from "@mui/material";
+import { theme } from "globalStyle/theme";
 
 const Transition = React.forwardRef(
   (
@@ -51,13 +53,18 @@ export const DialogCustom: React.FC = () => {
       TransitionComponent={Transition}
       keepMounted
       onClose={close}
+      sx={{ "& .MuiDialog-paper": { p: theme.spacing(2) } }}
     >
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
+      <DialogTitle>
+        <Typography variant="h5">{title}</Typography>
+      </DialogTitle>
+      <DialogContent sx={{ mb: theme.spacing(2), mt: theme.spacing(2) }}>
         <DialogContentText>{text}</DialogContentText>
       </DialogContent>
       <DialogActions>
         <Button
+          size="small"
+          variant="contained"
           onClick={() => {
             onDismiss && onDismiss();
             close();
@@ -66,6 +73,8 @@ export const DialogCustom: React.FC = () => {
           {dismissText || "Нет"}
         </Button>
         <Button
+          size="small"
+          variant="contained"
           onClick={() => {
             onAccept && onAccept();
             close();

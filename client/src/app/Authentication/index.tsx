@@ -3,14 +3,12 @@ import {
   Checkbox,
   Chip,
   FormControlLabel,
-  IconButton,
   Paper,
   Stack,
   TextField,
   Toolbar,
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
-import MenuIcon from "@mui/icons-material/Menu";
 import React, { useCallback, useEffect, useState } from "react";
 import { CenteredContainer } from "components/muiOverride";
 import { useAppDispatch, useSESelector } from "ducks/hooks";
@@ -26,12 +24,17 @@ import {
   useAuthMutation,
   useRegisterMutation,
 } from "ducks/reducers/api/auth.api";
+import { theme } from "globalStyle/theme";
 
 const PASSWORD_ERROR =
   "Пароль должен содержать минимум 6 символов, хотя бы 1 заглавную, 1 строчную букву латиницей, 1 цифру, 1 спецсимвол _.-!=";
 
 const helperTextProps = {
-  sx: { mt: 0, fontSize: "10px", lineHeight: "10px" },
+  sx: {
+    mt: 0,
+    fontSize: theme.typography.caption.fontSize,
+    lineHeight: theme.typography.caption.fontSize,
+  },
 };
 
 const passwordValidate = (val: string) =>
@@ -107,7 +110,7 @@ export const Authentication: React.FC = () => {
         </Toolbar>
       </AppBar>
       <CenteredContainer sx={{ flexGrow: 1 }}>
-        <Paper sx={{ width: 657, p: "30px" }} elevation={3}>
+        <Paper sx={{ width: 657, p: theme.spacing(4) }} elevation={3}>
           <Stack direction="column">
             <TextField
               size="small"
@@ -118,7 +121,7 @@ export const Authentication: React.FC = () => {
               helperText={!isFirstTry && isEmailError ? "Неверная почта" : " "}
               onChange={(e) => dispatch(changeEmail(e.target.value))}
               FormHelperTextProps={helperTextProps}
-              sx={{ mb: "10px" }}
+              sx={{ mb: theme.spacing(2) }}
             />
             <TextField
               size="small"
@@ -129,7 +132,7 @@ export const Authentication: React.FC = () => {
               helperText={!isFirstTry && isPasswordError ? PASSWORD_ERROR : " "}
               error={!isFirstTry && isPasswordError}
               FormHelperTextProps={helperTextProps}
-              sx={{ mb: "10px" }}
+              sx={{ mb: theme.spacing(2) }}
             />
             {page === AuthPage.register && (
               <TextField
@@ -141,7 +144,7 @@ export const Authentication: React.FC = () => {
                 onChange={(e) =>
                   dispatch(changeSecondPasswordInput(e.target.value))
                 }
-                sx={{ mb: "10px" }}
+                sx={{ mb: theme.spacing(2) }}
                 error={!isFirstTry && isSecondPasswordError}
                 helperText={
                   !isFirstTry && isSecondPasswordError
@@ -156,7 +159,7 @@ export const Authentication: React.FC = () => {
               <FormControlLabel
                 control={<Checkbox size="small" />}
                 label="Запомнить меня"
-                sx={{ mt: "20px" }}
+                sx={{ mt: theme.spacing(4) }}
               />
             )}
             <LoadingButton
@@ -165,7 +168,7 @@ export const Authentication: React.FC = () => {
               variant="contained"
               onClick={authCallback}
               sx={{
-                mt: page === AuthPage.auth ? "10px" : "30px",
+                mt: theme.spacing(2),
               }}
             >
               {page === AuthPage.auth ? "Войти" : "Зарегистрироваться"}

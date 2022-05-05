@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { nanoid } from "@reduxjs/toolkit";
 import { MenuContext } from "app/Workplace";
 import { TableFix } from "app/Workplace/common/Table";
@@ -37,10 +37,11 @@ export const DocumentsList: React.FC = () => {
     return () => clearInterval(interval);
   }, [menuOpened]);
 
-  console.log(allDocuments);
-
   return (
     <Box>
+      <Button variant="contained" fullWidth sx={{ mb: theme.spacing(2) }}>
+        Загрузить CSV
+      </Button>
       <TableFix
         forceResize={forceResize}
         resizable

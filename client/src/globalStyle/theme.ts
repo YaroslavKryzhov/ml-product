@@ -1,4 +1,17 @@
-import { createTheme, ThemeOptions } from "@mui/material/styles";
+import { createTheme, Theme, ThemeOptions } from "@mui/material/styles";
+
+declare module "@mui/material/styles" {
+  interface Theme {
+    additional: {
+      borderWidth: number;
+    };
+  }
+  interface ThemeOptions {
+    additional: {
+      borderWidth: number;
+    };
+  }
+}
 
 const themeOptions: ThemeOptions = {
   palette: {
@@ -14,6 +27,7 @@ const themeOptions: ThemeOptions = {
     fontFamily: "Jost",
     htmlFontSize: 20,
   },
+  additional: { borderWidth: 1 },
 };
 
 export const theme = createTheme(themeOptions);

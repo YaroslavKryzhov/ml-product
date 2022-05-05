@@ -10,10 +10,10 @@ export const StyledTableCell = styled.td<{
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding: 10px 20px;
+  padding: ${theme.spacing(2)} ${theme.spacing(3)};
   display: flex;
   align-items: center;
-  border-bottom: 1px solid ${theme.palette.divider};
+  border-bottom: ${theme.additional.borderWidth} solid ${theme.palette.divider};
   font-size: ${theme.typography.body2.fontSize};
 
   justify-content: ${({ fixed }) => {
@@ -42,9 +42,9 @@ export const EmptyData = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 18px 0;
+  padding: ${theme.spacing(3)} 0;
 `;
 
 export const TableFixContainer = styled.tbody`
-  border: 1px solid ${theme.shadows[11]};
+  border: ${theme.additional.borderWidth} solid ${theme.shadows[11]};
 `;

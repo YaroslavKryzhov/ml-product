@@ -21,9 +21,9 @@ export const StyledHeadCell = styled.th<{
   position: relative;
   font-weight: ${theme.typography.fontWeightBold};
   display: flex;
-  padding: 4px 20px;
+  padding: ${theme.spacing(1)} ${theme.spacing(3)};
   font-size: ${theme.typography.body1.fontSize};
-  border-bottom: 1px solid ${theme.palette.divider};
+  border-bottom: ${theme.additional.borderWidth} solid ${theme.palette.divider};
   justify-content: ${({ fixed }) => {
     if (fixed) {
       return fixed === Fixed.right
@@ -57,7 +57,7 @@ export const HeadCellContent = styled.div`
 
 export const SortedArrowUp = styled.span<{ isFlipped?: boolean }>`
   position: relative;
-  margin-left: 10px;
+  margin-left: ${theme.spacing(2)};
   top: 52%;
   background-color: ${theme.palette.primary.main};
   transform: translateY(-50%)
@@ -83,7 +83,8 @@ export const StyledResizer = styled.span<{ resizable?: boolean }>`
 
   &:after {
     content: "";
-    border-right: 1px solid ${theme.palette.secondary.dark};
+    border-right: ${theme.additional.borderWidth} solid
+      ${theme.palette.secondary.dark};
     position: absolute;
     left: 18px;
     top: 0;
