@@ -17,6 +17,8 @@ export const Main = styled("main", {
   flexGrow: 1,
   marginTop: BAR_HEIGHT,
   height: `calc(100vh - ${BAR_HEIGHT}px)`,
+  position: "relative",
+  overflow: "hidden",
   padding: theme.spacing(3),
   transition: theme.transitions.create("margin", {
     easing: theme.transitions.easing.sharp,

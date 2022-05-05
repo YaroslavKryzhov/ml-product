@@ -1,0 +1,37 @@
+import styled from "@emotion/styled";
+import { theme } from "globalStyle/theme";
+
+const fixedTableCellStyles = `
+  position: sticky!important;
+  left: 0;
+  text-align: left;
+  border-right: 1px solid ${theme.palette.secondary.dark};
+  z-index: 100
+`;
+
+export const StyledTable = styled.table<{
+  maxHeight?: string;
+  isFirstColumnFixed?: boolean;
+  width?: number;
+}>`
+  display: block;
+  position: relative;
+  border-collapse: collapse;
+  max-height: ${({ maxHeight }) => maxHeight || "none"};
+  overflow-y: ${({ maxHeight }) => (maxHeight ? "auto" : "hidden")};
+  overflow-x: auto;
+
+  tbody tr td:first-of-type {
+    ${({ isFirstColumnFixed }) => isFirstColumnFixed && fixedTableCellStyles}
+    justify-content: flex-start;
+  }
+
+  thead tr th:first-of-type {
+    ${({ isFirstColumnFixed }) => isFirstColumnFixed && fixedTableCellStyles}
+    justify-content: flex-start;
+
+    div {
+      ${({ isFirstColumnFixed }) => isFirstColumnFixed && "text-align: left;"}
+    }
+  }
+`;

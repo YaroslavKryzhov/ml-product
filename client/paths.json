@@ -24,6 +24,9 @@
       "ducks/*": [
         "redux/*"
       ],
+      "app/*": [
+        "app/*"
+      ],
       "components/*": [
         "components/*"
       ],

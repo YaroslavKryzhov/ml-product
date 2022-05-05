@@ -1,4 +1,4 @@
-import React from "react";
+import React, { createContext } from "react";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
 import Toolbar from "@mui/material/Toolbar";
@@ -26,6 +26,8 @@ import { changeWorkPage, logout } from "ducks/reducers/main";
 import { WorkPageHeader } from "./common/WorkPageHeader";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { ShowDialog } from "components/Dialog";
+
+export const MenuContext = createContext({ menuOpened: false });
 
 export const Workplace: React.FC = () => {
   const [open, setOpen] = React.useState(false);
@@ -114,11 +116,13 @@ export const Workplace: React.FC = () => {
         </List>
       </Drawer>
       <Main open={open}>
-        <WorkPageHeader />
-        {cond<WorkPage[], JSX.Element>([
-          [equals<WorkPage>(WorkPage.Documents), always(<Documents />)],
-          [T, always(<Documents />)],
-        ])(workPage)}
+        <MenuContext.Provider value={{ menuOpened: open }}>
+          <WorkPageHeader />
+          {cond<WorkPage[], JSX.Element>([
+            [equals<WorkPage>(WorkPage.Documents), always(<Documents />)],
+            [T, always(<Documents />)],
+          ])(workPage)}
+        </MenuContext.Provider>
       </Main>
     </Box>
   );

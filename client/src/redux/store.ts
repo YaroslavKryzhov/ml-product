@@ -3,13 +3,18 @@ import { sideEffectsMiddleware } from "./middleware/sideEffects";
 import authApi, { authApi as authApiSlice } from "./reducers/api/auth.api";
 import auth from "./reducers/auth";
 import documents from "./reducers/documents";
+import documentsApi, {
+  documentsApi as documentsApiSlice,
+} from "./reducers/api/documents.api";
+
 import main from "./reducers/main";
 
 export const store = configureStore({
-  reducer: { authApi, main, auth, documents },
+  reducer: { authApi, main, auth, documents, documentsApi },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }).concat([
       authApiSlice.middleware,
+      documentsApiSlice.middleware,
       sideEffectsMiddleware,
     ]),
 });

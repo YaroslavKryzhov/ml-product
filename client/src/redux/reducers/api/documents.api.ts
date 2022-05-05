@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { ROUTES } from "../../constants";
 import { addAuthHeader } from "./helpers";
-import { ColumnMarksPayload, DocumentInfo } from "../types";
+import { ColumnMarksPayload, DocumentInfo, DocumentInfoShort } from "../types";
 
 const buildFileForm = (file: File) => {
   const form = new FormData();
@@ -55,7 +55,7 @@ export const documentsApi = createApi({
         params: { document_from, document_to },
       }),
     }),
-    allDocuments: builder.query<string, void>({
+    allDocuments: builder.query<DocumentInfoShort[], void>({
       query: () => ({
         url: ROUTES.DOCUMENTS.ALL,
       }),
@@ -103,5 +103,5 @@ export const documentsApi = createApi({
   }),
 });
 
-export const {} = documentsApi;
+export const { useAllDocumentsQuery } = documentsApi;
 export default documentsApi.reducer;

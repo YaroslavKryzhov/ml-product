@@ -57,17 +57,20 @@ export type Document = {
   [key: string]: string[] | number[];
 };
 
-export type DocumentInfo = {
+export type DocumentInfo = DocumentInfoShort & {
   id: string;
-  name: string;
-  upload_date: string;
-  change_date: string;
   pipeline: string[];
   column_marks: {
     numeric: string[];
     categorical: string[];
     target: string;
   };
+};
+
+export type DocumentInfoShort = {
+  name: string;
+  upload_date: string;
+  change_date: string;
 };
 
 export type ColumnMarksPayload = {
