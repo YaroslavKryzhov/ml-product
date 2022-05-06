@@ -8,26 +8,31 @@ import {
 } from "@mui/material";
 import { CenteredContainer, helperTextProps } from "components/muiOverride";
 import { theme } from "globalStyle/theme";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { first } from "lodash";
 import AttachmentIcon from "@mui/icons-material/Attachment";
+import { useAppDispatch, useSESelector } from "ducks/hooks";
+import {
+  changeCustomFileName,
+  changeSelectedFile,
+} from "ducks/reducers/documents";
+import { setDialogAcceptDisabled } from "ducks/reducers/dialog";
 
 const SlideTr = (props: SlideProps) => <Slide {...props} direction={"left"} />;
 
-export const DocumentDrop: React.FC<{ onFile: (val: File) => void }> = ({
-  onFile,
-}) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [customFileName, setCustomFileName] = useState<string>("");
+export const DocumentDrop: React.FC = () => {
+  const { customFileName, selectedFile } = useSESelector(
+    (state) => state.documents
+  );
   const [errorNoticeOpened, setErrorNoticeOpened] = useState<boolean>(false);
+  const dispatch = useAppDispatch();
 
   const onDropAccepted = useCallback((files: File[]) => {
     const file = first(files);
     if (file) {
-      setSelectedFile(file);
-      setCustomFileName(file.name);
-      onFile(file);
+      dispatch(changeSelectedFile(file));
+      dispatch(changeCustomFileName(file.name));
     }
   }, []);
 
@@ -56,8 +61,12 @@ export const DocumentDrop: React.FC<{ onFile: (val: File) => void }> = ({
       ? "Обязательное поле"
       : !/.csv$/g.test(customFileName)
       ? "Расширение должно быть .csv"
-      : ""
-    : "";
+      : null
+    : null;
+
+  useEffect(() => {
+    dispatch(setDialogAcceptDisabled(!(selectedFile && !nameError)));
+  }, [selectedFile, customFileName]);
 
   return (
     <Box sx={{ mt: theme.spacing(1) }}>
@@ -74,12 +83,13 @@ export const DocumentDrop: React.FC<{ onFile: (val: File) => void }> = ({
         TransitionComponent={SlideTr}
       />
       <TextField
+        disabled={!selectedFile}
         size="small"
         label="Название файла"
         value={customFileName}
-        onChange={(e) => setCustomFileName(e.target.value)}
+        onChange={(e) => dispatch(changeCustomFileName(e.target.value))}
         sx={{ mb: theme.spacing(2) }}
-        helperText={nameError}
+        helperText={nameError || " "}
         error={!!nameError}
         FormHelperTextProps={helperTextProps}
         fullWidth

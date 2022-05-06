@@ -1,5 +1,4 @@
 import * as React from "react";
-import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
@@ -11,6 +10,7 @@ import { useAppDispatch, useSESelector } from "ducks/hooks";
 import { useEffect, useState } from "react";
 import { setDialog } from "ducks/reducers/dialog";
 import { theme } from "globalStyle/theme";
+import { LoadingButton } from "@mui/lab";
 
 export const CustomTransition = React.forwardRef(
   (
@@ -22,19 +22,31 @@ export const CustomTransition = React.forwardRef(
 );
 
 export type DialogProps = {
-  onAccept?: () => void;
+  onAccept?: () => Promise<void>;
   onDismiss?: () => void;
-  close: () => void;
+  onClose?: () => void;
   title: string | null;
   text?: string;
   acceptText?: string;
   dismissText?: string;
   Content?: React.ReactElement;
+  acceptDisabled?: boolean;
+  loading?: boolean;
 };
 
 export const DialogCustom: React.FC = () => {
-  const { onAccept, onDismiss, title, text, acceptText, dismissText, Content } =
-    useSESelector((state) => state.dialog);
+  const {
+    onAccept,
+    onDismiss,
+    onClose,
+    title,
+    text,
+    acceptText,
+    dismissText,
+    Content,
+    acceptDisabled,
+    loading,
+  } = useSESelector((state) => state.dialog);
   const [open, setIsOpen] = useState(false);
   const dispatch = useAppDispatch();
 
@@ -45,6 +57,7 @@ export const DialogCustom: React.FC = () => {
   const close = () => {
     setIsOpen(false);
     dispatch(setDialog({ title: null }));
+    onClose && onClose();
   };
 
   return (
@@ -74,17 +87,19 @@ export const DialogCustom: React.FC = () => {
             justifyContent: "center",
           }}
         >
-          <Button
+          <LoadingButton
+            loading={loading}
+            disabled={acceptDisabled}
             size="small"
             variant="contained"
             onClick={() => {
-              onAccept && onAccept();
-              close();
+              onAccept ? onAccept().then(() => close()) : close();
             }}
           >
             {acceptText || "Да"}
-          </Button>
-          <Button
+          </LoadingButton>
+          <LoadingButton
+            loading={loading}
             size="small"
             variant="contained"
             onClick={() => {
@@ -93,7 +108,7 @@ export const DialogCustom: React.FC = () => {
             }}
           >
             {dismissText || "Нет"}
-          </Button>
+          </LoadingButton>
         </DialogActions>
       )}
     </Dialog>

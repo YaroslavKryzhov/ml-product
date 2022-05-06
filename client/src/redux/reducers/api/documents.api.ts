@@ -10,12 +10,17 @@ const buildFileForm = (file: File) => {
   return form;
 };
 
+enum Tags {
+  documents = "documents",
+}
+
 export const documentsApi = createApi({
   reducerPath: "documentsApi",
   baseQuery: fetchBaseQuery({
     baseUrl: ROUTES.DOCUMENTS.BASE,
     prepareHeaders: addAuthHeader,
   }),
+  tagTypes: [Tags.documents],
   endpoints: (builder) => ({
     document: builder.query<Document, string>({
       query: (filename) => ({
@@ -32,6 +37,7 @@ export const documentsApi = createApi({
         method: "POST",
         body: buildFileForm(file),
       }),
+      invalidatesTags: [Tags.documents],
     }),
     deleteDocument: builder.mutation<string, string>({
       query: (filename) => ({
@@ -59,6 +65,7 @@ export const documentsApi = createApi({
       query: () => ({
         url: ROUTES.DOCUMENTS.ALL,
       }),
+      providesTags: [Tags.documents],
     }),
     downloadDocument: builder.query<string, string>({
       query: (filename) => ({
@@ -103,5 +110,5 @@ export const documentsApi = createApi({
   }),
 });
 
-export const { useAllDocumentsQuery } = documentsApi;
+export const { useAllDocumentsQuery, usePostDocumentMutation } = documentsApi;
 export default documentsApi.reducer;

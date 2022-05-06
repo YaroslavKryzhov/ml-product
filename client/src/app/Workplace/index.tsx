@@ -55,7 +55,7 @@ export const Workplace: React.FC = () => {
               dispatch(
                 setDialog({
                   text: "Вы действительно хотите выйти?",
-                  onAccept: () => dispatch(logout()),
+                  onAccept: async () => void dispatch(logout()),
                   title: "Выход",
                 })
               )

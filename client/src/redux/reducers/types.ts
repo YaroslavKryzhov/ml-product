@@ -34,10 +34,6 @@ export type DecodedToken = {
   exp: number;
 };
 
-export type DocumentsSlice = {
-  page: DocumentPage;
-};
-
 export type AuthPayload = { username: string; password: string };
 
 export type RegisterPayload = {};
