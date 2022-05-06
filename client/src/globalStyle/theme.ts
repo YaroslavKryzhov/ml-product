@@ -1,14 +1,16 @@
-import { createTheme, Theme, ThemeOptions } from "@mui/material/styles";
+import { createTheme, ThemeOptions } from "@mui/material/styles";
 
 declare module "@mui/material/styles" {
   interface Theme {
     additional: {
       borderWidth: number;
+      timeFormat: string;
     };
   }
   interface ThemeOptions {
     additional: {
       borderWidth: number;
+      timeFormat: string;
     };
   }
 }
@@ -30,7 +32,7 @@ const themeOptions: ThemeOptions = {
   shape: {
     borderRadius: 4,
   },
-  additional: { borderWidth: 1 },
+  additional: { borderWidth: 1, timeFormat: "DD.MM.YYYY (HH:mm)" },
 };
 
 export const theme = createTheme(themeOptions);

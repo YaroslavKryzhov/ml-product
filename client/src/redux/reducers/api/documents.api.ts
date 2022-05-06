@@ -45,6 +45,7 @@ export const documentsApi = createApi({
         params: { filename },
         method: "DELETE",
       }),
+      invalidatesTags: [Tags.documents],
     }),
     infoDocument: builder.query<DocumentInfo, string>({
       query: (filename) => ({
@@ -110,5 +111,9 @@ export const documentsApi = createApi({
   }),
 });
 
-export const { useAllDocumentsQuery, usePostDocumentMutation } = documentsApi;
+export const {
+  useAllDocumentsQuery,
+  usePostDocumentMutation,
+  useDeleteDocumentMutation,
+} = documentsApi;
 export default documentsApi.reducer;

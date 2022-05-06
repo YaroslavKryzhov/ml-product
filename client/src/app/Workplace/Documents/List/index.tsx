@@ -1,10 +1,11 @@
 import { Box, Button } from "@mui/material";
 import { nanoid } from "@reduxjs/toolkit";
 import { MenuContext } from "app/Workplace";
-import { TableFix } from "app/Workplace/common/Table";
-import { useAppDispatch, useSESelector } from "ducks/hooks";
+import { compareDate, TableFix } from "app/Workplace/common/Table";
+import { useAppDispatch } from "ducks/hooks";
 import {
   useAllDocumentsQuery,
+  useDeleteDocumentMutation,
   usePostDocumentMutation,
 } from "ducks/reducers/api/documents.api";
 import { setDialog, setDialogLoading } from "ducks/reducers/dialog";
@@ -14,21 +15,39 @@ import {
 } from "ducks/reducers/documents";
 import { store } from "ducks/store";
 import { theme } from "globalStyle/theme";
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { DocumentDrop } from "./DropFileDialog";
+import moment from "moment";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import { ActionIconSx } from "app/Workplace/common/Table/components/Body";
+
+enum Columns {
+  upload = "upload_date",
+  change = "change_date",
+  name = "name",
+}
 
 const columns = [
   {
     Header: "Название",
-    accessor: "name",
+    accessor: Columns.name,
   },
   {
     Header: "Загружено",
-    accessor: "upload_date",
+    accessor: Columns.upload,
+    sortType: compareDate(Columns.upload),
   },
   {
     Header: "Изменено",
-    accessor: "change_date",
+    accessor: Columns.change,
+    sortType: compareDate(Columns.change),
   },
 ];
 
@@ -36,11 +55,9 @@ export const DocumentsList: React.FC = () => {
   const { data: allDocuments } = useAllDocumentsQuery();
   const { menuOpened } = useContext(MenuContext);
   const [forceResize, setForceResize] = useState("");
-  const { customFileName, selectedFile } = useSESelector(
-    (state) => state.documents
-  );
   const dispatch = useAppDispatch();
   const [postDoc] = usePostDocumentMutation();
+  const [deleteDoc] = useDeleteDocumentMutation();
 
   useEffect(() => {
     const interval = setInterval(() => setForceResize(nanoid()), 0);
@@ -80,6 +97,16 @@ export const DocumentsList: React.FC = () => {
     );
   }, []);
 
+  const convertedData = useMemo(
+    () =>
+      allDocuments?.map((x) => ({
+        ...x,
+        upload_date: moment(x.upload_date).format(theme.additional.timeFormat),
+        change_date: moment(x.change_date).format(theme.additional.timeFormat),
+      })) || [],
+    [allDocuments]
+  );
+
   return (
     <Box>
       <Button
@@ -91,9 +118,35 @@ export const DocumentsList: React.FC = () => {
         Загрузить CSV
       </Button>
       <TableFix
+        rowActions={[
+          {
+            name: "Edit",
+            icon: <EditIcon sx={ActionIconSx} />,
+            onClick: () => {},
+          },
+          {
+            name: "Delete",
+            icon: <DeleteIcon sx={{ ActionIconSx }} />,
+            onClick: (row) =>
+              dispatch(
+                setDialog({
+                  title: "Удаление",
+                  text: `Вы действительно хотите удалить файл ${
+                    row.values[Columns.name]
+                  }?`,
+                  onAccept: async () => {
+                    dispatch(setDialogLoading(true));
+                    await deleteDoc(row.values[Columns.name]);
+                    dispatch(setDialogLoading(false));
+                  },
+                })
+              ),
+          },
+        ]}
+        rowHoverable
         forceResize={forceResize}
         resizable
-        data={allDocuments || []}
+        data={convertedData}
         columns={columns}
         sortBy={[
           { id: columns[2].accessor, desc: true },

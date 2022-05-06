@@ -1,4 +1,5 @@
-import { Column } from "react-table";
+import React from "react";
+import { Column, Row } from "react-table";
 
 export enum Fixed {
   left = "left",
@@ -8,7 +9,14 @@ export enum Fixed {
 
 export type CustomColumn = Column & Partial<{ fixed: Fixed }>;
 
+export type RowAction = {
+  icon: React.ReactElement;
+  name: string;
+  onClick: (row: Row) => void;
+};
+
 export type TableFixProps = {
+  rowHoverable?: boolean;
   forceResize?: any;
   data: object[];
   columns: Column[];
@@ -22,4 +30,5 @@ export type TableFixProps = {
   columnOrder?: string[]; // add id to column and place Array<ColumnId> here, to correct columns ordering
   tableMaxHeight?: string;
   resizable?: boolean;
+  rowActions?: RowAction[];
 };

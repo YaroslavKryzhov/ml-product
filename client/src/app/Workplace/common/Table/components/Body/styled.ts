@@ -2,13 +2,27 @@ import styled from "@emotion/styled";
 import { theme } from "globalStyle/theme";
 import { Fixed } from "../../types";
 
-export const StyledTableRow = styled.tr``;
+export const StyledTableRow = styled.tr<{ rowHoverable?: boolean }>`
+  .speedDial {
+    display: none;
+  }
+  cursor: pointer;
+  ${(rowHoverable) =>
+    rowHoverable &&
+    `&:hover{
+    background-color: ${theme.palette.divider};
+    .speedDial{
+      display: flex;
+    }
+  }`}
+`;
 
 export const StyledTableCell = styled.td<{
   fixed?: Fixed;
 }>`
   overflow: hidden;
   text-overflow: ellipsis;
+  position: relative;
   white-space: nowrap;
   padding: ${theme.spacing(2)} ${theme.spacing(3)};
   display: flex;

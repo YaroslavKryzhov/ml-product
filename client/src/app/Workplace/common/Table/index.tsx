@@ -7,6 +7,7 @@ import {
   useTable,
   Hooks,
   usePagination,
+  Row,
 } from "react-table";
 import { StyledTable } from "./styled";
 import TableFixBody from "./components/Body";
@@ -14,8 +15,11 @@ import TableFixHeader from "./components/Header";
 import { DEFAULT_COLUMN } from "./const";
 import { TableFixProps } from "./types";
 import { Paper } from "@mui/material";
-
+import moment from "moment";
 export * as TableFixTypes from "./types";
+
+export const compareDate = (field: string) => (a: Row, b: Row) =>
+  moment(a.values[field]).utc() > moment(b.values[field]).utc() ? 1 : -1;
 
 const View: React.FC<TableFixProps> = (props) => {
   const [colsWithWidth, setColsWithWidth] = useState(props.columns);
@@ -85,6 +89,8 @@ const View: React.FC<TableFixProps> = (props) => {
           headerGroups={headerGroups}
         />
         <TableFixBody
+          rowActions={props.rowActions}
+          rowHoverable={props.rowHoverable}
           page={page}
           prepareRow={prepareRow}
           tableBodyProps={getTableBodyProps()}
