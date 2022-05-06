@@ -45,7 +45,9 @@ const TableFixBody: React.FC<TableFixBodyProps> = ({
         );
       })
     ) : (
-      <EmptyData>Данных не найдено</EmptyData>
+      <tr>
+        <EmptyData>Данных не найдено</EmptyData>
+      </tr>
     )}
   </TableFixContainer>
 );

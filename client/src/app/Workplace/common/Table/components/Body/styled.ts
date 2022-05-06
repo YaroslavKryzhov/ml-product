@@ -37,11 +37,11 @@ export const StyledTableCell = styled.td<{
   }
 `;
 
-export const EmptyData = styled.div`
+export const EmptyData = styled.td`
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: center !important;
   padding: ${theme.spacing(3)} 0;
 `;
 

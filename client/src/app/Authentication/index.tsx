@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
 import React, { useCallback, useEffect, useState } from "react";
-import { CenteredContainer } from "components/muiOverride";
+import { CenteredContainer, helperTextProps } from "components/muiOverride";
 import { useAppDispatch, useSESelector } from "ducks/hooks";
 import {
   changeAuthPage,
@@ -28,14 +28,6 @@ import { theme } from "globalStyle/theme";
 
 const PASSWORD_ERROR =
   "Пароль должен содержать минимум 6 символов, хотя бы 1 заглавную, 1 строчную букву латиницей, 1 цифру, 1 спецсимвол _.-!=";
-
-const helperTextProps = {
-  sx: {
-    mt: 0,
-    fontSize: theme.typography.caption.fontSize,
-    lineHeight: theme.typography.caption.fontSize,
-  },
-};
 
 const passwordValidate = (val: string) =>
   !val.length ||

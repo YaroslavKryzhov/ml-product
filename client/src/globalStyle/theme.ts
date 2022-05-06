@@ -27,6 +27,9 @@ const themeOptions: ThemeOptions = {
     fontFamily: "Jost",
     htmlFontSize: 20,
   },
+  shape: {
+    borderRadius: 4,
+  },
   additional: { borderWidth: 1 },
 };
 

@@ -2,9 +2,12 @@ import { Box, Button } from "@mui/material";
 import { nanoid } from "@reduxjs/toolkit";
 import { MenuContext } from "app/Workplace";
 import { TableFix } from "app/Workplace/common/Table";
+import { useAppDispatch } from "ducks/hooks";
 import { useAllDocumentsQuery } from "ducks/reducers/api/documents.api";
+import { setDialog } from "ducks/reducers/dialog";
 import { theme } from "globalStyle/theme";
 import React, { useContext, useEffect, useState } from "react";
+import { DocumentDrop } from "./DropFileDialog";
 
 const columns = [
   {
@@ -25,6 +28,8 @@ export const DocumentsList: React.FC = () => {
   const { data: allDocuments } = useAllDocumentsQuery();
   const { menuOpened } = useContext(MenuContext);
   const [forceResize, setForceResize] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     const interval = setInterval(() => setForceResize(nanoid()), 0);
@@ -39,7 +44,23 @@ export const DocumentsList: React.FC = () => {
 
   return (
     <Box>
-      <Button variant="contained" fullWidth sx={{ mb: theme.spacing(2) }}>
+      <Button
+        onClick={() =>
+          dispatch(
+            setDialog({
+              title: "Загрузка файла",
+              Content: <DocumentDrop onFile={setSelectedFile} />,
+              onAccept: () => {},
+              onDismiss: () => setSelectedFile(null),
+              acceptText: "Загрузить",
+              dismissText: "Отменить",
+            })
+          )
+        }
+        variant="contained"
+        fullWidth
+        sx={{ mb: theme.spacing(2) }}
+      >
         Загрузить CSV
       </Button>
       <TableFix

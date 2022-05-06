@@ -10,10 +10,9 @@ import { TransitionProps } from "@mui/material/transitions";
 import { useAppDispatch, useSESelector } from "ducks/hooks";
 import { useEffect, useState } from "react";
 import { setDialog } from "ducks/reducers/dialog";
-import { Typography } from "@mui/material";
 import { theme } from "globalStyle/theme";
 
-const Transition = React.forwardRef(
+export const CustomTransition = React.forwardRef(
   (
     props: TransitionProps & {
       children: React.ReactElement;
@@ -30,10 +29,11 @@ export type DialogProps = {
   text?: string;
   acceptText?: string;
   dismissText?: string;
+  Content?: React.ReactElement;
 };
 
 export const DialogCustom: React.FC = () => {
-  const { onAccept, onDismiss, title, text, acceptText, dismissText } =
+  const { onAccept, onDismiss, title, text, acceptText, dismissText, Content } =
     useSESelector((state) => state.dialog);
   const [open, setIsOpen] = useState(false);
   const dispatch = useAppDispatch();
@@ -50,39 +50,52 @@ export const DialogCustom: React.FC = () => {
   return (
     <Dialog
       open={open}
-      TransitionComponent={Transition}
+      TransitionComponent={CustomTransition}
       keepMounted
       onClose={close}
-      sx={{ "& .MuiDialog-paper": { p: theme.spacing(2) } }}
+      sx={{ "& .MuiDialog-paper": { p: theme.spacing(1) } }}
     >
-      <DialogTitle>
-        <Typography variant="h5">{title}</Typography>
+      <DialogTitle sx={{ textAlign: "center" }} variant="h5">
+        {title}
       </DialogTitle>
-      <DialogContent sx={{ mb: theme.spacing(2), mt: theme.spacing(2) }}>
-        <DialogContentText>{text}</DialogContentText>
+      <DialogContent>
+        {Content || (
+          <DialogContentText sx={{ textAlign: "center" }}>
+            {text}
+          </DialogContentText>
+        )}
       </DialogContent>
-      <DialogActions>
-        <Button
-          size="small"
-          variant="contained"
-          onClick={() => {
-            onDismiss && onDismiss();
-            close();
+      {(onDismiss || onAccept) && (
+        <DialogActions
+          sx={{
+            mr: theme.spacing(2),
+            ml: theme.spacing(2),
+            gap: theme.spacing(2),
+            justifyContent: "center",
           }}
         >
-          {dismissText || "Нет"}
-        </Button>
-        <Button
-          size="small"
-          variant="contained"
-          onClick={() => {
-            onAccept && onAccept();
-            close();
-          }}
-        >
-          {acceptText || "Да"}
-        </Button>
-      </DialogActions>
+          <Button
+            size="small"
+            variant="contained"
+            onClick={() => {
+              onAccept && onAccept();
+              close();
+            }}
+          >
+            {acceptText || "Да"}
+          </Button>
+          <Button
+            size="small"
+            variant="contained"
+            onClick={() => {
+              onDismiss && onDismiss();
+              close();
+            }}
+          >
+            {dismissText || "Нет"}
+          </Button>
+        </DialogActions>
+      )}
     </Dialog>
   );
 };
