@@ -12,6 +12,7 @@ const buildFileForm = (file: File) => {
 
 enum Tags {
   documents = "documents",
+  singleDocument = "singleDocument",
 }
 
 export const documentsApi = createApi({
@@ -20,7 +21,7 @@ export const documentsApi = createApi({
     baseUrl: ROUTES.DOCUMENTS.BASE,
     prepareHeaders: addAuthHeader,
   }),
-  tagTypes: [Tags.documents],
+  tagTypes: Object.values(Tags),
   endpoints: (builder) => ({
     document: builder.query<Document, string>({
       query: (filename) => ({
@@ -52,6 +53,7 @@ export const documentsApi = createApi({
         url: ROUTES.DOCUMENTS.INFO,
         params: { filename },
       }),
+      providesTags: [Tags.singleDocument],
     }),
     pipelineDocument: builder.query<
       string,
@@ -83,6 +85,7 @@ export const documentsApi = createApi({
         params: { filename, new_filename },
         method: "PUT",
       }),
+      invalidatesTags: [Tags.documents],
     }),
     columnsDocument: builder.query<string, string>({
       query: (filename) => ({
@@ -116,5 +119,6 @@ export const {
   usePostDocumentMutation,
   useDeleteDocumentMutation,
   useInfoDocumentQuery,
+  useRenameDocumentMutation,
 } = documentsApi;
 export default documentsApi.reducer;
