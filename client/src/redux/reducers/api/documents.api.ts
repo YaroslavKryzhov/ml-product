@@ -115,5 +115,6 @@ export const {
   useAllDocumentsQuery,
   usePostDocumentMutation,
   useDeleteDocumentMutation,
+  useInfoDocumentQuery,
 } = documentsApi;
 export default documentsApi.reducer;

@@ -4,16 +4,17 @@ export enum AuthPage {
 }
 
 export enum AppPage {
-  Authentication = "Authentication",
-  Workplace = "Workplace",
+  Authentication = "authentication",
+  Workplace = "workplace",
 }
 
 export enum WorkPage {
-  Documents = "Documents",
+  Documents = "documents",
 }
 
 export enum DocumentPage {
-  List = "List",
+  List = "list",
+  Single = "single",
 }
 
 export type AuthSlice = {
@@ -24,7 +25,6 @@ export type AuthSlice = {
 };
 
 export type MainSlice = {
-  page: AppPage;
   workPage: WorkPage;
   isBlockingLoader: boolean;
 };

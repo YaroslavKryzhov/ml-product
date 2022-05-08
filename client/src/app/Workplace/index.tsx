@@ -18,14 +18,15 @@ import {
 } from "./styled";
 import { ListItemButton } from "@mui/material";
 import { always, cond, equals, T } from "ramda";
-import { DocumentPage, WorkPage } from "ducks/reducers/types";
+import { AppPage, DocumentPage, WorkPage } from "ducks/reducers/types";
 import { Documents } from "./Documents";
 import { changeDocumentPage } from "ducks/reducers/documents";
 import { useAppDispatch, useSESelector } from "ducks/hooks";
-import { changeWorkPage, logout } from "ducks/reducers/main";
+import { changeWorkPage } from "ducks/reducers/main";
 import { WorkPageHeader } from "./common/WorkPageHeader";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { setDialog } from "ducks/reducers/dialog";
+import { useNavigate } from "react-router-dom";
 
 export const MenuContext = createContext({ menuOpened: false });
 
@@ -33,6 +34,7 @@ export const Workplace: React.FC = () => {
   const [open, setOpen] = React.useState(false);
   const { workPage } = useSESelector((state) => state.main);
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   return (
     <Box sx={{ display: "flex" }}>
@@ -55,7 +57,10 @@ export const Workplace: React.FC = () => {
               dispatch(
                 setDialog({
                   text: "Вы действительно хотите выйти?",
-                  onAccept: async () => void dispatch(logout()),
+                  onAccept: async () => {
+                    localStorage.authToken = "";
+                    navigate(`/${AppPage.Authentication}`);
+                  },
                   title: "Выход",
                 })
               )

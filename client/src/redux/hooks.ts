@@ -5,6 +5,7 @@ import {
   useSelector,
 } from "react-redux";
 import type { RootState, AppDispatch } from "./store";
+import { createBrowserHistory } from "history";
 
 // Use throughout your app instead of plain `useDispatch` and `useSelector`
 export const useAppDispatch = () => useDispatch<AppDispatch>();
@@ -14,3 +15,5 @@ export const useSESelector = <T extends unknown>(
 ): T => {
   return useSelector(selector, shallowEqual);
 };
+
+export const browserHistory = createBrowserHistory();

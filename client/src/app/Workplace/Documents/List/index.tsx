@@ -4,6 +4,7 @@ import { MenuContext } from "app/Workplace";
 import { compareDate, TableFix } from "app/Workplace/common/Table";
 import { useAppDispatch } from "ducks/hooks";
 import {
+  documentsApi,
   useAllDocumentsQuery,
   useDeleteDocumentMutation,
   usePostDocumentMutation,
@@ -11,6 +12,7 @@ import {
 import { setDialog, setDialogLoading } from "ducks/reducers/dialog";
 import {
   changeCustomFileName,
+  changeDocumentPage,
   changeSelectedFile,
 } from "ducks/reducers/documents";
 import { store } from "ducks/store";
@@ -27,6 +29,7 @@ import moment from "moment";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import { ActionIconSx } from "app/Workplace/common/Table/components/Body";
+import { DocumentPage } from "ducks/reducers/types";
 
 enum Columns {
   upload = "upload_date",
@@ -122,7 +125,15 @@ export const DocumentsList: React.FC = () => {
           {
             name: "Edit",
             icon: <EditIcon sx={ActionIconSx} />,
-            onClick: () => {},
+            onClick: (row) => {
+              documentsApi.util.updateQueryData(
+                "infoDocument",
+                row.values.name,
+                (draft) => (draft.name = row.values.name)
+              );
+
+              dispatch(changeDocumentPage(DocumentPage.Single));
+            },
           },
           {
             name: "Delete",

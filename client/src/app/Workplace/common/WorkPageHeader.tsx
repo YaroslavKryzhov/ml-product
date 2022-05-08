@@ -1,73 +1,63 @@
 import { Breadcrumbs, Divider, Typography } from "@mui/material";
-import React, { useCallback } from "react";
+import React from "react";
 import HomeIcon from "@mui/icons-material/Home";
 import { StyledBreadcrumb } from "./styled";
-import { useAppDispatch, useSESelector } from "ducks/hooks";
+import { useSESelector } from "ducks/hooks";
 import { DocumentPage, WorkPage } from "ducks/reducers/types";
 import { changeWorkPage } from "ducks/reducers/main";
 import { changeDocumentPage } from "ducks/reducers/documents";
 import { theme } from "globalStyle/theme";
+import { store } from "ducks/store";
+import { always } from "ramda";
 
-const pageToHeader = {
-  [WorkPage.Documents]: "Документы",
+const goHome = () => {
+  store.dispatch(changeWorkPage(WorkPage.Documents));
+  store.dispatch(changeDocumentPage(DocumentPage.List));
 };
 
-const documentsPageToHeader = { [DocumentPage.List]: "Все" };
+const pathItem = (label: () => string, action: () => void) => ({
+  label,
+  action,
+});
 
-const subpageToHeader = (workPage: WorkPage, subPage: DocumentPage) => {
-  if (workPage === WorkPage.Documents) {
-    return documentsPageToHeader[subPage];
-  }
-
-  return "";
-};
-
-const subpageToListener = (
-  dispatch: ReturnType<typeof useAppDispatch>,
-  workPage: WorkPage,
-  subPage: DocumentPage
-) => {
-  if (workPage === WorkPage.Documents) {
-    if (subPage === DocumentPage.List) {
-      return () => {
-        dispatch(changeDocumentPage(DocumentPage.List));
-      };
+const PathMap = {
+  base: pathItem(always("Домой"), goHome),
+  [WorkPage.Documents]: pathItem(always("Документы"), goHome),
+  [DocumentPage.List]: pathItem(always("Все"), goHome),
+  [DocumentPage.Single]: pathItem(
+    () => "ToDO" || "Документ",
+    () => {
+      store.dispatch(changeWorkPage(WorkPage.Documents));
+      store.dispatch(changeDocumentPage(DocumentPage.Single));
     }
-  }
+  ),
 };
 
 export const WorkPageHeader: React.FC = () => {
   const { workPage } = useSESelector((state) => state.main);
   const { page: documentsPage } = useSESelector((state) => state.documents);
+  const path: (keyof typeof PathMap)[] = ["base", workPage, DocumentPage.List];
 
-  const dispatch = useAppDispatch();
-  const goHome = useCallback((workPage: WorkPage) => {
-    dispatch(changeWorkPage(workPage));
-    dispatch(changeDocumentPage(DocumentPage.List));
-  }, []);
+  if (documentsPage === DocumentPage.Single) {
+    path.push(DocumentPage.Single);
+  }
 
   return (
     <>
       <Typography sx={{ mb: theme.spacing(2) }} variant="h5">
-        {pageToHeader[workPage]}
+        {documentsPage === DocumentPage.List && "Документы"}
+        {documentsPage === DocumentPage.Single && "ToDO"}
       </Typography>
       <Breadcrumbs sx={{ mb: theme.spacing(2) }}>
-        <StyledBreadcrumb
-          color="secondary"
-          label="Домой"
-          icon={<HomeIcon fontSize="small" />}
-          onClick={() => goHome(WorkPage.Documents)}
-        />
-        <StyledBreadcrumb
-          color="secondary"
-          label={pageToHeader[workPage]}
-          onClick={() => goHome(workPage)}
-        />
-        <StyledBreadcrumb
-          color="secondary"
-          onClick={subpageToListener(dispatch, workPage, documentsPage)}
-          label={subpageToHeader(workPage, documentsPage)}
-        />
+        {path.map((x) => (
+          <StyledBreadcrumb
+            key={x}
+            color="secondary"
+            label={PathMap[x]?.label()}
+            icon={x === "base" ? <HomeIcon fontSize="small" /> : undefined}
+            onClick={PathMap[x]?.action}
+          />
+        ))}
       </Breadcrumbs>
       <Divider sx={{ mb: theme.spacing(3) }} />
     </>

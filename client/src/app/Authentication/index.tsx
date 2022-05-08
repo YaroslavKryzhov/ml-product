@@ -18,32 +18,28 @@ import {
   changePasswordInput,
   changeSecondPasswordInput,
 } from "ducks/reducers/auth";
-import { AuthPage } from "ducks/reducers/types";
+import { AppPage, AuthPage } from "ducks/reducers/types";
 import EmailValidator from "email-validator";
 import {
   useAuthMutation,
   useRegisterMutation,
 } from "ducks/reducers/api/auth.api";
 import { theme } from "globalStyle/theme";
-
-const PASSWORD_ERROR =
-  "Пароль должен содержать минимум 6 символов, хотя бы 1 заглавную, 1 строчную букву латиницей, 1 цифру, 1 спецсимвол _.-!=";
-
-const passwordValidate = (val: string) =>
-  !val.length ||
-  (/^[a-zA-Z0-9_.!=-]{6,}$/g.test(val) &&
-    /[a-z]/g.test(val) &&
-    /[A-Z]/g.test(val) &&
-    /[0-9]/g.test(val) &&
-    /[_.!=-]/g.test(val));
+import { PASSWORD_ERROR } from "./const";
+import { passwordValidate } from "./helpers";
+import { useNavigate } from "react-router-dom";
 
 export const Authentication: React.FC = () => {
   const { passwordInput, emailInput, page, secondPasswordInput } =
     useSESelector((state) => state.auth);
   const dispatch = useAppDispatch();
   const [isFirstTry, setIsFirstTry] = useState(true);
+  const navigate = useNavigate();
   const [register, { isLoading: isRegLoading }] = useRegisterMutation();
-  const [auth, { isLoading: isAuthLoading }] = useAuthMutation();
+  const [
+    auth,
+    { isLoading: isAuthLoading, isSuccess: isAuthSuccess, data: authResponse },
+  ] = useAuthMutation();
   const isLoading = isRegLoading || isAuthLoading;
 
   const isEmailError = !EmailValidator.validate(emailInput);
@@ -75,6 +71,14 @@ export const Authentication: React.FC = () => {
   ]);
 
   useEffect(() => setIsFirstTry(true), [page]);
+
+  useEffect(() => {
+    if (isAuthSuccess) {
+      localStorage.authToken = authResponse?.access_token;
+
+      navigate(`/${AppPage.Workplace}`);
+    }
+  }, [isAuthSuccess, authResponse]);
 
   return (
     <Stack direction="column" sx={{ height: "100vh" }}>
