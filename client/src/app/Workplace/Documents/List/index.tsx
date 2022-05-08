@@ -6,6 +6,7 @@ import { pathify, useAppDispatch } from "ducks/hooks";
 import {
   useAllDocumentsQuery,
   useDeleteDocumentMutation,
+  useDownloadDocumentMutation,
   usePostDocumentMutation,
 } from "ducks/reducers/api/documents.api";
 import { setDialog, setDialogLoading } from "ducks/reducers/dialog";
@@ -29,6 +30,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import { ActionIconSx } from "app/Workplace/common/Table/components/Body";
 import { useNavigate } from "react-router-dom";
 import { WorkPageHeader } from "app/Workplace/common/WorkPageHeader";
+import DownloadIcon from "@mui/icons-material/Download";
 
 enum Columns {
   upload = "upload_date",
@@ -60,6 +62,7 @@ export const DocumentsList: React.FC = () => {
   const dispatch = useAppDispatch();
   const [postDoc] = usePostDocumentMutation();
   const [deleteDoc] = useDeleteDocumentMutation();
+  const [downloadDoc] = useDownloadDocumentMutation();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -125,14 +128,21 @@ export const DocumentsList: React.FC = () => {
         <TableFix
           rowActions={[
             {
-              name: "Edit",
+              name: "Редактировать",
               icon: <EditIcon sx={ActionIconSx} />,
               onClick: (row) => {
                 navigate(pathify([row.values.name], { relative: true }));
               },
             },
             {
-              name: "Delete",
+              name: "Скачать",
+              icon: <DownloadIcon sx={ActionIconSx} />,
+              onClick: (row) => {
+                downloadDoc(row.values[Columns.name]);
+              },
+            },
+            {
+              name: "Удалить",
               icon: <DeleteIcon sx={{ ActionIconSx }} />,
               onClick: (row) =>
                 dispatch(

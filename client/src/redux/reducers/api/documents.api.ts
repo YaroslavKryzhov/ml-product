@@ -70,11 +70,33 @@ export const documentsApi = createApi({
       }),
       providesTags: [Tags.documents],
     }),
-    downloadDocument: builder.query<string, string>({
-      query: (filename) => ({
-        url: ROUTES.DOCUMENTS.DOWNLOAD,
-        params: { filename },
-      }),
+    downloadDocument: builder.mutation<null, string>({
+      async queryFn(filename) {
+        const res = await fetch(
+          `${ROUTES.DOCUMENTS.BASE}${ROUTES.DOCUMENTS.DOWNLOAD}?filename=${filename}`,
+          {
+            headers: { Authorization: `Bearer ${localStorage.authToken}` },
+          }
+        );
+
+        const blob = await res.blob();
+
+        console.log(res);
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+
+        return {
+          data: null,
+          meta: null,
+        };
+      },
     }),
     renameDocument: builder.mutation<
       string,
@@ -120,5 +142,6 @@ export const {
   useDeleteDocumentMutation,
   useInfoDocumentQuery,
   useRenameDocumentMutation,
+  useDownloadDocumentMutation,
 } = documentsApi;
 export default documentsApi.reducer;
