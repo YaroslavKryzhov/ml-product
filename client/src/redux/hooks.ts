@@ -17,3 +17,26 @@ export const useSESelector = <T extends unknown>(
 };
 
 export const browserHistory = createBrowserHistory();
+
+export enum Matcher {
+  start = "start",
+  end = "end",
+  contains = "contains",
+}
+
+export const pathify = (
+  slices: string[],
+  opts?: { matcher?: Matcher; relative?: boolean }
+) =>
+  (opts && opts.relative ? "." : "") +
+  (opts &&
+  opts.matcher &&
+  [Matcher.contains, Matcher.end].includes(opts.matcher)
+    ? "*/"
+    : "/") +
+  slices.join("/") +
+  (opts &&
+  opts.matcher &&
+  [Matcher.contains, Matcher.start].includes(opts.matcher)
+    ? "/*"
+    : "");

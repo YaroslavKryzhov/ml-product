@@ -9,16 +9,25 @@ import {
   Toolbar,
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
-import React, { useCallback, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useState,
+} from "react";
 import { CenteredContainer, helperTextProps } from "components/muiOverride";
-import { useAppDispatch, useSESelector } from "ducks/hooks";
+import { pathify, useAppDispatch, useSESelector } from "ducks/hooks";
 import {
-  changeAuthPage,
   changeEmail,
   changePasswordInput,
   changeSecondPasswordInput,
 } from "ducks/reducers/auth";
-import { AppPage, AuthPage } from "ducks/reducers/types";
+import {
+  AppPage,
+  AuthPage,
+  DocumentPage,
+  WorkPage,
+} from "ducks/reducers/types";
 import EmailValidator from "email-validator";
 import {
   useAuthMutation,
@@ -27,15 +36,18 @@ import {
 import { theme } from "globalStyle/theme";
 import { PASSWORD_ERROR } from "./const";
 import { passwordValidate } from "./helpers";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export const Authentication: React.FC = () => {
-  const { passwordInput, emailInput, page, secondPasswordInput } =
-    useSESelector((state) => state.auth);
+  const { passwordInput, emailInput, secondPasswordInput } = useSESelector(
+    (state) => state.auth
+  );
   const dispatch = useAppDispatch();
   const [isFirstTry, setIsFirstTry] = useState(true);
+  const { pathname } = useLocation();
   const navigate = useNavigate();
-  const [register, { isLoading: isRegLoading }] = useRegisterMutation();
+  const [register, { isLoading: isRegLoading, isSuccess: isRegSuccess }] =
+    useRegisterMutation();
   const [
     auth,
     { isLoading: isAuthLoading, isSuccess: isAuthSuccess, data: authResponse },
@@ -43,11 +55,13 @@ export const Authentication: React.FC = () => {
   const isLoading = isRegLoading || isAuthLoading;
 
   const isEmailError = !EmailValidator.validate(emailInput);
+  const isReg = !!pathname.match(
+    pathify([AppPage.Authentication, AuthPage.register])
+  );
   const isPasswordError =
-    (page === AuthPage.register && !passwordInput) ||
-    !passwordValidate(passwordInput);
+    (isReg && !passwordInput) || !passwordValidate(passwordInput);
   const isSecondPasswordError =
-    page === AuthPage.register &&
+    isReg &&
     (!secondPasswordInput ||
       !passwordValidate(secondPasswordInput) ||
       secondPasswordInput !== passwordInput);
@@ -56,13 +70,12 @@ export const Authentication: React.FC = () => {
     setIsFirstTry(false);
     if (isEmailError || isPasswordError || isSecondPasswordError) return;
 
-    if (page === AuthPage.auth)
-      auth({ username: emailInput, password: passwordInput });
+    if (!isReg) auth({ username: emailInput, password: passwordInput });
     else register({ email: emailInput, password: passwordInput });
   }, [
     auth,
     register,
-    page,
+    pathname,
     isEmailError,
     isPasswordError,
     isSecondPasswordError,
@@ -70,15 +83,23 @@ export const Authentication: React.FC = () => {
     passwordInput,
   ]);
 
-  useEffect(() => setIsFirstTry(true), [page]);
+  useEffect(() => setIsFirstTry(true), [isReg]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isAuthSuccess) {
       localStorage.authToken = authResponse?.access_token;
 
-      navigate(`/${AppPage.Workplace}`);
+      navigate(
+        pathify([AppPage.Workplace, WorkPage.Documents, DocumentPage.List])
+      );
     }
   }, [isAuthSuccess, authResponse]);
+
+  useLayoutEffect(() => {
+    if (isRegSuccess) {
+      navigate(pathify([AuthPage.auth], { relative: true }));
+    }
+  }, [isRegSuccess]);
 
   return (
     <Stack direction="column" sx={{ height: "100vh" }}>
@@ -94,14 +115,11 @@ export const Authentication: React.FC = () => {
             }}
             clickable
             onClick={() => {
-              dispatch(
-                page === AuthPage.auth
-                  ? changeAuthPage(AuthPage.register)
-                  : changeAuthPage(AuthPage.auth)
-              );
+              isReg ? navigate(AuthPage.auth) : navigate(AuthPage.register);
+
               setIsFirstTry(true);
             }}
-            label={page === AuthPage.auth ? "Регистрация" : "Авторизация"}
+            label={isReg ? "Авторизация" : "Регистрация"}
           />
         </Toolbar>
       </AppBar>
@@ -130,7 +148,7 @@ export const Authentication: React.FC = () => {
               FormHelperTextProps={helperTextProps}
               sx={{ mb: theme.spacing(2) }}
             />
-            {page === AuthPage.register && (
+            {isReg && (
               <TextField
                 size="small"
                 type="password"
@@ -151,7 +169,7 @@ export const Authentication: React.FC = () => {
                 }
               />
             )}
-            {page === AuthPage.auth && (
+            {!isReg && (
               <FormControlLabel
                 control={<Checkbox size="small" />}
                 label="Запомнить меня"
@@ -167,7 +185,7 @@ export const Authentication: React.FC = () => {
                 mt: theme.spacing(2),
               }}
             >
-              {page === AuthPage.auth ? "Войти" : "Зарегистрироваться"}
+              {isReg ? "Зарегистрироваться" : "Войти"}
             </LoadingButton>
           </Stack>
         </Paper>

@@ -17,22 +17,23 @@ import {
   MENU_WIDTH,
 } from "./styled";
 import { ListItemButton } from "@mui/material";
-import { always, cond, equals, T } from "ramda";
-import { AppPage, DocumentPage, WorkPage } from "ducks/reducers/types";
+import {
+  AppPage,
+  AuthPage,
+  DocumentPage,
+  WorkPage,
+} from "ducks/reducers/types";
 import { Documents } from "./Documents";
-import { changeDocumentPage } from "ducks/reducers/documents";
-import { useAppDispatch, useSESelector } from "ducks/hooks";
-import { changeWorkPage } from "ducks/reducers/main";
-import { WorkPageHeader } from "./common/WorkPageHeader";
+import { Matcher, pathify, useAppDispatch } from "ducks/hooks";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { setDialog } from "ducks/reducers/dialog";
 import { useNavigate } from "react-router-dom";
+import { Route, Routes } from "react-router";
 
 export const MenuContext = createContext({ menuOpened: false });
 
 export const Workplace: React.FC = () => {
   const [open, setOpen] = React.useState(false);
-  const { workPage } = useSESelector((state) => state.main);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
@@ -59,7 +60,7 @@ export const Workplace: React.FC = () => {
                   text: "Вы действительно хотите выйти?",
                   onAccept: async () => {
                     localStorage.authToken = "";
-                    navigate(`/${AppPage.Authentication}`);
+                    navigate(pathify([AppPage.Authentication, AuthPage.auth]));
                   },
                   title: "Выход",
                 })
@@ -113,8 +114,11 @@ export const Workplace: React.FC = () => {
             </ListItemIcon>
             <ListItemText
               onClick={() => {
-                dispatch(changeWorkPage(WorkPage.Documents));
-                dispatch(changeDocumentPage(DocumentPage.List));
+                navigate(
+                  pathify([WorkPage.Documents, DocumentPage.List], {
+                    relative: true,
+                  })
+                );
               }}
               primary="Документы"
               primaryTypographyProps={{ variant: "body2", color: "secondary" }}
@@ -124,11 +128,14 @@ export const Workplace: React.FC = () => {
       </Drawer>
       <Main open={open}>
         <MenuContext.Provider value={{ menuOpened: open }}>
-          <WorkPageHeader />
-          {cond<WorkPage[], JSX.Element>([
-            [equals<WorkPage>(WorkPage.Documents), always(<Documents />)],
-            [T, always(<Documents />)],
-          ])(workPage)}
+          <Routes>
+            <Route
+              path={pathify([WorkPage.Documents], {
+                matcher: Matcher.start,
+              })}
+              element={<Documents />}
+            />
+          </Routes>
         </MenuContext.Provider>
       </Main>
     </Box>

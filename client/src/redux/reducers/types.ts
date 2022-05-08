@@ -18,14 +18,12 @@ export enum DocumentPage {
 }
 
 export type AuthSlice = {
-  page: AuthPage;
   passwordInput: string;
   secondPasswordInput: string;
   emailInput: string;
 };
 
 export type MainSlice = {
-  workPage: WorkPage;
   isBlockingLoader: boolean;
 };
 

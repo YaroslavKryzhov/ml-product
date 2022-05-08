@@ -1,6 +1,6 @@
 import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 import { Authentication } from "./app/Authentication";
-import { useSESelector } from "ducks/hooks";
+import { Matcher, pathify, useSESelector } from "ducks/hooks";
 import { AppPage } from "ducks/reducers/types";
 import React from "react";
 import "./globalStyle/app.scss";
@@ -39,10 +39,17 @@ const App: React.FC = () => {
 
           <Routes>
             <Route
-              path={`/${AppPage.Authentication}`}
+              path={pathify([AppPage.Authentication], {
+                matcher: Matcher.start,
+              })}
               element={<Authentication />}
             />
-            <Route path={`/${AppPage.Workplace}`} element={<Workplace />} />
+            <Route
+              path={pathify([AppPage.Workplace], {
+                matcher: Matcher.start,
+              })}
+              element={<Workplace />}
+            />
             <Route path="/" element={<Authentication />} />
           </Routes>
         </Box>

@@ -2,9 +2,8 @@ import { Box, Button } from "@mui/material";
 import { nanoid } from "@reduxjs/toolkit";
 import { MenuContext } from "app/Workplace";
 import { compareDate, TableFix } from "app/Workplace/common/Table";
-import { useAppDispatch } from "ducks/hooks";
+import { pathify, useAppDispatch } from "ducks/hooks";
 import {
-  documentsApi,
   useAllDocumentsQuery,
   useDeleteDocumentMutation,
   usePostDocumentMutation,
@@ -12,7 +11,6 @@ import {
 import { setDialog, setDialogLoading } from "ducks/reducers/dialog";
 import {
   changeCustomFileName,
-  changeDocumentPage,
   changeSelectedFile,
 } from "ducks/reducers/documents";
 import { store } from "ducks/store";
@@ -29,7 +27,8 @@ import moment from "moment";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import { ActionIconSx } from "app/Workplace/common/Table/components/Body";
-import { DocumentPage } from "ducks/reducers/types";
+import { useNavigate } from "react-router-dom";
+import { WorkPageHeader } from "app/Workplace/common/WorkPageHeader";
 
 enum Columns {
   upload = "upload_date",
@@ -61,6 +60,7 @@ export const DocumentsList: React.FC = () => {
   const dispatch = useAppDispatch();
   const [postDoc] = usePostDocumentMutation();
   const [deleteDoc] = useDeleteDocumentMutation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const interval = setInterval(() => setForceResize(nanoid()), 0);
@@ -111,60 +111,57 @@ export const DocumentsList: React.FC = () => {
   );
 
   return (
-    <Box>
-      <Button
-        onClick={setDialogProps}
-        variant="contained"
-        fullWidth
-        sx={{ mb: theme.spacing(2) }}
-      >
-        Загрузить CSV
-      </Button>
-      <TableFix
-        rowActions={[
-          {
-            name: "Edit",
-            icon: <EditIcon sx={ActionIconSx} />,
-            onClick: (row) => {
-              documentsApi.util.updateQueryData(
-                "infoDocument",
-                row.values.name,
-                (draft) => (draft.name = row.values.name)
-              );
-
-              dispatch(changeDocumentPage(DocumentPage.Single));
+    <>
+      <WorkPageHeader />
+      <Box>
+        <Button
+          onClick={setDialogProps}
+          variant="contained"
+          fullWidth
+          sx={{ mb: theme.spacing(2) }}
+        >
+          Загрузить CSV
+        </Button>
+        <TableFix
+          rowActions={[
+            {
+              name: "Edit",
+              icon: <EditIcon sx={ActionIconSx} />,
+              onClick: (row) => {
+                navigate(pathify([row.values.name], { relative: true }));
+              },
             },
-          },
-          {
-            name: "Delete",
-            icon: <DeleteIcon sx={{ ActionIconSx }} />,
-            onClick: (row) =>
-              dispatch(
-                setDialog({
-                  title: "Удаление",
-                  text: `Вы действительно хотите удалить файл ${
-                    row.values[Columns.name]
-                  }?`,
-                  onAccept: async () => {
-                    dispatch(setDialogLoading(true));
-                    await deleteDoc(row.values[Columns.name]);
-                    dispatch(setDialogLoading(false));
-                  },
-                })
-              ),
-          },
-        ]}
-        rowHoverable
-        forceResize={forceResize}
-        resizable
-        data={convertedData}
-        columns={columns}
-        sortBy={[
-          { id: columns[2].accessor, desc: true },
-          { id: columns[0].accessor, desc: true },
-          { id: columns[1].accessor, desc: true },
-        ]}
-      />
-    </Box>
+            {
+              name: "Delete",
+              icon: <DeleteIcon sx={{ ActionIconSx }} />,
+              onClick: (row) =>
+                dispatch(
+                  setDialog({
+                    title: "Удаление",
+                    text: `Вы действительно хотите удалить файл ${
+                      row.values[Columns.name]
+                    }?`,
+                    onAccept: async () => {
+                      dispatch(setDialogLoading(true));
+                      await deleteDoc(row.values[Columns.name]);
+                      dispatch(setDialogLoading(false));
+                    },
+                  })
+                ),
+            },
+          ]}
+          rowHoverable
+          forceResize={forceResize}
+          resizable
+          data={convertedData}
+          columns={columns}
+          sortBy={[
+            { id: columns[2].accessor, desc: true },
+            { id: columns[0].accessor, desc: true },
+            { id: columns[1].accessor, desc: true },
+          ]}
+        />
+      </Box>
+    </>
   );
 };
