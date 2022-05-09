@@ -1,0 +1,19 @@
+{
+    "plugins": [
+        "@emotion",
+        [
+            "module-resolver",
+            {
+                "root": [
+                    "./"
+                ],
+                "alias": {
+                    "ducks": "./src/redux",
+                    "components": "./src/components",
+                    "globalStyle": "./src/globalStyle",
+                    "app": "./src/app",
+                }
+            }
+        ]
+    ]
+}
