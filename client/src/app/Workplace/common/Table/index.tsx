@@ -1,4 +1,10 @@
-import React, { useLayoutEffect, useRef, useState } from "react";
+import React, {
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   useColumnOrder,
   useFlexLayout,
@@ -16,6 +22,9 @@ import { DEFAULT_COLUMN } from "./const";
 import { TableFixProps } from "./types";
 import { Paper } from "@mui/material";
 import moment from "moment";
+import { MenuContext } from "app/Workplace";
+import { theme } from "globalStyle/theme";
+import { nanoid } from "@reduxjs/toolkit";
 export * as TableFixTypes from "./types";
 
 export const compareDate = (field: string) => (a: Row, b: Row) =>
@@ -24,6 +33,8 @@ export const compareDate = (field: string) => (a: Row, b: Row) =>
 const View: React.FC<TableFixProps> = (props) => {
   const [colsWithWidth, setColsWithWidth] = useState(props.columns);
   const containerRef = useRef<HTMLTableElement | null>(null);
+  const { menuOpened } = useContext(MenuContext);
+  const [forceResize, setForceResize] = useState("");
 
   const hooks: (<D extends object = {}>(hooks: Hooks<D>) => void)[] = [
     useFlexLayout,
@@ -50,6 +61,7 @@ const View: React.FC<TableFixProps> = (props) => {
     );
 
   useLayoutEffect(() => {
+    // toDO throttle and sum chnges
     const handler = () => {
       if (containerRef.current) {
         const calcHeaders: any[] = headerGroups.length
@@ -74,7 +86,20 @@ const View: React.FC<TableFixProps> = (props) => {
     window.addEventListener("resize", handler);
 
     return () => window.addEventListener("resize", handler);
-  }, [props.columns.toString(), props.forceResize]);
+  }, [props.columns.toString(), forceResize]);
+
+  useEffect(() => {
+    if (!props.forceResize) return;
+
+    const interval = setInterval(() => setForceResize(nanoid()), 0);
+
+    setTimeout(
+      () => clearInterval(interval),
+      theme.transitions.duration.complex
+    );
+
+    return () => clearInterval(interval);
+  }, [menuOpened, props.forceResize]);
 
   return (
     <Paper elevation={3} ref={containerRef}>

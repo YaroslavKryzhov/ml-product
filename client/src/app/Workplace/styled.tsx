@@ -14,6 +14,8 @@ export const Main = styled("main", {
 })<{
   open?: boolean;
 }>(({ theme, open }) => ({
+  display: "flex",
+  flexDirection: "column",
   flexGrow: 1,
   marginTop: BAR_HEIGHT,
   height: `calc(100vh - ${BAR_HEIGHT}px)`,

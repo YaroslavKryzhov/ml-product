@@ -4,7 +4,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import { theme } from "globalStyle/theme";
 import styled from "@emotion/styled";
 import { useRenameDocumentMutation } from "ducks/reducers/api/documents.api";
-import { useNavigate } from "react-router-dom";
 
 const EditableLabel = styled.label<{ editMode?: boolean }>`
   &:focus-visible {
@@ -18,7 +17,6 @@ const EditableLabel = styled.label<{ editMode?: boolean }>`
 export const HeaderRename: React.FC<{ initName: string }> = ({ initName }) => {
   const [editMode, setEditMode] = useState(false);
   const [customName, setCustomName] = useState(initName);
-  const navigate = useNavigate();
   const inputRef = useRef<HTMLLabelElement | null>(null);
   const [rename] = useRenameDocumentMutation();
   const matchName = customName.match(/(.*)(\.csv)/);

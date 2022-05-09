@@ -13,6 +13,7 @@ const buildFileForm = (file: File) => {
 enum Tags {
   documents = "documents",
   singleDocument = "singleDocument",
+  columnMarks = "columnMarks",
 }
 
 export const documentsApi = createApi({
@@ -81,8 +82,6 @@ export const documentsApi = createApi({
 
         const blob = await res.blob();
 
-        console.log(res);
-
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.style.display = "none";
@@ -121,6 +120,7 @@ export const documentsApi = createApi({
         url: ROUTES.DOCUMENTS.COLUMN_MARKS,
         params: { filename },
       }),
+      providesTags: [Tags.columnMarks],
     }),
     changeColumnMarks: builder.mutation<
       string,
@@ -132,6 +132,7 @@ export const documentsApi = createApi({
         body,
         method: "PUT",
       }),
+      invalidatesTags: [Tags.columnMarks],
     }),
   }),
 });
@@ -143,5 +144,6 @@ export const {
   useInfoDocumentQuery,
   useRenameDocumentMutation,
   useDownloadDocumentMutation,
+  useColumnMarksDocumentQuery,
 } = documentsApi;
 export default documentsApi.reducer;
