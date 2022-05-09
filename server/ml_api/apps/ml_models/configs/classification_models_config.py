@@ -142,6 +142,19 @@ class GradientBoostingClassifierParameters(BaseModel):
     def validate_validation_fraction(cls, value):
         if value > 1 or value <= 0:
             raise ValueError("validation_fraction must be between zero and one")
+        return value        
+    
+    @validator("n_iter_no_change")
+    def validate_n_iter_no_change(cls, value):
+        if not value is None and value < 0:
+            raise ValueError('n_inter_no_change musth be non-negative.')
+        return value
+    
+    @validator("tol")
+    def validate_tol(cls, value):
+        if value < 0:
+            raise ValueError('tol musth be non-negative.')
+
         return value
 
     @validator("n_iter_no_change")
@@ -154,6 +167,7 @@ class GradientBoostingClassifierParameters(BaseModel):
     def validate_tol(cls, value):
         if value < 0:
             raise ValueError('tol must be non-negative.')
+
         return value
 
     @validator("ccp_alpha")
@@ -192,6 +206,17 @@ class BaggingClassifierParameters(BaseModel):
         if value <= 0:
             raise ValueError('max_features must be greater than zero.')
         return value
+    
+    @validator("n_jobs")
+    def validate_n_jobs(cls, value):
+        if not value is None and value <= 0 and value != -1:
+            raise ValueError('max_features must be greater than zero or equal to minus one.')
+        return value
+    
+    @validator("verbose")
+    def validate_verbose(cls, value):
+        if value < 0:
+            raise ValueError('verbose musth be non-negative.')
 
     @validator("n_jobs")
     def validate_n_jobs(cls, value):
@@ -253,7 +278,7 @@ class ExtraTreesClassifierParameters(BaseModel):
     def validate_min_weight_fraction_leaf(cls, value):
         if value <= 0:
             raise ValueError('min_weight_fraction_leaf must be greater than zero.')
-        return value
+        return value 
 
     @validator("max_leaf_nodes")
     def validate_max_leaf_nodes(cls, value):
@@ -284,6 +309,7 @@ class ExtraTreesClassifierParameters(BaseModel):
         if not value is None and value <= 0:
             raise ValueError('max_samples must be greater than zero.')
         return value
+
 
 class SGDClassifierParameters(BaseModel):
     loss: Literal['hinge', 'log', 'modified_huber', 'squared_hinge', 'perceptron', 'squared_error', 'huber', 'epsilon_insensitive', 'squared_epsilon_insensitive'] = 'hinge'
