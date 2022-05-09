@@ -72,3 +72,5 @@ export type ColumnMarksPayload = {
   categorical: string[];
   target: string;
 };
+
+export type FullDocument = { [key: string]: (string | number)[] };

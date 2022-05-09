@@ -8,8 +8,11 @@ import {
   StyledTableRow,
   EmptyData,
   TableFixContainer,
+  CellValueContainer,
 } from "./styled";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
+import { TABLE_PARTS } from "../../const";
+import { useOverflow } from "app/Workplace/common/useOverflow";
 
 type TableFixBodyProps = {
   page: Row<object>[];
@@ -59,7 +62,10 @@ const TableFixBody: React.FC<TableFixBodyProps> = ({
                   fixed={(cell.column as CustomColumn).fixed}
                   key={cellKey}
                 >
-                  <div>{cell.value}</div>
+                  <CellValueContainer>
+                    {cell.render(TABLE_PARTS.Cell)}
+                  </CellValueContainer>
+
                   {rowActions && !inx && (
                     <SpeedDial
                       className="speedDial"

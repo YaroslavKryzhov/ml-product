@@ -7,7 +7,7 @@ import { AppPage, DocumentPage, WorkPage } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
 import { always } from "ramda";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { HeaderRename } from "../Documents/Single/HeaderRename";
+import { DocHeader } from "../Documents/Single/DocHeader";
 
 const goHome = (navigate: ReturnType<typeof useNavigate>) => {
   navigate(pathify([AppPage.Workplace, WorkPage.Documents, DocumentPage.List]));
@@ -57,7 +57,7 @@ export const WorkPageHeader: React.FC = () => {
         {pathname.match(
           pathify([WorkPage.Documents, DocumentPage.List]) + "$"
         ) && "Документы"}
-        {docName && <HeaderRename initName={docName} />}
+        {docName && <DocHeader initName={docName} />}
       </Typography>
       <Breadcrumbs sx={{ mb: theme.spacing(2) }}>
         {path.map((x) => (

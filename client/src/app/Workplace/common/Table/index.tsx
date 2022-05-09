@@ -35,6 +35,7 @@ const View: React.FC<TableFixProps> = (props) => {
   const containerRef = useRef<HTMLTableElement | null>(null);
   const { menuOpened } = useContext(MenuContext);
   const [forceResize, setForceResize] = useState("");
+  const firstRender = useRef(true);
 
   const hooks: (<D extends object = {}>(hooks: Hooks<D>) => void)[] = [
     useFlexLayout,
@@ -49,7 +50,13 @@ const View: React.FC<TableFixProps> = (props) => {
       {
         columns: colsWithWidth,
         data: props.data,
-        defaultColumn: DEFAULT_COLUMN,
+        defaultColumn: {
+          width: props.defaultColumnSizing?.width || DEFAULT_COLUMN.width,
+          minWidth:
+            props.defaultColumnSizing?.minWidth || DEFAULT_COLUMN.minWidth,
+          maxWidth:
+            props.defaultColumnSizing?.maxWidth || DEFAULT_COLUMN.maxWidth,
+        },
         initialState: {
           pageSize: props.data.length || 50,
           pageIndex: 0,
@@ -71,9 +78,7 @@ const View: React.FC<TableFixProps> = (props) => {
           (acc, c) => acc + (Number(c.width) || DEFAULT_COLUMN.width),
           0
         );
-
         const contW = containerRef.current.getBoundingClientRect().width;
-
         const newColumns = calcHeaders.map((c) => ({
           ...c,
           width: (contW * (Number(c.width) || DEFAULT_COLUMN.width)) / sumWidth,
@@ -81,15 +86,14 @@ const View: React.FC<TableFixProps> = (props) => {
         setColsWithWidth(newColumns);
       }
     };
+
     handler();
-
     window.addEventListener("resize", handler);
-
     return () => window.addEventListener("resize", handler);
-  }, [props.columns.toString(), forceResize]);
+  }, [JSON.stringify(colsWithWidth), forceResize]);
 
   useEffect(() => {
-    if (!props.forceResize) return;
+    if (!props.forceResize || firstRender.current) return;
 
     const interval = setInterval(() => setForceResize(nanoid()), 0);
 
@@ -100,6 +104,10 @@ const View: React.FC<TableFixProps> = (props) => {
 
     return () => clearInterval(interval);
   }, [menuOpened, props.forceResize]);
+
+  useEffect(() => {
+    firstRender.current = false;
+  }, []);
 
   return (
     <Paper elevation={3} ref={containerRef}>

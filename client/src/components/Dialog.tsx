@@ -66,7 +66,12 @@ export const DialogCustom: React.FC = () => {
       TransitionComponent={CustomTransition}
       keepMounted
       onClose={close}
-      sx={{ "& .MuiDialog-paper": { p: theme.spacing(1) } }}
+      sx={{
+        "& .MuiDialog-paper": {
+          p: theme.spacing(1),
+          maxWidth: "100vw",
+        },
+      }}
     >
       <DialogTitle sx={{ textAlign: "center" }} variant="h5">
         {title}
@@ -87,28 +92,32 @@ export const DialogCustom: React.FC = () => {
             justifyContent: "center",
           }}
         >
-          <LoadingButton
-            loading={loading}
-            disabled={acceptDisabled}
-            size="small"
-            variant="contained"
-            onClick={() => {
-              onAccept ? onAccept().then(() => close()) : close();
-            }}
-          >
-            {acceptText || "Да"}
-          </LoadingButton>
-          <LoadingButton
-            loading={loading}
-            size="small"
-            variant="contained"
-            onClick={() => {
-              onDismiss && onDismiss();
-              close();
-            }}
-          >
-            {dismissText || "Нет"}
-          </LoadingButton>
+          {onAccept && (
+            <LoadingButton
+              loading={loading}
+              disabled={acceptDisabled}
+              size="small"
+              variant="contained"
+              onClick={() => {
+                onAccept ? onAccept().then(() => close()) : close();
+              }}
+            >
+              {acceptText || "Да"}
+            </LoadingButton>
+          )}
+          {onDismiss && (
+            <LoadingButton
+              loading={loading}
+              size="small"
+              variant="contained"
+              onClick={() => {
+                onDismiss && onDismiss();
+                close();
+              }}
+            >
+              {dismissText || "Нет"}
+            </LoadingButton>
+          )}
         </DialogActions>
       )}
     </Dialog>

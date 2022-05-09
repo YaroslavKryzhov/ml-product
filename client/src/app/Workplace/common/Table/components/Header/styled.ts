@@ -17,6 +17,9 @@ export const StyledHeadCell = styled.th<{
   borderRight?: boolean;
   borderLeft?: boolean;
 }>`
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   user-select: none;
   position: relative;
   font-weight: ${theme.typography.fontWeightBold};
@@ -53,6 +56,7 @@ export const HeadCellContent = styled.div`
   display: flex;
   align-items: center;
   width: min-content;
+  display: block;
 `;
 
 export const SortedArrowUp = styled.span<{ isFlipped?: boolean }>`
