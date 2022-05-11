@@ -1,15 +1,19 @@
 import styled from "@emotion/styled";
 import { Box, Stack } from "@mui/material";
 import { theme } from "globalStyle/theme";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import SwipeLeftIcon from "@mui/icons-material/SwipeLeft";
 
-const HeapBox = styled.div<{ isHeap?: boolean }>`
+const HeapBox = styled.div<{ isHeap?: boolean; isDragHover?: boolean }>`
   width: 300px;
   height: ${({ isHeap }) => (isHeap ? 240 : 120)}px;
-  border: ${theme.additional.borderWidth}px solid ${theme.palette.primary.light};
+  border: ${theme.additional.borderWidth}px solid ${theme.palette.primary.main};
   border-radius: ${theme.shape.borderRadiusRound}px;
   overflow: hidden;
+  opacity: ${({ isDragHover }) => (isDragHover ? 0.5 : 1)};
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 `;
 
 const HeapName = styled.div`
@@ -22,7 +26,8 @@ const HeapName = styled.div`
 
 const ItemWrapper = styled.div<{
   isDragging?: boolean;
-  draggingRect?: DOMRect | null;
+  fixedX?: number;
+  fixedY?: number;
 }>`
   border-radius: ${theme.shape.borderRadiusRound}px;
   padding: 0 ${theme.spacing(1)};
@@ -37,15 +42,13 @@ const ItemWrapper = styled.div<{
   position: relative;
   cursor: pointer;
   user-select: none;
+  height: min-content;
   opacity: ${({ isDragging }) => (isDragging ? 0.3 : 1)};
 
-  ${({ draggingRect }) =>
-    draggingRect &&
-    `
-    position: absolute;
-    left: ${draggingRect.left}px;
-    top: ${draggingRect.top}px;
-  `}
+  ${({ fixedX, fixedY }) =>
+    fixedX &&
+    fixedY &&
+    `position: fixed; pointer-events: none; left: ${fixedX}px; top: ${fixedY}px;`}
 
   &:hover {
     background-color: ${theme.palette.primary.light};
@@ -60,6 +63,7 @@ const HeapElements = styled.div`
   width: 100%;
   justify-content: center;
   overflow-y: scroll;
+  flex-grow: 1;
 `;
 
 type CategoryItem = { value: string; label: string };
@@ -69,65 +73,118 @@ export type Distribution = {
   [key: string]: string[];
 };
 
-type CurrentDraging = {
-  item: CategoryItem;
-  startPosition: { x: number; y: number };
-};
+type Coords = { x: number; y: number };
 
 const Item: React.FC<
   CategoryItem & {
-    onElementDragStart?: (val: CurrentDraging | null) => void;
-    draggingRect?: DOMRect | null;
+    onElementDragStart?: (val: CategoryItem | null) => void;
+    onItemDrop: (val: CategoryItem) => void;
   }
 > = (props) => {
-  const ref = useRef<HTMLDivElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [initialRectCoords, setInitialRectCoords] = useState<DOMRect | null>(
+    null
+  );
+  const [initialMouseCoords, setInitialMouseCoords] = useState<Coords | null>(
+    null
+  );
+  const [mouseCoords, setMouseCoords] = useState<Coords | null>(null);
 
   useEffect(() => {
     if (isDragging) {
       const handler = () => {
         setIsDragging(false);
+        props.onItemDrop(props);
         props.onElementDragStart && props.onElementDragStart(null);
+        setInitialRectCoords(null);
+        setInitialMouseCoords(null);
+        setMouseCoords(null);
+      };
+
+      const moveHandler = (e: MouseEvent) => {
+        setMouseCoords({ x: e.clientX, y: e.clientY });
       };
 
       window.addEventListener("mouseup", handler);
+      window.addEventListener("mousemove", moveHandler);
 
-      return () => window.removeEventListener("mouseup", handler);
+      return () => {
+        window.removeEventListener("mouseup", handler);
+        window.removeEventListener("mousemove", moveHandler);
+      };
     }
-  }, [props.onElementDragStart, isDragging]);
+  }, [isDragging, props]);
 
   return (
-    <ItemWrapper
-      draggingRect={props.draggingRect}
-      isDragging={isDragging}
-      ref={ref}
-      onMouseDown={(e: React.MouseEvent) => {
-        setIsDragging(true);
-        props.onElementDragStart &&
-          props.onElementDragStart({
-            item: { value: props.value, label: props.label },
-            startPosition: { x: e.clientX, y: e.clientY },
-          });
-      }}
-    >
-      {props.label}
-      <SwipeLeftIcon sx={{ fontSize: theme.typography.caption.fontSize }} />
-    </ItemWrapper>
+    <>
+      <ItemWrapper
+        isDragging={isDragging}
+        onMouseDown={(e: React.MouseEvent) => {
+          setInitialRectCoords(e.currentTarget.getBoundingClientRect());
+          setInitialMouseCoords({ x: e.clientX, y: e.clientY });
+          setIsDragging(true);
+          props.onElementDragStart && props.onElementDragStart(props);
+        }}
+      >
+        {props.label}
+        <SwipeLeftIcon sx={{ fontSize: theme.typography.caption.fontSize }} />
+      </ItemWrapper>
+      {isDragging && mouseCoords && (
+        <ItemWrapper
+          fixedX={
+            initialRectCoords!.left! +
+            (mouseCoords!.x! - initialMouseCoords!.x!)
+          }
+          fixedY={
+            initialRectCoords!.top! + (mouseCoords!.y! - initialMouseCoords!.y!)
+          }
+        >
+          {props.label}
+          <SwipeLeftIcon sx={{ fontSize: theme.typography.caption.fontSize }} />
+        </ItemWrapper>
+      )}
+    </>
   );
 };
 
 const CategoryHeap: React.FC<
   CategoryItem & {
     items: string[];
-    onElementDragStart: (val: CurrentDraging | null) => void;
+    draggingItem: CategoryItem | null;
+    onElementDragStart: (val: CategoryItem | null) => void;
+    onElementDraggedInto: (category: string | null) => void;
+    onItemDrop: (val: CategoryItem) => void;
   }
-> = ({ value, label, items, onElementDragStart }) => {
+> = ({
+  value,
+  label,
+  items,
+  onElementDragStart,
+  draggingItem,
+  onElementDraggedInto,
+  onItemDrop,
+}) => {
+  const [isMouseOver, setIsMouseOver] = useState(false);
+
   return (
-    <HeapBox isHeap={value === "heap"}>
+    <HeapBox
+      isDragHover={
+        isMouseOver &&
+        !!draggingItem?.value &&
+        !items.includes(draggingItem.value)
+      }
+      onMouseOver={() => {
+        draggingItem && onElementDraggedInto(value);
+        setIsMouseOver(true);
+      }}
+      onMouseLeave={() => setIsMouseOver(false)}
+      isHeap={value === "heap"}
+    >
       <HeapName>{label}</HeapName>
       <HeapElements>
         {items.map((item) => (
           <Item
+            onItemDrop={onItemDrop}
             key={item}
             onElementDragStart={onElementDragStart}
             label={item}
@@ -145,35 +202,31 @@ export const Categorizer: React.FC<{
   distributionChange: (newDistribution: Distribution) => void;
   heap: { label: string; value: string };
 }> = ({ categories, distribution, distributionChange, heap }) => {
-  const [draggingEl, setDraggingEl] = useState<CurrentDraging | null>(null);
-  const [draggingRect, setDraggingRect] = useState<DOMRect | null>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      console.log(e);
-      setDraggingRect(
-        (prev) =>
-          prev && {
-            ...prev,
-            left: e.clientX,
-            top: e.clientY,
-          }
-      );
-
-      //  setDraggingRect(draggingEl.ref.current.getBoundingClientRect());
-
-      window.addEventListener("mousemove", handler);
-
-      return () => window.removeEventListener("mousemove", handler);
-    };
-  }, [draggingEl]);
+  const [draggingItem, setDraggingItem] = useState<CategoryItem | null>(null);
+  const [draggingCategory, setDraggingCategory] = useState<string | null>(null);
 
   const onElementDragStart = useCallback(
-    (val: CurrentDraging | null) => setDraggingEl(val),
+    (val: CategoryItem | null) => setDraggingItem(val),
     []
   );
 
-  console.log(draggingRect);
+  const onItemDrop = useCallback(
+    (val: CategoryItem) =>
+      draggingCategory &&
+      !distribution[draggingCategory].includes(val.value) &&
+      distributionChange(
+        Object.fromEntries(
+          Object.entries(distribution).map(([key, values]) =>
+            values.includes(val.value)
+              ? [key, values.filter((x) => x !== val.value)]
+              : key === draggingCategory
+              ? [key, [...values, val.value]]
+              : [key, values]
+          )
+        ) as Distribution
+      ),
+    [draggingCategory, distribution]
+  );
 
   return (
     <Stack
@@ -185,6 +238,9 @@ export const Categorizer: React.FC<{
       }}
     >
       <CategoryHeap
+        onElementDraggedInto={setDraggingCategory}
+        onItemDrop={onItemDrop}
+        draggingItem={draggingItem}
         onElementDragStart={onElementDragStart}
         {...heap}
         items={distribution.heap}
@@ -200,6 +256,9 @@ export const Categorizer: React.FC<{
       >
         {categories.map((category) => (
           <CategoryHeap
+            onItemDrop={onItemDrop}
+            onElementDraggedInto={setDraggingCategory}
+            draggingItem={draggingItem}
             onElementDragStart={onElementDragStart}
             key={category.value}
             {...category}
@@ -207,7 +266,6 @@ export const Categorizer: React.FC<{
           />
         ))}
       </Box>
-      {draggingEl && <Item {...draggingEl.item} draggingRect={draggingRect} />}
     </Stack>
   );
 };
