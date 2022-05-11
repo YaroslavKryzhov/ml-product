@@ -23,6 +23,7 @@ import { ActionIconSx } from "app/Workplace/common/Table/components/Body";
 import { useNavigate } from "react-router-dom";
 import { WorkPageHeader } from "app/Workplace/common/WorkPageHeader";
 import DownloadIcon from "@mui/icons-material/Download";
+import { T } from "ramda";
 
 enum Columns {
   upload = "upload_date",
@@ -136,6 +137,7 @@ export const DocumentsList: React.FC = () => {
                       await deleteDoc(row.values[Columns.name]);
                       dispatch(setDialogLoading(false));
                     },
+                    onDismiss: T,
                   })
                 ),
             },

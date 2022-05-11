@@ -1,16 +1,12 @@
-import { Box, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 import { WorkPageHeader } from "app/Workplace/common/WorkPageHeader";
 import { CenteredContainer } from "components/muiOverride";
-import { useSESelector } from "ducks/hooks";
-import {
-  useColumnMarksDocumentQuery,
-  useInfoDocumentQuery,
-} from "ducks/reducers/api/documents.api";
+import { useInfoDocumentQuery } from "ducks/reducers/api/documents.api";
 import { theme } from "globalStyle/theme";
 import React from "react";
 import { BallTriangle } from "react-loader-spinner";
 import { useParams } from "react-router-dom";
-import { Categorizer } from "./Categorizer";
+import { ColumnMarks } from "./ColumnMarks";
 import { MainInfo } from "./MainInfo";
 import { Pipeline } from "./Pipeline";
 
@@ -19,14 +15,12 @@ export const DocumentSingle: React.FC = () => {
   const { data: docInfo, isLoading: infoLoading } = useInfoDocumentQuery(
     docName!
   );
-  const { data: columnMarks, isLoading: marksLoading } =
-    useColumnMarksDocumentQuery(docName!);
 
   return (
     <>
       <WorkPageHeader />
       <Stack sx={{ flexGrow: 1 }}>
-        {infoLoading || marksLoading ? (
+        {infoLoading ? (
           <CenteredContainer sx={{ flexGrow: 1 }}>
             <BallTriangle
               color={theme.palette.primary.main}
@@ -40,7 +34,7 @@ export const DocumentSingle: React.FC = () => {
             {!!docInfo?.pipeline?.length && (
               <Pipeline steps={docInfo.pipeline} />
             )}
-            {columnMarks && <Categorizer />}
+            {docName && <ColumnMarks />}
           </>
         )}
       </Stack>

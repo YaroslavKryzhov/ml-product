@@ -14,12 +14,14 @@ export const StyledBox = styled.div`
   &:first-child {
     background-color: ${theme.palette.primary.dark};
     color: ${theme.palette.primary.contrastText};
-    border-radius: 30px 0 0 30px;
+    border-radius: ${theme.shape.borderRadiusRound}px 0 0
+      ${theme.shape.borderRadiusRound}px;
   }
   &:last-child {
     border: ${theme.additional.borderWidth}px solid
       ${theme.palette.primary.dark};
-    border-radius: 0 30px 30px 0;
+    border-radius: 0 ${theme.shape.borderRadiusRound}px
+      ${theme.shape.borderRadiusRound}px 0;
   }
 `;
 

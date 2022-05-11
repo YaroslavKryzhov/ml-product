@@ -113,14 +113,14 @@ export const documentsApi = createApi({
       }),
       invalidatesTags: [Tags.documents],
     }),
-    columnsDocument: builder.query<string, string>({
+    columnsDocument: builder.query<string[], string>({
       query: (filename) => ({
         url: ROUTES.DOCUMENTS.COLUMNS,
         params: { filename },
       }),
     }),
 
-    columnMarksDocument: builder.query<string, string>({
+    columnMarksDocument: builder.query<ColumnMarksPayload, string>({
       query: (filename) => ({
         url: ROUTES.DOCUMENTS.COLUMN_MARKS,
         params: { filename },
@@ -151,5 +151,6 @@ export const {
   useDownloadDocumentMutation,
   useColumnMarksDocumentQuery,
   useDocumentQuery,
+  useColumnsDocumentQuery,
 } = documentsApi;
 export default documentsApi.reducer;

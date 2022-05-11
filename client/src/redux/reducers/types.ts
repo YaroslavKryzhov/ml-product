@@ -67,10 +67,16 @@ export type DocumentInfoShort = {
   change_date: string;
 };
 
+export enum CategoryMark {
+  numeric = "numeric",
+  categorical = "categorical",
+  target = "target",
+}
+
 export type ColumnMarksPayload = {
-  numeric: string[];
-  categorical: string[];
-  target: string;
+  [CategoryMark.numeric]: string[];
+  [CategoryMark.categorical]: string[];
+  [CategoryMark.target]: string;
 };
 
 export type FullDocument = { [key: string]: (string | number)[] };

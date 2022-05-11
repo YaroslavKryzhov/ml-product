@@ -29,6 +29,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import { setDialog } from "ducks/reducers/dialog";
 import { useNavigate } from "react-router-dom";
 import { Route, Routes } from "react-router";
+import { T } from "ramda";
 
 export const MenuContext = createContext({ menuOpened: false });
 
@@ -63,6 +64,7 @@ export const Workplace: React.FC = () => {
                     navigate(pathify([AppPage.Authentication, AuthPage.auth]));
                   },
                   title: "Выход",
+                  onDismiss: T,
                 })
               )
             }
@@ -128,14 +130,23 @@ export const Workplace: React.FC = () => {
       </Drawer>
       <Main open={open}>
         <MenuContext.Provider value={{ menuOpened: open }}>
-          <Routes>
-            <Route
-              path={pathify([WorkPage.Documents], {
-                matcher: Matcher.start,
-              })}
-              element={<Documents />}
-            />
-          </Routes>
+          <Box
+            sx={{
+              maxWidth: 1480,
+              marginLeft: "auto",
+              marginRight: "auto",
+              width: "100%",
+            }}
+          >
+            <Routes>
+              <Route
+                path={pathify([WorkPage.Documents], {
+                  matcher: Matcher.start,
+                })}
+                element={<Documents />}
+              />
+            </Routes>
+          </Box>
         </MenuContext.Provider>
       </Main>
     </Box>

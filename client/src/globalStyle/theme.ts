@@ -6,11 +6,19 @@ declare module "@mui/material/styles" {
       borderWidth: number;
       timeFormat: string;
     };
+    shape: {
+      borderRadius: number;
+      borderRadiusRound: number;
+    };
   }
   interface ThemeOptions {
     additional: {
       borderWidth: number;
       timeFormat: string;
+    };
+    shape: {
+      borderRadiusRound: number;
+      borderRadius: number;
     };
   }
 }
@@ -22,6 +30,7 @@ const themeOptions: ThemeOptions = {
     },
     secondary: {
       main: "#f6f8fa",
+      light: "rgb(238 245 249);",
     },
   },
   typography: {
@@ -31,6 +40,7 @@ const themeOptions: ThemeOptions = {
   },
   shape: {
     borderRadius: 4,
+    borderRadiusRound: 30,
   },
   additional: { borderWidth: 1, timeFormat: "DD.MM.YYYY (HH:mm)" },
 };

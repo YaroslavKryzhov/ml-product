@@ -55,7 +55,7 @@ export const Pipeline: React.FC<{ steps: string[] }> = ({ steps }) => {
           width: steps.length * 200,
           border: `${theme.additional.borderWidth}px solid ${theme.palette.primary.main}`,
           p: theme.spacing(1),
-          borderRadius: "30px",
+          borderRadius: `${theme.shape.borderRadiusRound}px`,
         }}
         alternativeLabel
         connector={<ColorlibConnector />}
