@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from ml_api.common import config
 from ml_api.apps.documents.routers import documents_crud_router, documents_method_router
-from ml_api.apps.users.routers import fastapi_users, auth_backend, users_router
+from ml_api.apps.users.routers import users_router
 from ml_api.apps.ml_models.routers import models_router
 
 
@@ -26,15 +26,3 @@ app.include_router(documents_crud_router)
 app.include_router(documents_method_router)
 app.include_router(users_router)
 app.include_router(models_router)
-
-app.include_router(
-    fastapi_users.get_auth_router(auth_backend),
-    prefix="/auth/jwt",
-    tags=["Auth"],
-)
-
-app.include_router(
-    fastapi_users.get_register_router(),
-    prefix="/auth",
-    tags=["Auth"],
-)

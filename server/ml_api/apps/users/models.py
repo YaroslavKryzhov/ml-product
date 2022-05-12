@@ -1,9 +1,9 @@
-from fastapi_users.db import SQLAlchemyBaseUserTable
+from fastapi_users.db import SQLAlchemyBaseUserTableUUID
 from ml_api.common.database.base_model import Base
 from sqlalchemy.orm import relationship
 
 
-class User(Base, SQLAlchemyBaseUserTable):
+class User(SQLAlchemyBaseUserTableUUID, Base):
     #
     # __tablename__ = "user"
     #

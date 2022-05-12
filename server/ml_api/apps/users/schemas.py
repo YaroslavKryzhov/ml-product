@@ -1,17 +1,11 @@
-from fastapi_users import models
+import uuid
+
+from fastapi_users import schemas
 
 
-class User(models.BaseUser):
+class UserRead(schemas.BaseUser[uuid.UUID]):
     pass
 
 
-class UserCreate(models.BaseUserCreate):
-    pass
-
-
-class UserUpdate(models.BaseUserUpdate):
-    pass
-
-
-class UserDB(User, models.BaseUserDB):
+class UserCreate(schemas.BaseUserCreate):
     pass
