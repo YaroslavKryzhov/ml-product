@@ -4,7 +4,7 @@ from unicodedata import numeric
 import pandas as pd
 import numpy as np
 from datetime import datetime
-# from outliers import smirnov_grubbs as grubbs
+from outliers import smirnov_grubbs as grubbs
 from typing import List, Union, Dict, Callable, Tuple, Optional
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
@@ -18,7 +18,6 @@ from sklearn.feature_selection import SelectKBest, f_classif, SelectFpr, SelectF
     SelectPercentile, VarianceThreshold, GenericUnivariateSelect
 from sklearn.decomposition import PCA
 from sklearn.base import BaseEstimator
-import pickle
 
 from sympy import numer, per
 
@@ -43,6 +42,24 @@ class DocumentService:
         if DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename) is not None:
             df = DocumentFileCRUD(self._user).read_document(filename)
             return df
+        return None
+
+    def get_document_stat_info(self, filename: str) -> pd.DataFrame:
+        if DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename) is not None:
+            df = DocumentFileCRUD(self._user).read_document(filename)
+            import io
+            buffer = io.StringIO()
+            df.info(buf=buffer)
+            lines = buffer.getvalue().splitlines()
+            df = (pd.DataFrame([x.split() for x in lines[5:-2]], columns=lines[3].split())
+                  .drop(['#','Count'], axis=1))
+            return df
+        return None
+
+    def get_document_stat_description(self, filename: str) -> pd.DataFrame:
+        if DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename) is not None:
+            df = DocumentFileCRUD(self._user).read_document(filename)
+            return df.describe()
         return None
 
     def read_document_info(self, filename: str):
@@ -140,6 +157,17 @@ class DocumentService:
             document_operator.outliers_one_class_svm()
         # elif function_name == 'outliers_three_sigma':
         #     document_operator.outliers_three_sigma()
+
+        elif function_name == 'fs_select_k_best':
+            document_operator.fs_select_k_best()
+            self.update_pipeline(filename, method='fs_select_k_best')
+            self.update_column_marks(filename, column_marks=document_operator.get_column_marks())
+        elif function_name == 'fs_select_fpr':
+            document_operator.fs_select_fpr()
+            self.update_pipeline(filename, method='fs_select_fpr')
+            self.update_column_marks(filename, column_marks=document_operator.get_column_marks())
+
+
 
         DocumentFileCRUD(self._user).update_document(filename, document_operator.get_df())
         self.update_change_date_in_db(filename)
@@ -262,196 +290,182 @@ class DocumentOperator:
 
     # CHAPTER 4: FEATURE SELECTION--------------------------------------------------------------------------------------
 
-    def fs_select_k_best(
-            self,
-            filename: str,
-            score_func: Callable[
-                [np.ndarray, np.ndarray],
-                Tuple[np.ndarray, np.ndarray]
-            ] = f_classif,
-            k: Union[int, str] = 10
-    ):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        target = self.read_column_marks(filename)['target']
-        X, y = document.drop(target, axis=1), document[target]
-        selector = SelectKBest(score_func=score_func, k=k)
+    def fs_select_k_best(self, k: int = 10):
+        target = self.column_marks['target']
+        X, y = self.df.drop(target, axis=1), self.df[target]
+        # TOD: add changing score function
+        # TOD: add k parameter selection
+        selector = SelectKBest(k=k)
         selector.fit(X, y)
-        document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
-        document[target] = y
-        self.update_change_date_in_db(filename)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_pipeline(filename, method='fs_select_k_best')
+        self.df = pd.DataFrame(selector.transform(X), columns=self.df.columns[selector.get_support(indices=True)])
+        self.df[target] = y
+        # TOD: add column_marks changer
 
-    def fs_select_fpr(
-            self,
-            filename: str,
-            score_func: Callable[
-                [np.ndarray, np.ndarray],
-                Tuple[np.ndarray, np.ndarray]
-            ] = f_classif,
-            alpha: Union[int, str] = 0.05
-    ):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        columns_dict = self.read_column_marks(filename)
-        x = columns_dict['numeric'].append(columns_dict['categorical'])
-        y = columns_dict['target']
-        selector = SelectFpr(score_func=score_func, alpha=alpha)
-        selector.fit(x, y)
-        document = pd.DataFrame(selector.transform(x), columns=document.columns[selector.get_support(indices=True)])
-        document['target'] = y
-        self.update_change_date_in_db(filename)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_pipeline(filename, method='fs_select_fpr')
-
-    def fs_select_fwe(
-            self,
-            filename: str,
-            score_func: Callable[
-                [np.ndarray, np.ndarray],
-                Tuple[np.ndarray, np.ndarray]
-            ] = f_classif,
-            alpha: Union[int, str] = 0.05
-    ):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        columns_dict = self.read_column_marks(filename)
-        x = columns_dict['numeric'].append(columns_dict['categorical'])
-        y = columns_dict['target']
-        selector = SelectFwe(score_func=score_func, alpha=alpha)
-        selector.fit(x, y)
-        document = pd.DataFrame(selector.transform(x), columns=document.columns[selector.get_support(indices=True)])
-        document['target'] = y
-        self.update_change_date_in_db(filename)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_pipeline(filename, method='fs_select_fwe')
-
-    def fs_select_fdr(
-            self,
-            filename: str,
-            score_func: Callable[
-                [np.ndarray, np.ndarray],
-                Tuple[np.ndarray, np.ndarray]
-            ] = f_classif,
-            alpha: Union[int, str] = 0.05
-    ):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        columns_dict = self.read_column_marks(filename)
-        x = columns_dict['numeric'].append(columns_dict['categorical'])
-        y = columns_dict['target']
-        selector = SelectFdr(score_func=score_func, alpha=alpha)
-        selector.fit(x, y)
-        document = pd.DataFrame(selector.transform(x), columns=document.columns[selector.get_support(indices=True)])
-        document['target'] = y
-        self.update_change_date_in_db(filename)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_pipeline(filename, method='fs_select_fdr')
-
-    def fs_pca(self, filename: str, n_components: Optional[int]):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        target = self.read_column_marks(filename)['target']
-        X, y = document.drop(target, axis=1), document[target]
-        if n_components is None:
-            pca = PCA().fit(X)
-            n_components = len(pca.singular_values_[pca.singular_values_ > 1])
-        document = pd.DataFrame(
-            PCA(n_components=n_components).fit_transform(X),
-            columns=[f'PC{i}' for i in range(1, n_components + 1)]
-        )
-        document[target] = y
-        self.update_change_date_in_db(filename)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-
-        self.update_pipeline(filename, method='fs_pca')
-
-    def fs_rfe(
-            self,
-            filename: str,
-            estimator: BaseEstimator = SVR(kernel='linear'),
-            n_features: Optional[int] = None,
-    ):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        target = self.read_column_marks(filename)['target']
-        X, y = document.drop(target, axis=1), document[target]
-        selector = RFE(estimator=estimator, n_features_to_select=n_features)
-        selector.fit(X, y)
-        document = pd.DataFrame(selector.transform(X), columns=X.columns[selector.support_])
-        document[target] = y
-        self.update_change_date_in_db(filename)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_pipeline(filename, method='fs_rfe')
-
-    def fs_select_from_model(
-            self,
-            filename: str,
-            estimator: BaseEstimator,
-            threshold: Optional[Union[str, float]] = None,
-            max_features: Optional[int] = None,
-    ):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        target = self.read_column_marks(filename)['target']
-        X, y = document.drop(target, axis=1), document[target]
-        selector = SelectFromModel(estimator=estimator, threshold=threshold, max_features=max_features)
-        selector.fit(X, y)
-        document = pd.DataFrame(selector.transform(X), columns=X.columns[selector.get_support()])
-        document[target] = y
-        self.update_change_date_in_db(filename)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_pipeline(filename, method='fs_select_from_model')
-
-    def fs_select_percentile(
-            self,
-            filename: str,
-            score_func: Callable[
-                [np.ndarray, np.ndarray],
-                Tuple[np.ndarray, np.ndarray]
-            ] = f_classif,
-            percentile: int = 10
-    ):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        X, y = document.drop('target', axis=1), document['target']
-        selector = SelectPercentile(score_func=score_func, percentile=percentile)
-        selector.fit(X, y)
-        document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
-        document['target'] = y
-        self.update_change_date_in_db(filename)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_pipeline(filename, method='fs_select_percentile')
-
-    def fs_variance_threshold(
-            self,
-            filename: str,
-            threshold: float = 0.0
-    ):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        X, y = document.drop('target', axis=1), document['target']
-        selector = VarianceThreshold(threshold=threshold)
-        selector.fit(X, y)
-        document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
-        document['target'] = y
-        self.update_change_date_in_db(filename)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_pipeline(filename, method='fs_variance_threshold')
-
-    def fs_generic_univariate_select(
-            self,
-            filename: str,
-            score_func: Callable[
-                [np.ndarray, np.ndarray],
-                Tuple[np.ndarray, np.ndarray]
-            ] = f_classif,
-            mode: str = 'percentile',
-            param: Union[int, float] = 1e-5
-    ):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        X, y = document.drop('target', axis=1), document['target']
-        selector = GenericUnivariateSelect(score_func=score_func, mode=mode, param=param)
-        selector.fit(X, y)
-        document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
-        document['target'] = y
-        self.update_change_date_in_db(filename)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_pipeline(filename, method='fs_generic_univariate_select')
-
-
-if __name__ == "__main__":
-    csv = pd.read_csv("/Users/kirill/Downloads/Iris.csv")
-    print(csv)
+    # def fs_select_fpr(
+    #         self,
+    #         filename: str,
+    #         score_func: Callable[
+    #             [np.ndarray, np.ndarray],
+    #             Tuple[np.ndarray, np.ndarray]
+    #         ] = f_classif,
+    #         alpha: Union[int, str] = 0.05
+    # ):
+    #     document = DocumentFileCRUD(self._user).read_document(filename)
+    #     columns_dict = self.read_column_marks(filename)
+    #     x = columns_dict['numeric'].append(columns_dict['categorical'])
+    #     y = columns_dict['target']
+    #     selector = SelectFpr(score_func=score_func, alpha=alpha)
+    #     selector.fit(x, y)
+    #     document = pd.DataFrame(selector.transform(x), columns=document.columns[selector.get_support(indices=True)])
+    #     document['target'] = y
+    #     self.update_change_date_in_db(filename)
+    #     DocumentFileCRUD(self._user).update_document(filename, document)
+    #     self.update_pipeline(filename, method='fs_select_fpr')
+    #
+    # def fs_select_fwe(
+    #         self,
+    #         filename: str,
+    #         score_func: Callable[
+    #             [np.ndarray, np.ndarray],
+    #             Tuple[np.ndarray, np.ndarray]
+    #         ] = f_classif,
+    #         alpha: Union[int, str] = 0.05
+    # ):
+    #     document = DocumentFileCRUD(self._user).read_document(filename)
+    #     columns_dict = self.read_column_marks(filename)
+    #     x = columns_dict['numeric'].append(columns_dict['categorical'])
+    #     y = columns_dict['target']
+    #     selector = SelectFwe(score_func=score_func, alpha=alpha)
+    #     selector.fit(x, y)
+    #     document = pd.DataFrame(selector.transform(x), columns=document.columns[selector.get_support(indices=True)])
+    #     document['target'] = y
+    #     self.update_change_date_in_db(filename)
+    #     DocumentFileCRUD(self._user).update_document(filename, document)
+    #     self.update_pipeline(filename, method='fs_select_fwe')
+    #
+    # def fs_select_fdr(
+    #         self,
+    #         filename: str,
+    #         score_func: Callable[
+    #             [np.ndarray, np.ndarray],
+    #             Tuple[np.ndarray, np.ndarray]
+    #         ] = f_classif,
+    #         alpha: Union[int, str] = 0.05
+    # ):
+    #     document = DocumentFileCRUD(self._user).read_document(filename)
+    #     columns_dict = self.read_column_marks(filename)
+    #     x = columns_dict['numeric'].append(columns_dict['categorical'])
+    #     y = columns_dict['target']
+    #     selector = SelectFdr(score_func=score_func, alpha=alpha)
+    #     selector.fit(x, y)
+    #     document = pd.DataFrame(selector.transform(x), columns=document.columns[selector.get_support(indices=True)])
+    #     document['target'] = y
+    #     self.update_change_date_in_db(filename)
+    #     DocumentFileCRUD(self._user).update_document(filename, document)
+    #     self.update_pipeline(filename, method='fs_select_fdr')
+    #
+    # def fs_pca(self, filename: str, n_components: Optional[int]):
+    #     document = DocumentFileCRUD(self._user).read_document(filename)
+    #     target = self.read_column_marks(filename)['target']
+    #     X, y = document.drop(target, axis=1), document[target]
+    #     if n_components is None:
+    #         pca = PCA().fit(X)
+    #         n_components = len(pca.singular_values_[pca.singular_values_ > 1])
+    #     document = pd.DataFrame(
+    #         PCA(n_components=n_components).fit_transform(X),
+    #         columns=[f'PC{i}' for i in range(1, n_components + 1)]
+    #     )
+    #     document[target] = y
+    #     self.update_change_date_in_db(filename)
+    #     DocumentFileCRUD(self._user).update_document(filename, document)
+    #
+    #     self.update_pipeline(filename, method='fs_pca')
+    #
+    # def fs_rfe(
+    #         self,
+    #         filename: str,
+    #         estimator: BaseEstimator = SVR(kernel='linear'),
+    #         n_features: Optional[int] = None,
+    # ):
+    #     document = DocumentFileCRUD(self._user).read_document(filename)
+    #     target = self.read_column_marks(filename)['target']
+    #     X, y = document.drop(target, axis=1), document[target]
+    #     selector = RFE(estimator=estimator, n_features_to_select=n_features)
+    #     selector.fit(X, y)
+    #     document = pd.DataFrame(selector.transform(X), columns=X.columns[selector.support_])
+    #     document[target] = y
+    #     self.update_change_date_in_db(filename)
+    #     DocumentFileCRUD(self._user).update_document(filename, document)
+    #     self.update_pipeline(filename, method='fs_rfe')
+    #
+    # def fs_select_from_model(
+    #         self,
+    #         filename: str,
+    #         estimator: BaseEstimator,
+    #         threshold: Optional[Union[str, float]] = None,
+    #         max_features: Optional[int] = None,
+    # ):
+    #     document = DocumentFileCRUD(self._user).read_document(filename)
+    #     target = self.read_column_marks(filename)['target']
+    #     X, y = document.drop(target, axis=1), document[target]
+    #     selector = SelectFromModel(estimator=estimator, threshold=threshold, max_features=max_features)
+    #     selector.fit(X, y)
+    #     document = pd.DataFrame(selector.transform(X), columns=X.columns[selector.get_support()])
+    #     document[target] = y
+    #     self.update_change_date_in_db(filename)
+    #     DocumentFileCRUD(self._user).update_document(filename, document)
+    #     self.update_pipeline(filename, method='fs_select_from_model')
+    #
+    # def fs_select_percentile(
+    #         self,
+    #         filename: str,
+    #         score_func: Callable[
+    #             [np.ndarray, np.ndarray],
+    #             Tuple[np.ndarray, np.ndarray]
+    #         ] = f_classif,
+    #         percentile: int = 10
+    # ):
+    #     document = DocumentFileCRUD(self._user).read_document(filename)
+    #     X, y = document.drop('target', axis=1), document['target']
+    #     selector = SelectPercentile(score_func=score_func, percentile=percentile)
+    #     selector.fit(X, y)
+    #     document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
+    #     document['target'] = y
+    #     self.update_change_date_in_db(filename)
+    #     DocumentFileCRUD(self._user).update_document(filename, document)
+    #     self.update_pipeline(filename, method='fs_select_percentile')
+    #
+    # def fs_variance_threshold(
+    #         self,
+    #         filename: str,
+    #         threshold: float = 0.0
+    # ):
+    #     document = DocumentFileCRUD(self._user).read_document(filename)
+    #     X, y = document.drop('target', axis=1), document['target']
+    #     selector = VarianceThreshold(threshold=threshold)
+    #     selector.fit(X, y)
+    #     document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
+    #     document['target'] = y
+    #     self.update_change_date_in_db(filename)
+    #     DocumentFileCRUD(self._user).update_document(filename, document)
+    #     self.update_pipeline(filename, method='fs_variance_threshold')
+    #
+    # def fs_generic_univariate_select(
+    #         self,
+    #         filename: str,
+    #         score_func: Callable[
+    #             [np.ndarray, np.ndarray],
+    #             Tuple[np.ndarray, np.ndarray]
+    #         ] = f_classif,
+    #         mode: str = 'percentile',
+    #         param: Union[int, float] = 1e-5
+    # ):
+    #     document = DocumentFileCRUD(self._user).read_document(filename)
+    #     X, y = document.drop('target', axis=1), document['target']
+    #     selector = GenericUnivariateSelect(score_func=score_func, mode=mode, param=param)
+    #     selector.fit(X, y)
+    #     document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
+    #     document['target'] = y
+    #     self.update_change_date_in_db(filename)
+    #     DocumentFileCRUD(self._user).update_document(filename, document)
+    #     self.update_pipeline(filename, method='fs_generic_univariate_select')

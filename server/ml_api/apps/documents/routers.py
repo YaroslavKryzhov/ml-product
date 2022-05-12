@@ -32,6 +32,24 @@ def read_document(filename: str, db: get_db = Depends(), user: User = Depends(cu
         return JSONResponse(status_code=status.HTTP_200_OK, content=result.head(100).to_json())
 
 
+@documents_crud_router.get("/stats/info")
+def document_stat_info(filename: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
+    result = DocumentService(db, user).get_document_stat_info(filename)
+    if result is None:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content="No such csv document")
+    else:
+        return JSONResponse(status_code=status.HTTP_200_OK, content=result.to_json())
+
+
+@documents_crud_router.get("/stats/describe")
+def document_stat_describe(filename: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
+    result = DocumentService(db, user).get_document_stat_description(filename)
+    if result is None:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content="No such csv document")
+    else:
+        return JSONResponse(status_code=status.HTTP_200_OK, content=result.to_json())
+
+
 @documents_crud_router.get("/info")
 def read_document_info(filename: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
     result = DocumentService(db, user).read_document_info(filename=filename)
