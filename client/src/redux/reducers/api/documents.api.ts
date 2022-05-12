@@ -152,5 +152,6 @@ export const {
   useColumnMarksDocumentQuery,
   useDocumentQuery,
   useColumnsDocumentQuery,
+  useChangeColumnMarksMutation,
 } = documentsApi;
 export default documentsApi.reducer;

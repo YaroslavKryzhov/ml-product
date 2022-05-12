@@ -232,7 +232,7 @@ export const Categorizer: React.FC<{
     <Stack
       direction="row"
       sx={{
-        alignItems: "center",
+        alignItems: "flex-start",
         gap: theme.spacing(2),
         width: "min-content",
       }}
@@ -251,7 +251,6 @@ export const Categorizer: React.FC<{
           justifyContent: "center",
           flexDirection: "column",
           gap: theme.spacing(2),
-          width: "100%",
         }}
       >
         {categories.map((category) => (

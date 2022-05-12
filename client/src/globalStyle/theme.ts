@@ -32,6 +32,9 @@ const themeOptions: ThemeOptions = {
       main: "#f6f8fa",
       light: "rgb(238 245 249);",
     },
+    success: {
+      main: "#83d344",
+    },
   },
   typography: {
     fontSize: 20,

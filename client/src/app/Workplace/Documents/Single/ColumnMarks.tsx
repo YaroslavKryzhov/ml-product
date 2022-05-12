@@ -1,12 +1,16 @@
-import { Box, Typography } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
+import { Box, Snackbar, Typography } from "@mui/material";
 import { Categorizer, Distribution } from "app/Workplace/common/Categorizer";
+import { SlideTr } from "app/Workplace/common/styled";
 import {
+  useChangeColumnMarksMutation,
   useColumnMarksDocumentQuery,
   useColumnsDocumentQuery,
 } from "ducks/reducers/api/documents.api";
 import { CategoryMark } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
-import React, { useEffect, useState } from "react";
+import { first, omit } from "lodash";
+import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 const categories = [
@@ -23,11 +27,12 @@ export const ColumnMarks: React.FC = () => {
     [CategoryMark.numeric]: [],
   });
   const { docName } = useParams();
-  const { data: columnMarks, isLoading: marksLoading } =
-    useColumnMarksDocumentQuery(docName!);
-  const { data: columns, isLoading: columnsLoading } = useColumnsDocumentQuery(
-    docName!
-  );
+  const { data: columnMarks } = useColumnMarksDocumentQuery(docName!);
+  const { data: columns } = useColumnsDocumentQuery(docName!);
+  const [saveColumnMarks, { isLoading: isSaveLoading, isError, isSuccess }] =
+    useChangeColumnMarksMutation();
+
+  const [noticeShowed, setNoticeShowed] = useState(false);
 
   useEffect(() => {
     if (!(columnMarks && columns)) return;
@@ -45,6 +50,18 @@ export const ColumnMarks: React.FC = () => {
     });
   }, [JSON.stringify(columns), JSON.stringify(columnMarks)]);
 
+  const onSave = useCallback(
+    () =>
+      saveColumnMarks({
+        body: {
+          ...(omit(marksDistribution, "heap") as any),
+          target: first(marksDistribution[CategoryMark.target]) || "",
+        },
+        filename: docName!,
+      }).then(() => setNoticeShowed(true)),
+    [marksDistribution, docName]
+  );
+
   if (!columnMarks) return null;
 
   return (
@@ -52,12 +69,43 @@ export const ColumnMarks: React.FC = () => {
       <Typography sx={{ mb: theme.spacing(2) }} variant="h5">
         Категоризация колонок
       </Typography>
+
       <Categorizer
         heap={{ label: "Нераспределенные метки", value: "heap" }}
         categories={categories}
         distribution={marksDistribution}
         distributionChange={setMarksDistribution}
       />
+
+      <Snackbar
+        autoHideDuration={3000}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        open={noticeShowed}
+        onClose={() => setNoticeShowed(false)}
+        message={
+          <Typography
+            variant="body2"
+            sx={{
+              color: isError
+                ? theme.palette.error.main
+                : theme.palette.success.main,
+            }}
+          >
+            {isError && "Ошибка сохранения"}
+            {isSuccess && "Успешно сохранено"}
+          </Typography>
+        }
+        TransitionComponent={SlideTr}
+      />
+
+      <LoadingButton
+        loading={isSaveLoading}
+        onClick={onSave}
+        variant="contained"
+        sx={{ mt: "-76px", height: "min-content", width: "300px" }}
+      >
+        Сохранить
+      </LoadingButton>
     </Box>
   );
 };
