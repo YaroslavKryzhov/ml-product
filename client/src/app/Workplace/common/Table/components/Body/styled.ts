@@ -17,13 +17,16 @@ export const StyledTableRow = styled.tr<{ rowHoverable?: boolean }>`
   }`}
 `;
 
-export const StyledTableCell = styled.td<{
-  fixed?: Fixed;
-}>`
+export const CellValueContainer = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
   position: relative;
   white-space: nowrap;
+`;
+
+export const StyledTableCell = styled.td<{
+  fixed?: Fixed;
+}>`
   padding: ${theme.spacing(2)} ${theme.spacing(3)};
   display: flex;
   align-items: center;

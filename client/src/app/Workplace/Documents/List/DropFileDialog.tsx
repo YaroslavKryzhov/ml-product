@@ -18,8 +18,7 @@ import {
   changeSelectedFile,
 } from "ducks/reducers/documents";
 import { setDialogAcceptDisabled } from "ducks/reducers/dialog";
-
-const SlideTr = (props: SlideProps) => <Slide {...props} direction={"left"} />;
+import { SlideTr } from "app/Workplace/common/styled";
 
 export const DocumentDrop: React.FC = () => {
   const { customFileName, selectedFile } = useSESelector(

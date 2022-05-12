@@ -14,6 +14,7 @@ export const StyledTable = styled.table<{
   isFirstColumnFixed?: boolean;
   width?: number;
 }>`
+  min-width: unset !important;
   display: block;
   position: relative;
   border-collapse: collapse;

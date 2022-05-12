@@ -14,11 +14,12 @@ export const Main = styled("main", {
 })<{
   open?: boolean;
 }>(({ theme, open }) => ({
+  display: "flex",
+  flexDirection: "column",
   flexGrow: 1,
   marginTop: BAR_HEIGHT,
-  height: `calc(100vh - ${BAR_HEIGHT}px)`,
+  minHeight: `calc(100vh - ${BAR_HEIGHT}px)`,
   position: "relative",
-  overflow: "hidden",
   padding: theme.spacing(3),
   transition: theme.transitions.create("margin", {
     easing: theme.transitions.easing.sharp,

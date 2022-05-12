@@ -1,6 +1,4 @@
 import { Box, Button } from "@mui/material";
-import { nanoid } from "@reduxjs/toolkit";
-import { MenuContext } from "app/Workplace";
 import { compareDate, TableFix } from "app/Workplace/common/Table";
 import { pathify, useAppDispatch } from "ducks/hooks";
 import {
@@ -16,13 +14,7 @@ import {
 } from "ducks/reducers/documents";
 import { store } from "ducks/store";
 import { theme } from "globalStyle/theme";
-import React, {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useCallback, useMemo } from "react";
 import { DocumentDrop } from "./DropFileDialog";
 import moment from "moment";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -31,6 +23,7 @@ import { ActionIconSx } from "app/Workplace/common/Table/components/Body";
 import { useNavigate } from "react-router-dom";
 import { WorkPageHeader } from "app/Workplace/common/WorkPageHeader";
 import DownloadIcon from "@mui/icons-material/Download";
+import { T } from "ramda";
 
 enum Columns {
   upload = "upload_date",
@@ -57,24 +50,12 @@ const columns = [
 
 export const DocumentsList: React.FC = () => {
   const { data: allDocuments } = useAllDocumentsQuery();
-  const { menuOpened } = useContext(MenuContext);
-  const [forceResize, setForceResize] = useState("");
+
   const dispatch = useAppDispatch();
   const [postDoc] = usePostDocumentMutation();
   const [deleteDoc] = useDeleteDocumentMutation();
   const [downloadDoc] = useDownloadDocumentMutation();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const interval = setInterval(() => setForceResize(nanoid()), 0);
-
-    setTimeout(
-      () => clearInterval(interval),
-      theme.transitions.duration.complex
-    );
-
-    return () => clearInterval(interval);
-  }, [menuOpened]);
 
   const setDialogProps = useCallback(() => {
     dispatch(
@@ -156,12 +137,13 @@ export const DocumentsList: React.FC = () => {
                       await deleteDoc(row.values[Columns.name]);
                       dispatch(setDialogLoading(false));
                     },
+                    onDismiss: T,
                   })
                 ),
             },
           ]}
           rowHoverable
-          forceResize={forceResize}
+          forceResize
           resizable
           data={convertedData}
           columns={columns}

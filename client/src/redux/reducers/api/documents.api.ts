@@ -1,7 +1,12 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { ROUTES } from "../../constants";
 import { addAuthHeader } from "./helpers";
-import { ColumnMarksPayload, DocumentInfo, DocumentInfoShort } from "../types";
+import {
+  ColumnMarksPayload,
+  DocumentInfo,
+  DocumentInfoShort,
+  FullDocument,
+} from "../types";
 
 const buildFileForm = (file: File) => {
   const form = new FormData();
@@ -13,6 +18,7 @@ const buildFileForm = (file: File) => {
 enum Tags {
   documents = "documents",
   singleDocument = "singleDocument",
+  columnMarks = "columnMarks",
 }
 
 export const documentsApi = createApi({
@@ -23,12 +29,12 @@ export const documentsApi = createApi({
   }),
   tagTypes: Object.values(Tags),
   endpoints: (builder) => ({
-    document: builder.query<Document, string>({
+    document: builder.query<FullDocument, string>({
       query: (filename) => ({
         url: ROUTES.DOCUMENTS.BASE,
         params: { filename },
       }),
-      // TODO: weird back string response. Need to be rewrited to JSON
+      // TODO: weird back string response. Need to be rewrited to JSON and correct format
       transformResponse: (response: string) => JSON.parse(response),
     }),
     postDocument: builder.mutation<string, { filename: string; file: File }>({
@@ -81,8 +87,6 @@ export const documentsApi = createApi({
 
         const blob = await res.blob();
 
-        console.log(res);
-
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.style.display = "none";
@@ -109,18 +113,19 @@ export const documentsApi = createApi({
       }),
       invalidatesTags: [Tags.documents],
     }),
-    columnsDocument: builder.query<string, string>({
+    columnsDocument: builder.query<string[], string>({
       query: (filename) => ({
         url: ROUTES.DOCUMENTS.COLUMNS,
         params: { filename },
       }),
     }),
 
-    columnMarksDocument: builder.query<string, string>({
+    columnMarksDocument: builder.query<ColumnMarksPayload, string>({
       query: (filename) => ({
         url: ROUTES.DOCUMENTS.COLUMN_MARKS,
         params: { filename },
       }),
+      providesTags: [Tags.columnMarks],
     }),
     changeColumnMarks: builder.mutation<
       string,
@@ -132,6 +137,7 @@ export const documentsApi = createApi({
         body,
         method: "PUT",
       }),
+      invalidatesTags: [Tags.columnMarks],
     }),
   }),
 });
@@ -143,5 +149,9 @@ export const {
   useInfoDocumentQuery,
   useRenameDocumentMutation,
   useDownloadDocumentMutation,
+  useColumnMarksDocumentQuery,
+  useDocumentQuery,
+  useColumnsDocumentQuery,
+  useChangeColumnMarksMutation,
 } = documentsApi;
 export default documentsApi.reducer;

@@ -17,7 +17,7 @@ export type RowAction = {
 
 export type TableFixProps = {
   rowHoverable?: boolean;
-  forceResize?: any;
+  forceResize?: boolean;
   data: object[];
   columns: Column[];
   isFirstColumnFixed?: boolean;
