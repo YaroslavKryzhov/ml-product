@@ -1,18 +1,17 @@
 import os
 import shutil
-from typing import List, Dict, Optional
+from typing import Dict
 from datetime import datetime
-from uuid import UUID
-import pickle
 
 import pandas as pd
 from sqlalchemy.orm import Session
 from fastapi.responses import FileResponse
+
 from ml_api.common.config import ROOT_DIR
 from ml_api.apps.documents.models import Document
 
 
-class BaseCrud:
+class BaseCRUD:
 
     def __init__(self, user):
         self.user_id = str(user.id)
@@ -24,7 +23,7 @@ class BaseCrud:
         return os.path.join(self.user_path, filename)
 
 
-class DocumentPostgreCRUD(BaseCrud):
+class DocumentPostgreCRUD(BaseCRUD):
 
     def __init__(self, session: Session, user):
         super().__init__(user)
@@ -72,7 +71,7 @@ class DocumentPostgreCRUD(BaseCrud):
         self.session.commit()
 
 
-class DocumentFileCRUD(BaseCrud):
+class DocumentFileCRUD(BaseCRUD):
 
     # CREATE
     def upload_document(self, filename: str, file):

@@ -107,174 +107,160 @@ class DocumentService:
     def apply_function(self, filename: str, function_name: str):
         document = DocumentFileCRUD(self._user).read_document(filename)
         column_marks = self.read_column_marks(filename)
-        document_changer = DocumentChangeService(document, column_marks)
+        document_operator = DocumentOperator(document, column_marks)
 
         if function_name == 'remove_duplicates':
-            document_changer.remove_duplicates()
+            document_operator.remove_duplicates()
         elif function_name == 'drop_na':
-            document_changer.drop_na()
+            document_operator.drop_na()
         elif function_name == 'miss_insert_mean_mode':
-            document_changer.miss_insert_mean_mode()
+            document_operator.miss_insert_mean_mode()
         elif function_name == 'miss_linear_imputer':
-            document_changer.miss_linear_imputer()
-        # if function_name == 'remove_duplicates':
-        #     self.remove_duplicates(filename=filename)
-        DocumentFileCRUD(self._user).update_document(filename, document)
+            document_operator.miss_linear_imputer()
+
+        elif function_name == 'standardize_features':
+            document_operator.standardize_features()
+            self.update_pipeline(filename, method='standardize_features')
+        elif function_name == 'ordinal_encoding':
+            document_operator.ordinal_encoding()
+            self.update_pipeline(filename, method='ordinal_encoding')
+            self.update_column_marks(filename, column_marks=document_operator.get_column_marks())
+        elif function_name == 'one_hot_encoding':
+            document_operator.one_hot_encoding()
+            self.update_pipeline(filename, method='one_hot_encoding')
+            self.update_column_marks(filename, column_marks=document_operator.get_column_marks())
+
+        elif function_name == 'outliers_isolation_forest':
+            document_operator.outliers_isolation_forest()
+        elif function_name == 'outliers_elliptic_envelope':
+            document_operator.outliers_elliptic_envelope()
+        elif function_name == 'outliers_local_factor':
+            document_operator.outliers_local_factor()
+        elif function_name == 'outliers_one_class_svm':
+            document_operator.outliers_one_class_svm()
+        # elif function_name == 'outliers_three_sigma':
+        #     document_operator.outliers_three_sigma()
+
+        DocumentFileCRUD(self._user).update_document(filename, document_operator.get_df())
         self.update_change_date_in_db(filename)
 
 
-class DocumentChangeService:
+class DocumentOperator:
 
-    def __init__(self, document: pd.DataFrame, column_marks: Dict):
-        self.document = document
+    def __init__(self, document: pd.DataFrame, column_marks: Dict[str, Union[List[str], str]]):
+        self.df = document
         self.column_marks = column_marks
 
-    # CHAPTER 1: MISSING DATA AND DUPLICATES (NOT RECORDED IN PIPELINE)-------------------------------------------------
+    def get_df(self) -> pd.DataFrame:
+        return self.df
+
+    def get_column_marks(self) -> Dict[str, Union[List[str], str]]:
+        return self.column_marks
+
+    # CHAPTER 1: MISSING DATA AND DUPLICATES----------------------------------------------------------------------------
+
     def remove_duplicates(self):
-        self.document.drop_duplicates(inplace=True)
+        self.df.drop_duplicates(inplace=True)
 
     def drop_na(self):
-        self.document.dropna(inplace=True)
+        self.df.dropna(inplace=True)
 
     def miss_insert_mean_mode(self):
         numeric_columns = self.column_marks['numeric']
         categorical = self.column_marks['categorical']
-        for feature in self.document.columns:
+        for feature in self.df.columns:
             if feature in categorical:
-                self.document[feature].fillna(mode(self.document[feature]).mode[0], inplace=True)
+                self.df[feature].fillna(mode(self.df[feature]).mode[0], inplace=True)
             if feature in numeric_columns:
-                self.document[feature].fillna(self.document[feature].mean(), inplace=True)
+                self.df[feature].fillna(self.df[feature].mean(), inplace=True)
 
-    def miss_linear_imputer(self):
+    def miss_linear_imputer(self):  # can be slow on big amount of columns
         numeric_columns = self.column_marks['numeric']
-        self.document[numeric_columns] = pd.DataFrame(IterativeImputer().fit_transform(self.document[numeric_columns]))
+        self.df[numeric_columns] = pd.DataFrame(IterativeImputer().fit_transform(self.df[numeric_columns]))
 
     # CHAPTER 2: FEATURE TRANSFORMATION---------------------------------------------------------------------------------
 
-    def standardize_features(self, filename: str):
-        df = DocumentFileCRUD(self._user).read_document(filename)
-        numeric_columns = self.read_column_marks(filename)['numeric']
+    def standardize_features(self):
+        numeric_columns = self.column_marks['numeric']
         sc = StandardScaler()
-        df[numeric_columns] = pd.DataFrame(sc.fit_transform(df[numeric_columns]), df.index, numeric_columns)
-        DocumentFileCRUD(self._user).update_document(filename, df)
-        self.update_change_date_in_db(filename)
-        self.update_pipeline(filename, method='standardize_features')
+        self.df[numeric_columns] = pd.DataFrame(sc.fit_transform(self.df[numeric_columns]), self.df.index,
+                                                numeric_columns)
 
-    def encoding_Ordinal(self, filename: str):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        categorical = self.read_column_marks(filename)['categorical']
-        document[categorical] = OrdinalEncoder().fit_transform(document[categorical])
-        self.update_change_date_in_db(filename)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_pipeline(filename, method='encoding_Ordinal')
+    def ordinal_encoding(self):
+        categorical = self.column_marks['categorical']
+        self.df[categorical] = OrdinalEncoder().fit_transform(self.df[categorical])
 
-    def one_hot_encoding(self, filename: str):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        categorical = self.read_column_marks(filename)['categorical']
+        self.column_marks['numeric'].extend(categorical)
+        self.column_marks['categorical'] = []
+
+    def one_hot_encoding(self):
+        categorical = self.column_marks['categorical']
         enc = OneHotEncoder()
-        enc.fit(document[categorical])
-        document[enc.get_feature_names(categorical)] = enc.transform(document[categorical]).toarray()
-        document.drop(categorical, axis=1, inplace=True)
-        self.update_change_date_in_db(filename)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_pipeline(filename, method='one_hot_encoding')
+        enc.fit(self.df[categorical])
+        new_cols = enc.get_feature_names(categorical)
+        self.df[new_cols] = enc.transform(self.df[categorical]).toarray()
+        self.df.drop(categorical, axis=1, inplace=True)
+
+        self.column_marks['numeric'].extend(new_cols)
+        self.column_marks['categorical'] = []
 
     # CHAPTER 3: OUTLIERS-----------------------------------------------------------------------------------------------
 
-    def outliers_IsolationForest(self, filename: str, n_estimators: int, contamination: float):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        numeric_columns = self.read_column_marks(filename)['numeric']
-        IF = IsolationForest(n_estimators=n_estimators, contamination=contamination)
-        document_with_forest = document.join(pd.DataFrame(IF.fit_predict(document[numeric_columns]),
-                                                          index=document.index, columns=['isolation_forest']),
-                                             how='left')
-        document_with_forest = document_with_forest.loc[document_with_forest['isolation_forest'] == 1]
-        document = document_with_forest.drop("isolation_forest", axis=1)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename)
+    def outliers_isolation_forest(self):
+        numeric_columns = self.column_marks['numeric']
+        outliers = IsolationForest().fit_predict(self.df[numeric_columns])
+        self.df = self.df.loc[outliers == 1].reset_index(drop=True)
 
-    def outlier_three_sigma(self, filename: str):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        numeric_columns = self.read_column_marks(filename)['numeric']
-        document[numeric_columns] = document.loc[(document[numeric_columns] - document[
-            numeric_columns].mean()).abs() < 3 * document.std(), numeric_columns].dropna(axis=0, how='any')
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename)
+    def outliers_elliptic_envelope(self):
+        numeric_columns = self.column_marks['numeric']
+        outliers = EllipticEnvelope().fit_predict(self.df[numeric_columns])
+        self.df = self.df.loc[outliers == 1].reset_index(drop=True)
 
-    def outlier_grubbs(self, filename: str, alpha: float):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        numeric_columns = self.read_column_marks(filename)['numeric']
-        for col in numeric_columns:
-            document = document.drop(
-                grubbs.two_sided_test_indices(document[col], alpha)
-            ).reset_index().drop('index', axis=1)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename)
+    def outliers_local_factor(self):
+        numeric_columns = self.column_marks['numeric']
+        outliers = LocalOutlierFactor().fit_predict(self.df[numeric_columns])
+        self.df = self.df.loc[outliers == 1].reset_index(drop=True)
 
-    def outliers_EllipticEnvelope(self, filename: str, contamination: float = 0.1):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        numeric_columns = self.read_column_marks(filename)['numeric']
-        outliers = EllipticEnvelope(contamination=contamination).fit_predict(document[numeric_columns])
-        document[numeric_columns] = document.loc[outliers == 1, numeric_columns].reset_index().drop('index', axis=1)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename)
+    def outliers_one_class_svm(self):
+        numeric_columns = self.column_marks['numeric']
+        outliers = OneClassSVM().fit_predict(self.df[numeric_columns])
+        self.df = self.df.loc[outliers == 1].reset_index(drop=True)
 
-    def outliers_LocalFactor(
-            self,
-            filename: str,
-            n_neighbors: int = 20,
-            algorithm: str = 'auto',
-            contamination: Union[str, float] = 'auto'
-    ):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        numeric_columns = self.read_column_marks(filename)['numeric']
-        outliers = LocalOutlierFactor(
-            n_neighbors=n_neighbors,
-            algorithm=algorithm,
-            contamination=contamination
-        ).fit_predict(document[numeric_columns])
-        document[numeric_columns] = document.loc[outliers == 1, numeric_columns].reset_index().drop('index', axis=1)
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename)
+    # def outliers_three_sigma(self):
+    #     numeric_columns = self.column_marks['numeric']
+    #     self.df[numeric_columns] = self.df.loc[(self.df[numeric_columns] -
+    #             self.df[numeric_columns].mean()).abs() < 3 * self.df.std(), numeric_columns].dropna(axis=0, how='any')
 
-    def outliers_Approximate(self, filename: str, deviation: int):
-        document = DocumentFileCRUD(self._user).read_document(filename)
-        numeric_columns = self.read_column_marks(filename)['numeric']
-        M = document[numeric_columns]
-        u, s, vh = np.linalg.svd(M, full_matrices=True)
-        Mk_rank = np.linalg.matrix_rank(M) - deviation
-        Uk, Sk, VHk = u[:, :Mk_rank], np.diag(s)[:Mk_rank, :Mk_rank], vh[:Mk_rank, :]
-        Mk = pd.DataFrame(np.dot(np.dot(Uk, Sk), VHk), index=M.index, columns=M.columns)
-        delta = abs(Mk - M)
-        document = document.drop(delta.idxmax())
-        DocumentFileCRUD(self._user).update_document(filename, document)
-        self.update_change_date_in_db(filename)
+    # def outliers_grubbs(self):
+    #     alpha = 0.05
+    #     numeric_columns = self.column_marks['numeric']
+    #     for col in numeric_columns:
+    #         self.df = self.df.drop(
+    #             grubbs.two_sided_test_indices(self.df[col], alpha)
+    #         ).reset_index().drop('index', axis=1)
+    #
+    # def outliers_approximate(self):
+    #     deviation =
+    #     numeric_columns = self.column_marks['numeric']
+    #     M = self.df[numeric_columns]
+    #     u, s, vh = np.linalg.svd(M, full_matrices=True)
+    #     Mk_rank = np.linalg.matrix_rank(M) - deviation
+    #     Uk, Sk, VHk = u[:, :Mk_rank], np.diag(s)[:Mk_rank, :Mk_rank], vh[:Mk_rank, :]
+    #     Mk = pd.DataFrame(np.dot(np.dot(Uk, Sk), VHk), index=M.index, columns=M.columns)
+    #     delta = abs(Mk - M)
+    #     self.df = self.df.drop(delta.idxmax())
+    #
+    # def outliers_interquartile_distance(self, low_quantile: float, up_quantile: float, coef: float):
+    #     numeric_columns = self.column_marks['numeric']
+    #     self.df
+    #     quantile = numeric_columns.quantile([low_quantile, up_quantile])
+    #     for column in numeric_columns:
+    #         low_lim = quantile[column][low_quantile]
+    #         up_lim = quantile[column][up_quantile]
+    #         df = df.loc[df[column] >= low_lim - coef * (up_lim - low_lim)]. \
+    #             loc[df[column] <= up_lim + coef * (up_lim - low_lim)]
 
-    # OCSVM на выходе 1 - выброс, -1 - не выброс
-    # iter - количество итераций, если -1, то нет ограничений
-    def outliers_OneClassSVM(self, filename: str, iters: float):
-        df = DocumentFileCRUD(self._user).read_document(filename)
-        dataset = self.read_column_marks(filename)['numeric']
-        OCSVM = OneClassSVM(kernel='rbf', gamma='auto', max_iter=iters)
-        df_with_svm = dataset.join(pd.DataFrame(OCSVM.fit_predict(dataset),
-                                                index=dataset.index, columns=['svm']), how='left')
-        df = df_with_svm.loc[df_with_svm['svm'] != -1]
-        DocumentFileCRUD(self._user).update_document(filename, df)
-        self.update_change_date_in_db(filename)
-
-    def outlier_interquartile_distance(self, filename: str, low_quantile: float, up_quantile: float, coef: float):
-        df = DocumentFileCRUD(self._user).read_document(filename)
-        numeric_columns = self.read_column_marks(filename)['numeric']
-        quantile = numeric_columns.quantile([low_quantile, up_quantile])
-        for column in numeric_columns:
-            low_lim = quantile[column][low_quantile]
-            up_lim = quantile[column][up_quantile]
-            df = df.loc[df[column] >= low_lim - coef * (up_lim - low_lim)]. \
-                loc[df[column] <= up_lim + coef * (up_lim - low_lim)]
-        DocumentFileCRUD(self._user).update_document(filename, df)
-        self.update_change_date_in_db(filename)
-
-    # CHAPTER 5: FEATURE SELECTION--------------------------------------------------------------------------------------
+    # CHAPTER 4: FEATURE SELECTION--------------------------------------------------------------------------------------
 
     def fs_select_k_best(
             self,
