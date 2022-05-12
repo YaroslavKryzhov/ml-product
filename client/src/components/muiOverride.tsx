@@ -12,8 +12,10 @@ export const CenteredContainer = styled(Container)<ContainerProps>(() => ({
 
 export const helperTextProps = {
   sx: {
+    position: "absolute",
+    top: "44px",
     mt: 0,
-    fontSize: theme.typography.caption.fontSize,
-    lineHeight: theme.typography.caption.fontSize,
+    fontSize: theme.typography.caption.fontSize!,
+    lineHeight: theme.typography.caption.fontSize!,
   },
 };

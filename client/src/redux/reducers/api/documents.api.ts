@@ -125,7 +125,6 @@ export const documentsApi = createApi({
         url: ROUTES.DOCUMENTS.COLUMN_MARKS,
         params: { filename },
       }),
-      providesTags: [Tags.columnMarks],
     }),
     changeColumnMarks: builder.mutation<
       string,
@@ -137,7 +136,6 @@ export const documentsApi = createApi({
         body,
         method: "PUT",
       }),
-      invalidatesTags: [Tags.columnMarks],
     }),
   }),
 });

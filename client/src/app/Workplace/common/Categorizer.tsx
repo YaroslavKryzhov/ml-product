@@ -63,10 +63,9 @@ const HeapElements = styled.div`
   width: 100%;
   justify-content: center;
   overflow-y: scroll;
-  flex-grow: 1;
 `;
 
-type CategoryItem = { value: string; label: string };
+type CategoryItem = { value: string; label: string; singleCapacity?: boolean };
 
 export type Distribution = {
   heap: string[];
@@ -158,6 +157,7 @@ const CategoryHeap: React.FC<
 > = ({
   value,
   label,
+  singleCapacity,
   items,
   onElementDragStart,
   draggingItem,
@@ -180,7 +180,7 @@ const CategoryHeap: React.FC<
       onMouseLeave={() => setIsMouseOver(false)}
       isHeap={value === "heap"}
     >
-      <HeapName>{label}</HeapName>
+      <HeapName>{label + (singleCapacity ? " (x1)" : "")}</HeapName>
       <HeapElements>
         {items.map((item) => (
           <Item
@@ -211,20 +211,28 @@ export const Categorizer: React.FC<{
   );
 
   const onItemDrop = useCallback(
-    (val: CategoryItem) =>
-      draggingCategory &&
-      !distribution[draggingCategory].includes(val.value) &&
-      distributionChange(
-        Object.fromEntries(
-          Object.entries(distribution).map(([key, values]) =>
-            values.includes(val.value)
-              ? [key, values.filter((x) => x !== val.value)]
-              : key === draggingCategory
-              ? [key, [...values, val.value]]
-              : [key, values]
-          )
-        ) as Distribution
-      ),
+    (val: CategoryItem) => {
+      const dragCatObj = categories.find((x) => x.value === draggingCategory);
+
+      return (
+        draggingCategory &&
+        !(
+          dragCatObj?.singleCapacity && distribution[draggingCategory].length
+        ) &&
+        !distribution[draggingCategory].includes(val.value) &&
+        distributionChange(
+          Object.fromEntries(
+            Object.entries(distribution).map(([key, values]) =>
+              values.includes(val.value)
+                ? [key, values.filter((x) => x !== val.value)]
+                : key === draggingCategory
+                ? [key, [...values, val.value]]
+                : [key, values]
+            )
+          ) as Distribution
+        )
+      );
+    },
     [draggingCategory, distribution]
   );
 

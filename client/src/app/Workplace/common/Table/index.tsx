@@ -89,8 +89,8 @@ const View: React.FC<TableFixProps> = (props) => {
 
     handler();
     window.addEventListener("resize", handler);
-    return () => window.addEventListener("resize", handler);
-  }, [JSON.stringify(colsWithWidth), forceResize]);
+    return () => window.removeEventListener("resize", handler);
+  }, [forceResize]);
 
   useEffect(() => {
     if (!props.forceResize || firstRender.current) return;

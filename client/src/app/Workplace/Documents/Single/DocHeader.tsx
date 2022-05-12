@@ -42,6 +42,7 @@ export const DocHeader: React.FC<{ initName: string }> = ({ initName }) => {
         title: "Просмотр",
         Content: <DocumentPreview docName={customName} />,
         onDismiss: () => {},
+        fullWidth: true,
         dismissText: "Закрыть",
       })
     );

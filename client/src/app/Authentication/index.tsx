@@ -135,7 +135,7 @@ export const Authentication: React.FC = () => {
               helperText={!isFirstTry && isEmailError ? "Неверная почта" : " "}
               onChange={(e) => dispatch(changeEmail(e.target.value))}
               FormHelperTextProps={helperTextProps}
-              sx={{ mb: theme.spacing(2) }}
+              sx={{ mb: theme.spacing(3) }}
             />
             <TextField
               size="small"
@@ -146,7 +146,7 @@ export const Authentication: React.FC = () => {
               helperText={!isFirstTry && isPasswordError ? PASSWORD_ERROR : " "}
               error={!isFirstTry && isPasswordError}
               FormHelperTextProps={helperTextProps}
-              sx={{ mb: theme.spacing(2) }}
+              sx={{ mb: theme.spacing(3) }}
             />
             {isReg && (
               <TextField
@@ -158,7 +158,7 @@ export const Authentication: React.FC = () => {
                 onChange={(e) =>
                   dispatch(changeSecondPasswordInput(e.target.value))
                 }
-                sx={{ mb: theme.spacing(2) }}
+                sx={{ mb: theme.spacing(4) }}
                 error={!isFirstTry && isSecondPasswordError}
                 helperText={
                   !isFirstTry && isSecondPasswordError

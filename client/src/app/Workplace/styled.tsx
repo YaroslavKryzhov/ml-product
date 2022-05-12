@@ -20,6 +20,7 @@ export const Main = styled("main", {
   marginTop: BAR_HEIGHT,
   minHeight: `calc(100vh - ${BAR_HEIGHT}px)`,
   position: "relative",
+  overflow: "hidden",
   padding: theme.spacing(3),
   transition: theme.transitions.create("margin", {
     easing: theme.transitions.easing.sharp,

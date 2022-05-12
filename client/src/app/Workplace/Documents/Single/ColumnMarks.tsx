@@ -45,7 +45,8 @@ export const ColumnMarks: React.FC = () => {
 
     setMarksDistribution({
       heap,
-      ...columnMarks,
+      categorical: columnMarks.categorical || [],
+      numeric: columnMarks.numeric || [],
       target: columnMarks.target ? [columnMarks.target] : [],
     });
   }, [JSON.stringify(columns), JSON.stringify(columnMarks)]);

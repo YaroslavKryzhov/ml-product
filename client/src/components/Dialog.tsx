@@ -32,6 +32,7 @@ export type DialogProps = {
   Content?: React.ReactElement;
   acceptDisabled?: boolean;
   loading?: boolean;
+  fullWidth?: boolean;
 };
 
 export const DialogCustom: React.FC = () => {
@@ -46,6 +47,7 @@ export const DialogCustom: React.FC = () => {
     Content,
     acceptDisabled,
     loading,
+    fullWidth,
   } = useSESelector((state) => state.dialog);
   const [open, setIsOpen] = useState(false);
   const dispatch = useAppDispatch();
@@ -70,6 +72,7 @@ export const DialogCustom: React.FC = () => {
         "& .MuiDialog-paper": {
           p: theme.spacing(1),
           maxWidth: "100vw",
+          width: fullWidth ? "100%" : "auto",
         },
       }}
     >
