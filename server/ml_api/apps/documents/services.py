@@ -62,6 +62,17 @@ class DocumentService:
             return df.describe()
         return None
 
+    def get_column_stat_description(self, filename: str, column_name: str) -> [str, str]:
+        # TOD: maybe take column type from frontend?
+        if DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename) is not None:
+            df = DocumentFileCRUD(self._user).read_document(filename)
+            column_marks = self.read_column_marks(filename)
+            if column_name in column_marks['numeric']:
+                return ['numeric', pd.cut(df[column_name], 10).value_counts().sort_index().to_json()]
+            elif column_name in column_marks['categorical']:
+                return ['categorical', df[column_name].value_counts().to_json()]
+        return None
+
     def read_document_info(self, filename: str):
         document = DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename)
         return document
