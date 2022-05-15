@@ -1,13 +1,17 @@
-import { Box, Button } from "@mui/material";
+import { Box, Button, Stack } from "@mui/material";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import { theme } from "globalStyle/theme";
 import styled from "@emotion/styled";
-import { useRenameDocumentMutation } from "ducks/reducers/api/documents.api";
+import {
+  useDownloadDocumentMutation,
+  useRenameDocumentMutation,
+} from "ducks/reducers/api/documents.api";
 import PreviewIcon from "@mui/icons-material/Preview";
 import { useAppDispatch } from "ducks/hooks";
 import { DocumentPreview } from "./DocumentPreview";
 import { setDialog } from "ducks/reducers/dialog";
+import DownloadIcon from "@mui/icons-material/Download";
 
 const EditableLabel = styled.label<{ editMode?: boolean }>`
   &:focus-visible {
@@ -23,6 +27,7 @@ export const DocHeader: React.FC<{ initName: string }> = ({ initName }) => {
   const [customName, setCustomName] = useState(initName);
   const inputRef = useRef<HTMLLabelElement | null>(null);
   const [rename] = useRenameDocumentMutation();
+  const [downloadDoc] = useDownloadDocumentMutation();
   const dispatch = useAppDispatch();
   const matchName = customName.match(/(.*)(\.csv)/);
   const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLLabelElement>) => {
@@ -84,13 +89,22 @@ export const DocHeader: React.FC<{ initName: string }> = ({ initName }) => {
           }}
         />
       </Box>
-      <Button
-        onClick={setDialogProps}
-        variant="outlined"
-        startIcon={<PreviewIcon />}
-      >
-        Просмотр
-      </Button>
+      <Stack direction="row" sx={{ gap: theme.spacing(1) }}>
+        <Button
+          onClick={setDialogProps}
+          variant="outlined"
+          startIcon={<PreviewIcon />}
+        >
+          Просмотр
+        </Button>
+        <Button
+          onClick={() => downloadDoc(customName)}
+          variant="outlined"
+          startIcon={<DownloadIcon />}
+        >
+          Скачать
+        </Button>
+      </Stack>
     </Box>
   );
 };

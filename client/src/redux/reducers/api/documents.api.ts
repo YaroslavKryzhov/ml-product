@@ -5,6 +5,7 @@ import {
   ColumnMarksPayload,
   DocumentInfo,
   DocumentInfoShort,
+  DocumentMethod,
   FullDocument,
 } from "../types";
 
@@ -19,6 +20,7 @@ enum Tags {
   documents = "documents",
   singleDocument = "singleDocument",
   columnMarks = "columnMarks",
+  pipeline = "pipeline",
 }
 
 export const documentsApi = createApi({
@@ -69,6 +71,7 @@ export const documentsApi = createApi({
         url: ROUTES.DOCUMENTS.PIPE,
         params: { document_from, document_to },
       }),
+      providesTags: [Tags.pipeline],
     }),
     allDocuments: builder.query<DocumentInfoShort[], void>({
       query: () => ({
@@ -137,6 +140,17 @@ export const documentsApi = createApi({
         method: "PUT",
       }),
     }),
+    applyDocMethod: builder.mutation<
+      string,
+      { filename: string; function_name: DocumentMethod }
+    >({
+      query: ({ filename, function_name }) => ({
+        url: ROUTES.DOCUMENTS.APPLY_METHOD,
+        params: { filename, function_name },
+        method: "PUT",
+      }),
+      invalidatesTags: [Tags.pipeline],
+    }),
   }),
 });
 
@@ -151,5 +165,6 @@ export const {
   useDocumentQuery,
   useColumnsDocumentQuery,
   useChangeColumnMarksMutation,
+  useApplyDocMethodMutation,
 } = documentsApi;
 export default documentsApi.reducer;

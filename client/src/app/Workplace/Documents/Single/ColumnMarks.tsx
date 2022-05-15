@@ -1,5 +1,5 @@
 import { LoadingButton } from "@mui/lab";
-import { Box, Snackbar, Typography } from "@mui/material";
+import { Box, Divider, Snackbar, Typography } from "@mui/material";
 import { Categorizer, Distribution } from "app/Workplace/common/Categorizer";
 import { SlideTr } from "app/Workplace/common/styled";
 import {
@@ -66,7 +66,7 @@ export const ColumnMarks: React.FC = () => {
   if (!columnMarks) return null;
 
   return (
-    <Box>
+    <Box sx={{ position: "relative" }}>
       <Typography sx={{ mb: theme.spacing(2) }} variant="h5">
         Категоризация колонок
       </Typography>
@@ -103,10 +103,16 @@ export const ColumnMarks: React.FC = () => {
         loading={isSaveLoading}
         onClick={onSave}
         variant="contained"
-        sx={{ mt: "-76px", height: "min-content", width: "300px" }}
+        sx={{
+          bottom: "52px",
+          height: "min-content",
+          width: "300px",
+          position: "absolute",
+        }}
       >
         Сохранить
       </LoadingButton>
+      <Divider sx={{ mb: theme.spacing(3), mt: theme.spacing(3) }} />
     </Box>
   );
 };

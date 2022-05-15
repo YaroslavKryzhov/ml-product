@@ -17,5 +17,6 @@ export const ROUTES = {
     RENAME: "/rename",
     COLUMNS: "/columns",
     COLUMN_MARKS: "/column_marks",
+    APPLY_METHOD: "/process/apply",
   },
 };

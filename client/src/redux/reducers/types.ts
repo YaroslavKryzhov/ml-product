@@ -80,3 +80,17 @@ export type ColumnMarksPayload = {
 };
 
 export type FullDocument = { [key: string]: (string | number)[] };
+
+export enum DocumentMethod {
+  removeDuplicates = "remove_duplicates",
+  dropNa = "drop_na",
+  missInsertMeanMode = "miss_insert_mean_mode",
+  missLinearImputer = "miss_linear_imputer",
+  standartizeFeatures = "standartize_features",
+  ordinalEncoding = "ordinal_encoding",
+  oneHotEncoding = "one_hot_encoding",
+  outliersIsolationForest = "outliers_isolation_forest",
+  outliersEllipticEnvelope = "outliers_elliptic_envelope",
+  outliersLocalFactor = "outliers_local_factor",
+  outliersOneClassSvm = "outliers_one_class_svm",
+}

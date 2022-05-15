@@ -7,6 +7,7 @@ import React from "react";
 import { BallTriangle } from "react-loader-spinner";
 import { useParams } from "react-router-dom";
 import { ColumnMarks } from "./ColumnMarks";
+import { DocumentMethods } from "./DocumentMethods";
 import { MainInfo } from "./MainInfo";
 import { Pipeline } from "./Pipeline";
 
@@ -35,6 +36,7 @@ export const DocumentSingle: React.FC = () => {
               <Pipeline steps={docInfo.pipeline} />
             )}
             {docName && <ColumnMarks />}
+            {docName && <DocumentMethods docName={docName} />}
           </>
         )}
       </Stack>
