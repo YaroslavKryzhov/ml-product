@@ -3,7 +3,6 @@ import { compareDate, TableFix } from "app/Workplace/common/Table";
 import { pathify, useAppDispatch } from "ducks/hooks";
 import {
   useAllDocumentsQuery,
-  useDeleteDocumentMutation,
   useDownloadDocumentMutation,
   usePostDocumentMutation,
 } from "ducks/reducers/api/documents.api";
@@ -23,7 +22,7 @@ import { ActionIconSx } from "app/Workplace/common/Table/components/Body";
 import { useNavigate } from "react-router-dom";
 import { WorkPageHeader } from "app/Workplace/common/WorkPageHeader";
 import DownloadIcon from "@mui/icons-material/Download";
-import { T } from "ramda";
+import { useDeleteFile } from "../hooks";
 
 enum Columns {
   upload = "upload_date",
@@ -53,8 +52,8 @@ export const DocumentsList: React.FC = () => {
 
   const dispatch = useAppDispatch();
   const [postDoc] = usePostDocumentMutation();
-  const [deleteDoc] = useDeleteDocumentMutation();
   const [downloadDoc] = useDownloadDocumentMutation();
+  const deleteDoc = useDeleteFile();
   const navigate = useNavigate();
 
   const setDialogProps = useCallback(() => {
@@ -125,21 +124,7 @@ export const DocumentsList: React.FC = () => {
             {
               name: "Удалить",
               icon: <DeleteIcon sx={{ ActionIconSx }} />,
-              onClick: (row) =>
-                dispatch(
-                  setDialog({
-                    title: "Удаление",
-                    text: `Вы действительно хотите удалить файл ${
-                      row.values[Columns.name]
-                    }?`,
-                    onAccept: async () => {
-                      dispatch(setDialogLoading(true));
-                      await deleteDoc(row.values[Columns.name]);
-                      dispatch(setDialogLoading(false));
-                    },
-                    onDismiss: T,
-                  })
-                ),
+              onClick: (row) => deleteDoc(row.values[Columns.name]),
             },
           ]}
           rowHoverable

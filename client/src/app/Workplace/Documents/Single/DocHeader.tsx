@@ -12,6 +12,8 @@ import { useAppDispatch } from "ducks/hooks";
 import { DocumentPreview } from "./DocumentPreview";
 import { setDialog } from "ducks/reducers/dialog";
 import DownloadIcon from "@mui/icons-material/Download";
+import { useDeleteFile } from "../hooks";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const EditableLabel = styled.label<{ editMode?: boolean }>`
   &:focus-visible {
@@ -28,14 +30,23 @@ export const DocHeader: React.FC<{ initName: string }> = ({ initName }) => {
   const inputRef = useRef<HTMLLabelElement | null>(null);
   const [rename] = useRenameDocumentMutation();
   const [downloadDoc] = useDownloadDocumentMutation();
+  const deleteDoc = useDeleteFile({ redirectAfter: true });
   const dispatch = useAppDispatch();
   const matchName = customName.match(/(.*)(\.csv)/);
-  const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLLabelElement>) => {
-    if (e.code === "Enter") {
-      e.preventDefault();
-      (e.target as HTMLLabelElement).blur();
-    }
-  }, []);
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLLabelElement>) => {
+      if (e.code === "Enter") {
+        e.preventDefault();
+        (e.target as HTMLLabelElement).blur();
+      }
+      if (e.code === "Escape") {
+        e.preventDefault();
+        if (matchName) (e.target as HTMLLabelElement).innerText = matchName[1];
+        (e.target as HTMLLabelElement).blur();
+      }
+    },
+    [matchName]
+  );
 
   useEffect(() => {
     editMode && inputRef.current?.focus();
@@ -103,6 +114,13 @@ export const DocHeader: React.FC<{ initName: string }> = ({ initName }) => {
           startIcon={<DownloadIcon />}
         >
           Скачать
+        </Button>
+        <Button
+          onClick={() => deleteDoc(customName)}
+          variant="outlined"
+          startIcon={<DeleteIcon />}
+        >
+          Удалить
         </Button>
       </Stack>
     </Box>
