@@ -50,6 +50,15 @@ def document_stat_describe(filename: str, db: get_db = Depends(), user: User = D
         return JSONResponse(status_code=status.HTTP_200_OK, content=result.to_json())
 
 
+@documents_crud_router.get("/stats/column")
+def column_stat_description(filename: str, column_name: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
+    result = DocumentService(db, user).get_column_stat_description(filename, column_name)
+    if result is None:
+        return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content="No such csv document")
+    else:
+        return JSONResponse(status_code=status.HTTP_200_OK, content=result)
+
+
 @documents_crud_router.get("/info")
 def read_document_info(filename: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
     result = DocumentService(db, user).read_document_info(filename=filename)
@@ -117,7 +126,7 @@ documents_method_router = APIRouter(
 )
 
 @documents_method_router.put("/apply")
-def remove_duplicates(filename: str, function_name: AvailableFunctions, db: get_db = Depends(), user: User = Depends(current_active_user)):
+def apply_method(filename: str, function_name: AvailableFunctions, db: get_db = Depends(), user: User = Depends(current_active_user)):
     DocumentService(db, user).apply_function(filename, function_name=function_name.value)
     return {"filename": filename}
 
