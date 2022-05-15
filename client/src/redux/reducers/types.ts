@@ -10,11 +10,17 @@ export enum AppPage {
 
 export enum WorkPage {
   Documents = "documents",
+  Compositions = "compositions",
 }
 
 export enum DocumentPage {
   List = "list",
   Single = "single",
+}
+
+export enum CompositionPage {
+  List = "CompositionList",
+  Single = "CompositionSingle",
 }
 
 export type AuthSlice = {

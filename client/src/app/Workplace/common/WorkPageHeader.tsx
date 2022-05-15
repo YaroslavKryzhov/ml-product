@@ -3,7 +3,12 @@ import React from "react";
 import HomeIcon from "@mui/icons-material/Home";
 import { StyledBreadcrumb } from "./styled";
 import { pathify } from "ducks/hooks";
-import { AppPage, DocumentPage, WorkPage } from "ducks/reducers/types";
+import {
+  AppPage,
+  CompositionPage,
+  DocumentPage,
+  WorkPage,
+} from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
 import { always } from "ramda";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
@@ -11,6 +16,10 @@ import { DocHeader } from "../Documents/Single/DocHeader";
 
 const goHome = (navigate: ReturnType<typeof useNavigate>) => {
   navigate(pathify([AppPage.Workplace, WorkPage.Documents, DocumentPage.List]));
+};
+
+const goCompositions = (navigate: ReturnType<typeof useNavigate>) => {
+  pathify([AppPage.Workplace, WorkPage.Compositions, CompositionPage.List]);
 };
 
 const pathItem = (label: () => string, action: () => void) => ({
@@ -24,6 +33,12 @@ const definePathMap = (
 ) => ({
   [AppPage.Workplace]: pathItem(always("Домой"), () => goHome(navigate)),
   [WorkPage.Documents]: pathItem(always("Документы"), () => goHome(navigate)),
+  [WorkPage.Compositions]: pathItem(always("Композиции"), () =>
+    goCompositions(navigate)
+  ),
+  [CompositionPage.List]: pathItem(always("Все"), () =>
+    goCompositions(navigate)
+  ),
   [DocumentPage.List]: pathItem(always("Все"), () => goHome(navigate)),
   [DocumentPage.Single]: pathItem(
     () => docName || "",
@@ -57,6 +72,9 @@ export const WorkPageHeader: React.FC = () => {
         {pathname.match(
           pathify([WorkPage.Documents, DocumentPage.List]) + "$"
         ) && "Документы"}
+        {pathname.match(
+          pathify([WorkPage.Compositions, CompositionPage.List]) + "$"
+        ) && "Композиции"}
         {docName && <DocHeader initName={docName} />}
       </Typography>
       <Breadcrumbs sx={{ mb: theme.spacing(2) }}>

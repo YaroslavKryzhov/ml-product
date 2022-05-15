@@ -7,7 +7,7 @@ import Divider from "@mui/material/Divider";
 import MenuIcon from "@mui/icons-material/Menu";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
+import MuiListItemText, { ListItemTextProps } from "@mui/material/ListItemText";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import {
   AppBar,
@@ -16,25 +16,58 @@ import {
   Main,
   MENU_WIDTH,
 } from "./styled";
-import { ListItemButton } from "@mui/material";
+import { styled } from "@mui/material";
+import MuiListItemButton, {
+  ListItemButtonProps,
+} from "@mui/material/ListItemButton";
 import {
   AppPage,
   AuthPage,
+  CompositionPage,
   DocumentPage,
   WorkPage,
 } from "ducks/reducers/types";
 import { Documents } from "./Documents";
+import { Compositions } from "./Compositions";
 import { Matcher, pathify, useAppDispatch } from "ducks/hooks";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { setDialog } from "ducks/reducers/dialog";
 import { useNavigate } from "react-router-dom";
-import { Route, Routes } from "react-router";
+import { Route, Routes, useMatch } from "react-router";
 import { T } from "ramda";
+import { theme } from "globalStyle/theme";
+import BarChartIcon from "@mui/icons-material/BarChart";
+
+const ListItemButton = styled((props: ListItemButtonProps) => (
+  <MuiListItemButton {...props} />
+))(() => ({
+  "&.Mui-selected": {
+    backgroundColor: theme.palette.primary.light,
+  },
+  "&:hover": {
+    backgroundColor: theme.palette.primary.dark,
+  },
+}));
+
+const ListItemText: React.FC<ListItemTextProps> = (props) => (
+  <MuiListItemText
+    {...props}
+    primaryTypographyProps={{ variant: "body2", color: "secondary" }}
+  />
+);
 
 export const MenuContext = createContext({ menuOpened: false });
 
 export const Workplace: React.FC = () => {
   const [open, setOpen] = React.useState(false);
+  const isDocs = !!useMatch(
+    pathify([AppPage.Workplace, WorkPage.Documents], { matcher: Matcher.start })
+  );
+  const isCompositions = !!useMatch(
+    pathify([AppPage.Workplace, WorkPage.Compositions], {
+      matcher: Matcher.start,
+    })
+  );
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
@@ -101,30 +134,34 @@ export const Workplace: React.FC = () => {
         <Divider sx={{ backgroundColor: "primary.light" }} />
         <List>
           <ListItemButton
-            sx={{
-              "&.Mui-selected": {
-                backgroundColor: "primary.light",
-              },
-              "&.Mui-selected:hover": {
-                backgroundColor: "primary.dark",
-              },
+            onClick={() => {
+              navigate(
+                pathify([WorkPage.Documents, DocumentPage.List], {
+                  relative: true,
+                })
+              );
             }}
-            selected
+            selected={isDocs}
           >
             <ListItemIcon>
               <FormatListBulletedIcon color="secondary" fontSize="small" />
             </ListItemIcon>
-            <ListItemText
-              onClick={() => {
-                navigate(
-                  pathify([WorkPage.Documents, DocumentPage.List], {
-                    relative: true,
-                  })
-                );
-              }}
-              primary="Документы"
-              primaryTypographyProps={{ variant: "body2", color: "secondary" }}
-            />
+            <ListItemText primary="Документы" />
+          </ListItemButton>
+          <ListItemButton
+            onClick={() => {
+              navigate(
+                pathify([WorkPage.Compositions, CompositionPage.List], {
+                  relative: true,
+                })
+              );
+            }}
+            selected={isCompositions}
+          >
+            <ListItemIcon>
+              <BarChartIcon color="secondary" fontSize="small" />
+            </ListItemIcon>
+            <ListItemText primary="Композиции" />
           </ListItemButton>
         </List>
       </Drawer>
@@ -144,6 +181,12 @@ export const Workplace: React.FC = () => {
                   matcher: Matcher.start,
                 })}
                 element={<Documents />}
+              />
+              <Route
+                path={pathify([WorkPage.Compositions], {
+                  matcher: Matcher.start,
+                })}
+                element={<Compositions />}
               />
             </Routes>
           </Box>
