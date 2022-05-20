@@ -29,7 +29,7 @@ def read_document(filename: str, page: int = 1, db: get_db = Depends(), user: Us
     if result is None:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content="No such csv document")
     else:
-        return JSONResponse(status_code=status.HTTP_200_OK, content=result.to_json())
+        return JSONResponse(status_code=status.HTTP_200_OK, content=result)
 
 
 @documents_crud_router.get("/stats/info")
@@ -38,7 +38,7 @@ def document_stat_info(filename: str, db: get_db = Depends(), user: User = Depen
     if result is None:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content="No such csv document")
     else:
-        return JSONResponse(status_code=status.HTTP_200_OK, content=result.to_json())
+        return JSONResponse(status_code=status.HTTP_200_OK, content=result)
 
 
 @documents_crud_router.get("/stats/describe")
@@ -47,7 +47,7 @@ def document_stat_describe(filename: str, db: get_db = Depends(), user: User = D
     if result is None:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content="No such csv document")
     else:
-        return JSONResponse(status_code=status.HTTP_200_OK, content=result.to_json())
+        return JSONResponse(status_code=status.HTTP_200_OK, content=result)
 
 
 @documents_crud_router.get("/stats/column")
