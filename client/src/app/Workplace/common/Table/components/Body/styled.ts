@@ -54,7 +54,7 @@ export const StyledTableCell = styled.td<{
   }
 `;
 
-export const EmptyData = styled.td`
+export const EmptyData = styled.div`
   width: 100%;
   display: flex;
   align-items: center;

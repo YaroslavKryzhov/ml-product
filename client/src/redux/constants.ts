@@ -11,6 +11,8 @@ export const ROUTES = {
   DOCUMENTS: {
     BASE: BASE_API + "/document",
     INFO: "/info",
+    STATS_INFO: "/stats/info",
+    DESCRIBE: "/stats/describe",
     DOWNLOAD: "/download",
     PIPE: "/pipeline",
     ALL: "/all",

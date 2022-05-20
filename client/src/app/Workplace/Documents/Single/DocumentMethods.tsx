@@ -68,13 +68,7 @@ const Accordion = styled((props: AccordionProps) => (
 }));
 
 export const DocumentMethods: React.FC<{ docName: string }> = ({ docName }) => {
-  const [expanded, setExpanded] = React.useState<BtnGroups | null>(null);
   const [applyMethod, { isLoading }] = useApplyDocMethodMutation();
-
-  const handleChange =
-    (panel: BtnGroups) => (_: React.SyntheticEvent, isExpanded: boolean) => {
-      setExpanded(isExpanded ? panel : null);
-    };
 
   return (
     <Box>
@@ -83,12 +77,8 @@ export const DocumentMethods: React.FC<{ docName: string }> = ({ docName }) => {
       </Typography>
 
       {Object.keys(ButtonsData).map((groupKey) => (
-        <Accordion
-          key={groupKey}
-          expanded={expanded === groupKey}
-          onChange={handleChange(groupKey as BtnGroups)}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Accordion key={groupKey} expanded>
+          <AccordionSummary>
             <Typography variant="h6">{groupKey}</Typography>
           </AccordionSummary>
           <AccordionDetails>

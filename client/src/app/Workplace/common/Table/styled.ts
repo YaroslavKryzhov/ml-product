@@ -6,7 +6,8 @@ const fixedTableCellStyles = `
   left: 0;
   text-align: left;
   border-right: ${theme.additional.borderWidth} solid ${theme.palette.secondary.dark};
-  z-index: ${theme.zIndex.appBar};
+  z-index: 1;
+  background-color: ${theme.palette.secondary.light};
 `;
 
 export const StyledTable = styled.table<{
@@ -32,7 +33,7 @@ export const StyledTable = styled.table<{
     justify-content: flex-start;
 
     div {
-      ${({ isFirstColumnFixed }) => isFirstColumnFixed && "text-align: left;"}
+      ${({ isFirstColumnFixed }) => isFirstColumnFixed && `text-align: left;`}
     }
   }
 `;

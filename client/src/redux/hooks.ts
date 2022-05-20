@@ -26,9 +26,10 @@ export enum Matcher {
 
 export const pathify = (
   slices: string[],
-  opts?: { matcher?: Matcher; relative?: boolean }
+  opts?: { matcher?: Matcher; relative?: boolean; changeLast?: boolean }
 ) =>
   (opts && opts.relative ? "." : "") +
+  (opts && opts.changeLast ? ".." : "") +
   (opts &&
   opts.matcher &&
   [Matcher.contains, Matcher.end].includes(opts.matcher)

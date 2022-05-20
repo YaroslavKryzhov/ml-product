@@ -67,6 +67,14 @@ const View: React.FC<TableFixProps> = (props) => {
       ...hooks
     );
 
+  // untested
+  useEffect(() => {
+    setColsWithWidth(props.columns);
+    setForceResize(nanoid());
+  }, [props.columns]);
+
+  //end
+
   useLayoutEffect(() => {
     // toDO throttle and sum chnges
     const handler = () => {
@@ -90,7 +98,7 @@ const View: React.FC<TableFixProps> = (props) => {
     handler();
     window.addEventListener("resize", handler);
     return () => window.removeEventListener("resize", handler);
-  }, [forceResize]);
+  }, [forceResize, colsWithWidth.length]);
 
   useEffect(() => {
     if (!props.forceResize || firstRender.current) return;

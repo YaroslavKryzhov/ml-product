@@ -68,7 +68,7 @@ export const WorkPageHeader: React.FC = () => {
 
   return (
     <>
-      <Typography sx={{ mb: theme.spacing(2) }} variant="h5">
+      <Typography sx={{ mb: theme.spacing(1) }} variant="h5">
         {pathname.match(
           pathify([WorkPage.Documents, DocumentPage.List]) + "$"
         ) && "Документы"}

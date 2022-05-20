@@ -67,6 +67,16 @@ export type DocumentInfo = DocumentInfoShort & {
   };
 };
 
+export type DocumentStatsInfo = {
+  Column: string[];
+  Dtype: string[];
+  "Non-Null": string[];
+};
+
+export type DescribeDoc = {
+  [key: string]: { [key: string]: number };
+};
+
 export type DocumentInfoShort = {
   name: string;
   upload_date: string;

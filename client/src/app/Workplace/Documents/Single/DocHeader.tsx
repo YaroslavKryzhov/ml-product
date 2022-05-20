@@ -5,15 +5,21 @@ import { theme } from "globalStyle/theme";
 import styled from "@emotion/styled";
 import {
   useDownloadDocumentMutation,
+  useInfoDocumentQuery,
   useRenameDocumentMutation,
 } from "ducks/reducers/api/documents.api";
 import PreviewIcon from "@mui/icons-material/Preview";
-import { useAppDispatch } from "ducks/hooks";
+import { pathify, useAppDispatch } from "ducks/hooks";
 import { DocumentPreview } from "./DocumentPreview";
 import { setDialog } from "ducks/reducers/dialog";
 import DownloadIcon from "@mui/icons-material/Download";
 import { useDeleteFile } from "../hooks";
 import DeleteIcon from "@mui/icons-material/Delete";
+import moment from "moment";
+import { InfoChip } from "components/infoChip";
+import { Size } from "app/types";
+import { useNavigate } from "react-router-dom";
+import { DocumentPage } from "ducks/reducers/types";
 
 const EditableLabel = styled.label<{ editMode?: boolean }>`
   &:focus-visible {
@@ -33,6 +39,7 @@ export const DocHeader: React.FC<{ initName: string }> = ({ initName }) => {
   const deleteDoc = useDeleteFile({ redirectAfter: true });
   const dispatch = useAppDispatch();
   const matchName = customName.match(/(.*)(\.csv)/);
+  const navigate = useNavigate();
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLLabelElement>) => {
       if (e.code === "Enter") {
@@ -47,6 +54,8 @@ export const DocHeader: React.FC<{ initName: string }> = ({ initName }) => {
     },
     [matchName]
   );
+
+  const { data: docData } = useInfoDocumentQuery(customName);
 
   useEffect(() => {
     editMode && inputRef.current?.focus();
@@ -67,62 +76,98 @@ export const DocHeader: React.FC<{ initName: string }> = ({ initName }) => {
   if (!matchName) return <>{customName}</>;
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        cursor: "pointer",
-        "&:hover": { color: theme.palette.primary.light },
-      }}
-    >
-      <Box onClick={() => !editMode && setEditMode(true)}>
-        <EditableLabel
-          ref={inputRef}
-          editMode={editMode}
-          onBlur={(e) => {
-            const newName = e.target.innerText + matchName[2];
-            rename({ filename: customName, new_filename: newName });
-            setCustomName(newName);
-            setEditMode(false);
-          }}
-          onKeyDown={onKeyDown}
-          contentEditable={editMode}
-        >
-          {matchName[1]}
-        </EditableLabel>
-        <EditableLabel editMode={editMode}>{matchName[2]}</EditableLabel>
-        <EditIcon
-          onClick={() => setEditMode(!editMode)}
-          sx={{
-            ml: theme.spacing(1),
-            verticalAlign: "middle",
-            fontSize: theme.typography.h6.fontSize,
-          }}
+    <Box>
+      <Stack direction="row" sx={{ gap: theme.spacing(2) }}>
+        <InfoChip
+          size={Size.small}
+          label="Загружено"
+          info={
+            docData &&
+            moment(docData.upload_date).format(theme.additional.timeFormat)
+          }
         />
-      </Box>
-      <Stack direction="row" sx={{ gap: theme.spacing(1) }}>
-        <Button
-          onClick={setDialogProps}
-          variant="outlined"
-          startIcon={<PreviewIcon />}
-        >
-          Просмотр
-        </Button>
-        <Button
-          onClick={() => downloadDoc(customName)}
-          variant="outlined"
-          startIcon={<DownloadIcon />}
-        >
-          Скачать
-        </Button>
-        <Button
-          onClick={() => deleteDoc(customName)}
-          variant="outlined"
-          startIcon={<DeleteIcon />}
-        >
-          Удалить
-        </Button>
+        <InfoChip
+          size={Size.small}
+          label="Изменено"
+          info={
+            docData &&
+            moment(docData.change_date).format(theme.additional.timeFormat)
+          }
+        />
       </Stack>
+
+      <Box
+        sx={{
+          mt: theme.spacing(3),
+          display: "flex",
+          justifyContent: "space-between",
+          cursor: "pointer",
+          "&:hover": { color: theme.palette.primary.light },
+        }}
+      >
+        <Box>
+          <Box onClick={() => !editMode && setEditMode(true)}>
+            <EditableLabel
+              ref={inputRef}
+              editMode={editMode}
+              onBlur={(e) => {
+                const newName = e.target.innerText + matchName[2];
+                setEditMode(false);
+                rename({ filename: customName, new_filename: newName }).then(
+                  () => {
+                    setCustomName(newName);
+                    navigate(
+                      pathify([DocumentPage.List, newName], {
+                        changeLast: true,
+                      })
+                    );
+                  }
+                );
+              }}
+              onKeyDown={onKeyDown}
+              contentEditable={editMode}
+            >
+              {matchName[1]}
+            </EditableLabel>
+            <EditableLabel editMode={editMode}>{matchName[2]}</EditableLabel>
+            <EditIcon
+              onClick={() => setEditMode(!editMode)}
+              sx={{
+                ml: theme.spacing(1),
+                verticalAlign: "middle",
+                fontSize: theme.typography.h6.fontSize,
+              }}
+            />
+          </Box>
+        </Box>
+
+        <Stack
+          direction="row"
+          sx={{ gap: theme.spacing(1), height: "min-content" }}
+        >
+          <Button
+            onClick={setDialogProps}
+            variant="outlined"
+            startIcon={<PreviewIcon />}
+          >
+            Просмотр
+          </Button>
+          <Button
+            onClick={() => downloadDoc(customName)}
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+          >
+            Скачать
+          </Button>
+          <Button
+            onClick={() => deleteDoc(customName)}
+            variant="outlined"
+            startIcon={<DeleteIcon />}
+          >
+            Удалить
+          </Button>
+        </Stack>
+      </Box>
     </Box>
   );
 };

@@ -3,9 +3,11 @@ import { ROUTES } from "../../constants";
 import { addAuthHeader } from "./helpers";
 import {
   ColumnMarksPayload,
+  DescribeDoc,
   DocumentInfo,
   DocumentInfoShort,
   DocumentMethod,
+  DocumentStatsInfo,
   FullDocument,
 } from "../types";
 
@@ -36,8 +38,6 @@ export const documentsApi = createApi({
         url: ROUTES.DOCUMENTS.BASE,
         params: { filename },
       }),
-      // TODO: weird back string response. Need to be rewrited to JSON and correct format
-      transformResponse: (response: string) => JSON.parse(response),
     }),
     postDocument: builder.mutation<string, { filename: string; file: File }>({
       query: ({ filename, file }) => ({
@@ -62,6 +62,22 @@ export const documentsApi = createApi({
         params: { filename },
       }),
       providesTags: [Tags.singleDocument],
+    }),
+    infoStatsDocument: builder.query<DocumentStatsInfo, string>({
+      query: (filename) => ({
+        url: ROUTES.DOCUMENTS.STATS_INFO,
+        params: { filename },
+      }),
+      providesTags: [Tags.singleDocument],
+      transformResponse: (response: string) => JSON.parse(response),
+    }),
+    describeDocument: builder.query<DescribeDoc, string>({
+      query: (filename) => ({
+        url: ROUTES.DOCUMENTS.DESCRIBE,
+        params: { filename },
+      }),
+      providesTags: [Tags.singleDocument],
+      transformResponse: (response: string) => JSON.parse(response),
     }),
     pipelineDocument: builder.query<
       string,
@@ -139,6 +155,7 @@ export const documentsApi = createApi({
         body,
         method: "PUT",
       }),
+      invalidatesTags: [Tags.singleDocument],
     }),
     applyDocMethod: builder.mutation<
       string,
@@ -166,5 +183,7 @@ export const {
   useColumnsDocumentQuery,
   useChangeColumnMarksMutation,
   useApplyDocMethodMutation,
+  useDescribeDocumentQuery,
+  useInfoStatsDocumentQuery,
 } = documentsApi;
 export default documentsApi.reducer;

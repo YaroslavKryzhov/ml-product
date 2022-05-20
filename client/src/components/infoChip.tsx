@@ -2,14 +2,20 @@ import styled from "@emotion/styled";
 import { Box } from "@mui/material";
 import { theme } from "globalStyle/theme";
 import React from "react";
+import { Size } from "app/types";
 
-export const StyledBox = styled.div`
+export const StyledBox = styled.div<{ size?: Size }>`
   width: min-content;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: ${theme.spacing(2)};
+  padding: ${({ size }) =>
+    size === Size.small
+      ? `${theme.spacing(0.1)} ${theme.spacing(1)}`
+      : theme.spacing(2)};
   white-space: nowrap;
+  font-size: ${({ size }) =>
+    size === Size.small ? theme.typography.caption.fontSize : "inherit"};
 
   &:first-child {
     background-color: ${theme.palette.primary.dark};
@@ -28,15 +34,16 @@ export const StyledBox = styled.div`
 export const InfoChip: React.FC<{
   label: string;
   info: React.ReactNode;
-}> = ({ label, info }) => {
+  size?: Size;
+}> = ({ label, info, size }) => {
   return (
     <Box
       sx={{
         display: "flex",
       }}
     >
-      <StyledBox>{label}</StyledBox>
-      <StyledBox>{info}</StyledBox>
+      <StyledBox size={size}>{label}</StyledBox>
+      <StyledBox size={size}>{info}</StyledBox>
     </Box>
   );
 };

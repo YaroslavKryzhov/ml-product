@@ -12,7 +12,6 @@ import {
 } from "./styled";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import { TABLE_PARTS } from "../../const";
-import { useOverflow } from "app/Workplace/common/useOverflow";
 
 type TableFixBodyProps = {
   page: Row<object>[];
@@ -40,10 +39,10 @@ const TableFixBody: React.FC<TableFixBodyProps> = ({
   prepareRow,
   rowHoverable,
   rowActions,
-}) => (
-  <TableFixContainer {...tableBodyProps}>
-    {page?.length ? (
-      page.map((row) => {
+}) =>
+  page?.length ? (
+    <TableFixContainer {...tableBodyProps}>
+      {page.map((row) => {
         prepareRow(row);
         const { key: rowKey, ...rowProps } = row.getRowProps();
 
@@ -103,13 +102,10 @@ const TableFixBody: React.FC<TableFixBodyProps> = ({
             })}
           </StyledTableRow>
         );
-      })
-    ) : (
-      <tr>
-        <EmptyData>Данных не найдено</EmptyData>
-      </tr>
-    )}
-  </TableFixContainer>
-);
+      })}
+    </TableFixContainer>
+  ) : (
+    <EmptyData>Данных не найдено</EmptyData>
+  );
 
 export default TableFixBody;
