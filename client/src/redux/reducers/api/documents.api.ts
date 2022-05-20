@@ -2,11 +2,13 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { ROUTES } from "../../constants";
 import { addAuthHeader } from "./helpers";
 import {
+  CategoryMark,
   ColumnMarksPayload,
   DescribeDoc,
   DocumentInfo,
   DocumentInfoShort,
   DocumentMethod,
+  DocumentStatsColumnInfo,
   DocumentStatsInfo,
   FullDocument,
 } from "../types";
@@ -62,6 +64,20 @@ export const documentsApi = createApi({
         params: { filename },
       }),
       providesTags: [Tags.singleDocument],
+    }),
+    infoStatsColumnDocument: builder.query<
+      DocumentStatsColumnInfo,
+      { filename: string; columnName: string }
+    >({
+      query: ({ filename, columnName }) => ({
+        url: ROUTES.DOCUMENTS.STATS_INFO,
+        params: { filename, column_name: columnName },
+      }),
+      providesTags: [Tags.singleDocument],
+      transformResponse: (response: { type: CategoryMark; data: string }) => ({
+        ...response,
+        data: JSON.parse(response.data),
+      }),
     }),
     infoStatsDocument: builder.query<DocumentStatsInfo, string>({
       query: (filename) => ({
@@ -185,5 +201,6 @@ export const {
   useApplyDocMethodMutation,
   useDescribeDocumentQuery,
   useInfoStatsDocumentQuery,
+  useInfoStatsColumnDocumentQuery,
 } = documentsApi;
 export default documentsApi.reducer;

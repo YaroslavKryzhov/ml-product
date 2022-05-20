@@ -67,6 +67,11 @@ export type DocumentInfo = DocumentInfoShort & {
   };
 };
 
+export type DocumentStatsColumnInfo = {
+  type: CategoryMark;
+  data: Record<string, number>;
+};
+
 export type DocumentStatsInfo = {
   Column: string[];
   Dtype: string[];

@@ -1,15 +1,12 @@
 import { Box, Divider, Typography } from "@mui/material";
 import { TableFix } from "app/Workplace/common/Table";
-import { InfoChip } from "components/infoChip";
-import { count } from "console";
 import {
-  useColumnMarksDocumentQuery,
   useDescribeDocumentQuery,
+  useInfoStatsColumnDocumentQuery,
   useInfoStatsDocumentQuery,
 } from "ducks/reducers/api/documents.api";
 import { theme } from "globalStyle/theme";
-import { entries, fill, first, zip } from "lodash";
-import moment from "moment";
+import { entries, first, zip } from "lodash";
 import { compose, map, zipObj, values, keys } from "ramda";
 import React, { useMemo } from "react";
 
@@ -25,23 +22,14 @@ enum DescribeRows {
   std = "std",
 }
 
-// entries(
-//   zipObj(
-//     composeAny(keys, first, values)(describeData),
-//     zip(...composeAny(map(values), values)(describeData))
-//   )
-// ).map(([key, values]) =>
-//   zipObj(
-//     [DescribeRows.propNames, ...keys(describeData)],
-//     [key, ...values]
-//   )
-// )
-
 const composeAny = compose as any;
 
 export const MainInfo: React.FC<{ docName: string }> = ({ docName }) => {
   const { data: describeData } = useDescribeDocumentQuery(docName);
   const { data: infoData } = useInfoStatsDocumentQuery(docName);
+  // const { data: columnData } = useInfoStatsColumnDocumentQuery({
+  //   filename: docName,
+  // });
 
   // const { data: columnMarks } = useColumnMarksDocumentQuery(docName);
 
@@ -112,6 +100,7 @@ export const MainInfo: React.FC<{ docName: string }> = ({ docName }) => {
       <Box>
         <Typography variant="body1">Pandas Description</Typography>
         <TableFix
+          compact
           isFirstColumnFixed
           columns={describeColumns}
           data={describeDataRows}
@@ -122,7 +111,7 @@ export const MainInfo: React.FC<{ docName: string }> = ({ docName }) => {
         </Typography>
       </Box>
 
-      <TableFix columns={infoColumns} data={infoDataRows} />
+      <TableFix compact columns={infoColumns} data={infoDataRows} />
       <Divider sx={{ mb: theme.spacing(3), mt: theme.spacing(3) }} />
     </Box>
   );

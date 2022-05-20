@@ -26,8 +26,12 @@ export const CellValueContainer = styled.div`
 
 export const StyledTableCell = styled.td<{
   fixed?: Fixed;
+  compact?: boolean;
 }>`
-  padding: ${theme.spacing(2)} ${theme.spacing(3)};
+  padding: ${({ compact }) =>
+    compact
+      ? `${theme.spacing(0.2)} ${theme.spacing(1)}`
+      : `${theme.spacing(2)} ${theme.spacing(3)}`};
   display: flex;
   align-items: center;
   border-bottom: ${theme.additional.borderWidth} solid ${theme.palette.divider};

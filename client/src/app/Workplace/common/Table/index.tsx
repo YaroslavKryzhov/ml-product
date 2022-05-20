@@ -130,6 +130,7 @@ const View: React.FC<TableFixProps> = (props) => {
           headerGroups={headerGroups}
         />
         <TableFixBody
+          compact={props.compact}
           rowActions={props.rowActions}
           rowHoverable={props.rowHoverable}
           page={page}
