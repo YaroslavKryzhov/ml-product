@@ -38,10 +38,22 @@ class DocumentService:
         DocumentPostgreCRUD(self._db, self._user).new_document(filename)
         return True
 
-    def read_document_from_db(self, filename: str) -> pd.DataFrame:
+    def read_document_from_db(self, filename: str, page: int = 1, rows_on_page: int = 50) -> pd.DataFrame:
         if DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename) is not None:
             df = DocumentFileCRUD(self._user).read_document(filename)
-            return df
+            start_index = (page - 1) * rows_on_page
+            stop_index = page * rows_on_page
+            try:
+                result = df.iloc[start_index:stop_index]
+            except IndexError:
+                try:
+                    result = df.iloc[start_index:]
+                except IndexError:
+                    return pd.DataFrame()
+                else:
+                    return result
+            else:
+                return result
         return None
 
     def get_document_stat_info(self, filename: str) -> pd.DataFrame:
@@ -63,7 +75,6 @@ class DocumentService:
         return None
 
     def get_column_stat_description(self, filename: str, column_name: str) -> [str, str]:
-        # TOD: maybe take column type from frontend?
         if DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename) is not None:
             df = DocumentFileCRUD(self._user).read_document(filename)
             column_marks = self.read_column_marks(filename)
@@ -71,6 +82,12 @@ class DocumentService:
                 return ['numeric', pd.cut(df[column_name], 10).value_counts().sort_index().to_json()]
             elif column_name in column_marks['categorical']:
                 return ['categorical', df[column_name].value_counts().to_json()]
+            elif column_name in column_marks['target']:
+                try:
+                    result = ['target', pd.cut(df[column_name], 10).value_counts().sort_index().to_json()]
+                except TypeError:
+                    result = ['target', df[column_name].value_counts().to_json()]
+                return result
         return None
 
     def read_document_info(self, filename: str):
@@ -177,8 +194,6 @@ class DocumentService:
             document_operator.fs_select_fpr()
             self.update_pipeline(filename, method='fs_select_fpr')
             self.update_column_marks(filename, column_marks=document_operator.get_column_marks())
-
-
 
         DocumentFileCRUD(self._user).update_document(filename, document_operator.get_df())
         self.update_change_date_in_db(filename)
