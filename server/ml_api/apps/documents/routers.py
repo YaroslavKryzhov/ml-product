@@ -24,12 +24,12 @@ def load_document(filename: str, file: UploadFile = File(...), db: get_db = Depe
 
 
 @documents_crud_router.get("")
-def read_document(filename: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
-    result = DocumentService(db, user).read_document_from_db(filename)
+def read_document(filename: str, page: int = 1, db: get_db = Depends(), user: User = Depends(current_active_user)):
+    result = DocumentService(db, user).read_document_from_db(filename, page)
     if result is None:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content="No such csv document")
     else:
-        return JSONResponse(status_code=status.HTTP_200_OK, content=result.head(100).to_json())
+        return JSONResponse(status_code=status.HTTP_200_OK, content=result)
 
 
 @documents_crud_router.get("/stats/info")
@@ -38,7 +38,7 @@ def document_stat_info(filename: str, db: get_db = Depends(), user: User = Depen
     if result is None:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content="No such csv document")
     else:
-        return JSONResponse(status_code=status.HTTP_200_OK, content=result.to_json())
+        return JSONResponse(status_code=status.HTTP_200_OK, content=result)
 
 
 @documents_crud_router.get("/stats/describe")
@@ -47,7 +47,7 @@ def document_stat_describe(filename: str, db: get_db = Depends(), user: User = D
     if result is None:
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content="No such csv document")
     else:
-        return JSONResponse(status_code=status.HTTP_200_OK, content=result.to_json())
+        return JSONResponse(status_code=status.HTTP_200_OK, content=result)
 
 
 @documents_crud_router.get("/stats/column")
@@ -124,6 +124,7 @@ documents_method_router = APIRouter(
     tags=["Document Methods"],
     responses={404: {"description": "Not found"}}
 )
+
 
 @documents_method_router.put("/apply")
 def apply_method(filename: str, function_name: AvailableFunctions, db: get_db = Depends(), user: User = Depends(current_active_user)):

@@ -13,7 +13,7 @@ from ml_api.common.config import ROOT_DIR
 from ml_api.apps.ml_models.models import Model
 
 
-class BaseCrud:
+class BaseCRUD:
 
     def __init__(self, user):
         self.user_id = str(user.id)
@@ -25,7 +25,7 @@ class BaseCrud:
         return os.path.join(self.user_path, filename + '.pickle')
 
 
-class ModelPostgreCRUD(BaseCrud):
+class ModelPostgreCRUD(BaseCRUD):
 
     def __init__(self, session: Session, user):
         super().__init__(user)
@@ -77,7 +77,7 @@ class ModelPostgreCRUD(BaseCrud):
         self.session.commit()
 
 
-class ModelPickleCRUD(BaseCrud):
+class ModelPickleCRUD(BaseCRUD):
 
     # CREATE/UPDATE
     def save_model(self, model_name: str, model):

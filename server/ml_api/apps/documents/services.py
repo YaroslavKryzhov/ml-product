@@ -38,10 +38,19 @@ class DocumentService:
         DocumentPostgreCRUD(self._db, self._user).new_document(filename)
         return True
 
-    def read_document_from_db(self, filename: str) -> pd.DataFrame:
+    def read_document_from_db(self, filename: str, page: int = 1, rows_on_page: int = 50) -> pd.DataFrame:
         if DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename) is not None:
             df = DocumentFileCRUD(self._user).read_document(filename)
-            return df
+            length = len(df)
+            pages_count = (length - 1)//rows_on_page + 1
+            start_index = (page - 1) * rows_on_page
+            stop_index = page * rows_on_page
+            if stop_index < length:
+                return {'total': pages_count, 'records': df.iloc[start_index:stop_index].to_json()}
+            elif start_index < length:
+                return {'total': pages_count, 'records': df.iloc[start_index:].to_json()}
+            else:
+                return {'total': pages_count, 'records': pd.DataFrame().to_json()}
         return None
 
     def get_document_stat_info(self, filename: str) -> pd.DataFrame:
@@ -52,25 +61,30 @@ class DocumentService:
             df.info(buf=buffer)
             lines = buffer.getvalue().splitlines()
             df = (pd.DataFrame([x.split() for x in lines[5:-2]], columns=lines[3].split())
-                  .drop(['#','Count'], axis=1))
-            return df
+                  .drop(['#', 'Count'], axis=1))
+            return df.to_json()
         return None
 
     def get_document_stat_description(self, filename: str) -> pd.DataFrame:
         if DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename) is not None:
             df = DocumentFileCRUD(self._user).read_document(filename)
-            return df.describe()
+            return df.describe().to_json()
         return None
 
-    def get_column_stat_description(self, filename: str, column_name: str) -> [str, str]:
-        # TOD: maybe take column type from frontend?
+    def get_column_stat_description(self, filename: str, column_name: str, bins: int = 10) -> [str, str]:
         if DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename) is not None:
             df = DocumentFileCRUD(self._user).read_document(filename)
             column_marks = self.read_column_marks(filename)
             if column_name in column_marks['numeric']:
-                return ['numeric', pd.cut(df[column_name], 10).value_counts().sort_index().to_json()]
+                return {'type': 'numeric', 'data': pd.cut(df[column_name], bins).value_counts().sort_index().to_json()}
             elif column_name in column_marks['categorical']:
-                return ['categorical', df[column_name].value_counts().to_json()]
+                return {'type': 'categorical', 'data': df[column_name].value_counts().to_json()}
+            elif column_name in column_marks['target']:
+                try:
+                    result = {'type': 'target', 'data': pd.cut(df[column_name], bins).value_counts().sort_index().to_json()}
+                except TypeError:
+                    result = {'type': 'target', 'data': df[column_name].value_counts().to_json()}
+                return result
         return None
 
     def read_document_info(self, filename: str):
@@ -177,8 +191,6 @@ class DocumentService:
             document_operator.fs_select_fpr()
             self.update_pipeline(filename, method='fs_select_fpr')
             self.update_column_marks(filename, column_marks=document_operator.get_column_marks())
-
-
 
         DocumentFileCRUD(self._user).update_document(filename, document_operator.get_df())
         self.update_change_date_in_db(filename)
