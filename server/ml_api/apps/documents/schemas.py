@@ -18,6 +18,7 @@ class AvailableFunctions(Enum):
     drop_na = 'drop_na'
     miss_insert_mean_mode = 'miss_insert_mean_mode'
     miss_linear_imputer = 'miss_linear_imputer'
+    miss_knn_imputer = 'miss_knn_imputer'
 
     standardize_features = 'standardize_features'
     ordinal_encoding = 'ordinal_encoding'
@@ -27,3 +28,4 @@ class AvailableFunctions(Enum):
     outliers_elliptic_envelope = 'outliers_elliptic_envelope'
     outliers_local_factor = 'outliers_local_factor'
     outliers_one_class_svm = 'outliers_one_class_svm'
+    outliers_sgd_one_class_svm = 'outliers_sgd_one_class_svm'

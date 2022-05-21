@@ -7,14 +7,15 @@ from datetime import datetime
 from outliers import smirnov_grubbs as grubbs
 from typing import List, Union, Dict, Callable, Tuple, Optional
 from sklearn.experimental import enable_iterative_imputer
-from sklearn.impute import IterativeImputer
+from sklearn.impute import IterativeImputer, SimpleImputer, KNNImputer
 from sklearn.ensemble import IsolationForest
 from scipy.stats import mode
 from sklearn.svm import OneClassSVM, SVR
+from sklearn.linear_model import SGDOneClassSVM
 from sklearn.preprocessing import OrdinalEncoder, StandardScaler, OneHotEncoder
 from sklearn.covariance import EllipticEnvelope
 from sklearn.neighbors import LocalOutlierFactor
-from sklearn.feature_selection import SelectKBest, f_classif, SelectFpr, SelectFwe, SelectFdr, RFE, SelectFromModel, \
+from sklearn.feature_selection import SelectKBest, f_classif, f_regression, SelectFpr, SelectFwe, SelectFdr, RFE, SelectFromModel, \
     SelectPercentile, VarianceThreshold, GenericUnivariateSelect
 from sklearn.decomposition import PCA
 from sklearn.base import BaseEstimator
@@ -22,6 +23,21 @@ from sklearn.base import BaseEstimator
 from sympy import numer, per
 
 from ml_api.apps.documents.repository import DocumentFileCRUD, DocumentPostgreCRUD
+
+
+def create_hist_data(df: pd.DataFrame, column_name: str, bins: int) -> List[Dict]:
+    ints = df[column_name].value_counts(bins=bins).sort_index().reset_index()
+    ints['start'] = ints['index'].apply(lambda x: x.left)
+    ints['end'] = ints['index'].apply(lambda x: x.right)
+    ints.drop('index', axis=1, inplace=True)
+    ints.columns = ['value', 'left', 'right']
+    return list(ints.to_dict('index').values())
+
+
+def create_counts_data(df: pd.DataFrame, column_name: str) -> List[Dict]:
+    ints = df[column_name].value_counts(normalize=True).reset_index()
+    ints.columns = ['name', 'value']
+    return list(ints.to_dict('index').values())
 
 
 class DocumentService:
@@ -46,11 +62,11 @@ class DocumentService:
             start_index = (page - 1) * rows_on_page
             stop_index = page * rows_on_page
             if stop_index < length:
-                return {'total': pages_count, 'records': df.iloc[start_index:stop_index].to_json()}
+                return {'total': pages_count, 'records': df.iloc[start_index:stop_index].to_dict()}
             elif start_index < length:
-                return {'total': pages_count, 'records': df.iloc[start_index:].to_json()}
+                return {'total': pages_count, 'records': df.iloc[start_index:].to_dict()}
             else:
-                return {'total': pages_count, 'records': pd.DataFrame().to_json()}
+                return {'total': pages_count, 'records': pd.DataFrame().to_dict()}
         return None
 
     def get_document_stat_info(self, filename: str) -> pd.DataFrame:
@@ -62,29 +78,38 @@ class DocumentService:
             lines = buffer.getvalue().splitlines()
             df = (pd.DataFrame([x.split() for x in lines[5:-2]], columns=lines[3].split())
                   .drop(['#', 'Count'], axis=1))
-            return df.to_json()
+            df.columns = ['column_name', 'non_null_count', 'data_type']
+            return df.to_dict()
         return None
 
     def get_document_stat_description(self, filename: str) -> pd.DataFrame:
         if DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename) is not None:
             df = DocumentFileCRUD(self._user).read_document(filename)
-            return df.describe().to_json()
+            result = df.describe()
+            result.index = ["count", "mean", "std", "min", "first_percentile", "second_percentile",  "third_percentile",
+                            "max"]
+            return result.to_dict()
         return None
 
-    def get_column_stat_description(self, filename: str, column_name: str, bins: int = 10) -> [str, str]:
+    def get_column_stat_description(self, filename: str, bins: int = 10) -> [str, str]:
         if DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename) is not None:
+            result = []
             df = DocumentFileCRUD(self._user).read_document(filename)
             column_marks = self.read_column_marks(filename)
-            if column_name in column_marks['numeric']:
-                return {'type': 'numeric', 'data': pd.cut(df[column_name], bins).value_counts().sort_index().to_json()}
-            elif column_name in column_marks['categorical']:
-                return {'type': 'categorical', 'data': df[column_name].value_counts().to_json()}
-            elif column_name in column_marks['target']:
-                try:
-                    result = {'type': 'target', 'data': pd.cut(df[column_name], bins).value_counts().sort_index().to_json()}
-                except TypeError:
-                    result = {'type': 'target', 'data': df[column_name].value_counts().to_json()}
-                return result
+            for column_name in column_marks['numeric']:
+                data = create_hist_data(df=df, column_name=column_name, bins=bins)
+                result.append({'name': column_name, 'type': 'numeric', 'data': data})
+            for column_name in column_marks['categorical']:
+                data = create_counts_data(df=df, column_name=column_name)
+                result.append({'name': column_name, 'type': 'categorical', 'data': data})
+            column_name = column_marks['target']
+            try:
+                data = create_hist_data(df=df, column_name=column_name, bins=bins)
+                result.append({'name': column_name, 'type': 'numeric', 'data': data})
+            except TypeError:
+                data = create_counts_data(df=df, column_name=column_name)
+                result.append({'name': column_name, 'type': 'categorical', 'data': data})
+            return result
         return None
 
     def read_document_info(self, filename: str):
@@ -143,10 +168,14 @@ class DocumentService:
         DocumentPostgreCRUD(self._db, self._user).update_document(filename, query)
 
     def apply_pipeline_to_csv(self, filename: str, pipeline: List[str]):
-        for function_name in pipeline:
-            self.apply_function(filename=filename, function_name=function_name)
+        for function in pipeline:
+            if type(function) == List:
+                function, task_type, param = function
+                self.apply_function(filename=filename, function_name=function, task_type=task_type, param=param)
+            else:
+                self.apply_function(filename=filename, function_name=function)
 
-    def apply_function(self, filename: str, function_name: str):
+    def apply_function(self, filename: str, function_name: str, task_type: str = 'classification', param: float = 1):
         document = DocumentFileCRUD(self._user).read_document(filename)
         column_marks = self.read_column_marks(filename)
         document_operator = DocumentOperator(document, column_marks)
@@ -159,6 +188,8 @@ class DocumentService:
             document_operator.miss_insert_mean_mode()
         elif function_name == 'miss_linear_imputer':
             document_operator.miss_linear_imputer()
+        elif function_name == 'miss_knn_imputer':
+            document_operator.miss_knn_imputer()
 
         elif function_name == 'standardize_features':
             document_operator.standardize_features()
@@ -180,12 +211,12 @@ class DocumentService:
             document_operator.outliers_local_factor()
         elif function_name == 'outliers_one_class_svm':
             document_operator.outliers_one_class_svm()
-        # elif function_name == 'outliers_three_sigma':
-        #     document_operator.outliers_three_sigma()
+        elif function_name == 'outliers_sgd_one_class_svm':
+            document_operator.outliers_sgd_one_class_svm()
 
         elif function_name == 'fs_select_k_best':
-            document_operator.fs_select_k_best()
-            self.update_pipeline(filename, method='fs_select_k_best')
+            document_operator.fs_generic_univariate_select(task_type=task_type, mode='k_best', param=param)
+            self.update_pipeline(filename, method=f'fs_select_k_best')
             self.update_column_marks(filename, column_marks=document_operator.get_column_marks())
         elif function_name == 'fs_select_fpr':
             document_operator.fs_select_fpr()
@@ -218,19 +249,24 @@ class DocumentOperator:
 
     def miss_insert_mean_mode(self):
         numeric_columns = self.column_marks['numeric']
-        categorical = self.column_marks['categorical']
-        for feature in self.df.columns:
-            if feature in categorical:
-                self.df[feature].fillna(mode(self.df[feature]).mode[0], inplace=True)
-            if feature in numeric_columns:
-                self.df[feature].fillna(self.df[feature].mean(), inplace=True)
+        categorical_columns = self.column_marks['categorical']
+        self.df[numeric_columns] = pd.DataFrame(SimpleImputer(strategy='mean').fit_transform(self.df[numeric_columns]),
+                                                self.df.index, numeric_columns)
+        self.df[categorical_columns] = pd.DataFrame(SimpleImputer(strategy='most_frequent').fit_transform(
+                                                    self.df[numeric_columns]), self.df.index, categorical_columns)
 
-    def miss_linear_imputer(self):  # can be slow on big amount of columns
+    def miss_linear_imputer(self):
         numeric_columns = self.column_marks['numeric']
-        self.df[numeric_columns] = pd.DataFrame(IterativeImputer().fit_transform(self.df[numeric_columns]))
+        self.df[numeric_columns] = pd.DataFrame(IterativeImputer().fit_transform(self.df[numeric_columns]),
+                                                self.df.index, numeric_columns)
+
+    def miss_knn_imputer(self):
+        numeric_columns = self.column_marks['numeric']
+        self.df[numeric_columns] = pd.DataFrame(KNNImputer().fit_transform(self.df[numeric_columns]),
+                                                self.df.index, numeric_columns)
 
     # CHAPTER 2: FEATURE TRANSFORMATION---------------------------------------------------------------------------------
-
+  # работает ли на пропусках в данных?
     def standardize_features(self):
         numeric_columns = self.column_marks['numeric']
         sc = StandardScaler()
@@ -256,7 +292,7 @@ class DocumentOperator:
         self.column_marks['categorical'] = []
 
     # CHAPTER 3: OUTLIERS-----------------------------------------------------------------------------------------------
-
+# работает ли на пропусках и категориальных?
     def outliers_isolation_forest(self):
         numeric_columns = self.column_marks['numeric']
         outliers = IsolationForest().fit_predict(self.df[numeric_columns])
@@ -277,116 +313,33 @@ class DocumentOperator:
         outliers = OneClassSVM().fit_predict(self.df[numeric_columns])
         self.df = self.df.loc[outliers == 1].reset_index(drop=True)
 
+    def outliers_sgd_one_class_svm(self):
+        numeric_columns = self.column_marks['numeric']
+        outliers = SGDOneClassSVM().fit_predict(self.df[numeric_columns])
+        self.df = self.df.loc[outliers == 1].reset_index(drop=True)
+
+    # CANCELLED:
     # def outliers_three_sigma(self):
-    #     numeric_columns = self.column_marks['numeric']
-    #     self.df[numeric_columns] = self.df.loc[(self.df[numeric_columns] -
-    #             self.df[numeric_columns].mean()).abs() < 3 * self.df.std(), numeric_columns].dropna(axis=0, how='any')
-
     # def outliers_grubbs(self):
-    #     alpha = 0.05
-    #     numeric_columns = self.column_marks['numeric']
-    #     for col in numeric_columns:
-    #         self.df = self.df.drop(
-    #             grubbs.two_sided_test_indices(self.df[col], alpha)
-    #         ).reset_index().drop('index', axis=1)
-    #
     # def outliers_approximate(self):
-    #     deviation =
-    #     numeric_columns = self.column_marks['numeric']
-    #     M = self.df[numeric_columns]
-    #     u, s, vh = np.linalg.svd(M, full_matrices=True)
-    #     Mk_rank = np.linalg.matrix_rank(M) - deviation
-    #     Uk, Sk, VHk = u[:, :Mk_rank], np.diag(s)[:Mk_rank, :Mk_rank], vh[:Mk_rank, :]
-    #     Mk = pd.DataFrame(np.dot(np.dot(Uk, Sk), VHk), index=M.index, columns=M.columns)
-    #     delta = abs(Mk - M)
-    #     self.df = self.df.drop(delta.idxmax())
-    #
-    # def outliers_interquartile_distance(self, low_quantile: float, up_quantile: float, coef: float):
-    #     numeric_columns = self.column_marks['numeric']
-    #     self.df
-    #     quantile = numeric_columns.quantile([low_quantile, up_quantile])
-    #     for column in numeric_columns:
-    #         low_lim = quantile[column][low_quantile]
-    #         up_lim = quantile[column][up_quantile]
-    #         df = df.loc[df[column] >= low_lim - coef * (up_lim - low_lim)]. \
-    #             loc[df[column] <= up_lim + coef * (up_lim - low_lim)]
+    # def outliers_interquartile_distance(self):
 
-    # CHAPTER 4: FEATURE SELECTION--------------------------------------------------------------------------------------
+    # CHAPTER 4: FEATURE SELECTION (required: all columns are numeric)--------------------------------------------------
 
-    def fs_select_k_best(self, k: int = 10):
+    def fs_generic_univariate_select(self, task_type: str, select_mode: str, param: float = 1e-5):
+        # mode: {‘percentile’, ‘k_best’, ‘fpr’, ‘fdr’, ‘fwe’}
         target = self.column_marks['target']
-        X, y = self.df.drop(target, axis=1), self.df[target]
-        # TOD: add changing score function
-        # TOD: add k parameter selection
-        selector = SelectKBest(k=k)
-        selector.fit(X, y)
-        self.df = pd.DataFrame(selector.transform(X), columns=self.df.columns[selector.get_support(indices=True)])
+        x, y = self.df.drop(target, axis=1), self.df[target]
+        if task_type == 'classification':
+            selector = GenericUnivariateSelect(f_classif, mode=select_mode, param=param)
+        else:
+            selector = GenericUnivariateSelect(f_regression, mode=select_mode, param=param)
+        selector.fit(x, y)
+        selected_columns = self.df.columns[selector.get_support(indices=True)]
+        self.df = pd.DataFrame(selector.transform(x), columns=selected_columns)
         self.df[target] = y
-        # TOD: add column_marks changer
+        self.column_marks['numeric'] = selected_columns
 
-    # def fs_select_fpr(
-    #         self,
-    #         filename: str,
-    #         score_func: Callable[
-    #             [np.ndarray, np.ndarray],
-    #             Tuple[np.ndarray, np.ndarray]
-    #         ] = f_classif,
-    #         alpha: Union[int, str] = 0.05
-    # ):
-    #     document = DocumentFileCRUD(self._user).read_document(filename)
-    #     columns_dict = self.read_column_marks(filename)
-    #     x = columns_dict['numeric'].append(columns_dict['categorical'])
-    #     y = columns_dict['target']
-    #     selector = SelectFpr(score_func=score_func, alpha=alpha)
-    #     selector.fit(x, y)
-    #     document = pd.DataFrame(selector.transform(x), columns=document.columns[selector.get_support(indices=True)])
-    #     document['target'] = y
-    #     self.update_change_date_in_db(filename)
-    #     DocumentFileCRUD(self._user).update_document(filename, document)
-    #     self.update_pipeline(filename, method='fs_select_fpr')
-    #
-    # def fs_select_fwe(
-    #         self,
-    #         filename: str,
-    #         score_func: Callable[
-    #             [np.ndarray, np.ndarray],
-    #             Tuple[np.ndarray, np.ndarray]
-    #         ] = f_classif,
-    #         alpha: Union[int, str] = 0.05
-    # ):
-    #     document = DocumentFileCRUD(self._user).read_document(filename)
-    #     columns_dict = self.read_column_marks(filename)
-    #     x = columns_dict['numeric'].append(columns_dict['categorical'])
-    #     y = columns_dict['target']
-    #     selector = SelectFwe(score_func=score_func, alpha=alpha)
-    #     selector.fit(x, y)
-    #     document = pd.DataFrame(selector.transform(x), columns=document.columns[selector.get_support(indices=True)])
-    #     document['target'] = y
-    #     self.update_change_date_in_db(filename)
-    #     DocumentFileCRUD(self._user).update_document(filename, document)
-    #     self.update_pipeline(filename, method='fs_select_fwe')
-    #
-    # def fs_select_fdr(
-    #         self,
-    #         filename: str,
-    #         score_func: Callable[
-    #             [np.ndarray, np.ndarray],
-    #             Tuple[np.ndarray, np.ndarray]
-    #         ] = f_classif,
-    #         alpha: Union[int, str] = 0.05
-    # ):
-    #     document = DocumentFileCRUD(self._user).read_document(filename)
-    #     columns_dict = self.read_column_marks(filename)
-    #     x = columns_dict['numeric'].append(columns_dict['categorical'])
-    #     y = columns_dict['target']
-    #     selector = SelectFdr(score_func=score_func, alpha=alpha)
-    #     selector.fit(x, y)
-    #     document = pd.DataFrame(selector.transform(x), columns=document.columns[selector.get_support(indices=True)])
-    #     document['target'] = y
-    #     self.update_change_date_in_db(filename)
-    #     DocumentFileCRUD(self._user).update_document(filename, document)
-    #     self.update_pipeline(filename, method='fs_select_fdr')
-    #
     # def fs_pca(self, filename: str, n_components: Optional[int]):
     #     document = DocumentFileCRUD(self._user).read_document(filename)
     #     target = self.read_column_marks(filename)['target']
@@ -439,24 +392,6 @@ class DocumentOperator:
     #     DocumentFileCRUD(self._user).update_document(filename, document)
     #     self.update_pipeline(filename, method='fs_select_from_model')
     #
-    # def fs_select_percentile(
-    #         self,
-    #         filename: str,
-    #         score_func: Callable[
-    #             [np.ndarray, np.ndarray],
-    #             Tuple[np.ndarray, np.ndarray]
-    #         ] = f_classif,
-    #         percentile: int = 10
-    # ):
-    #     document = DocumentFileCRUD(self._user).read_document(filename)
-    #     X, y = document.drop('target', axis=1), document['target']
-    #     selector = SelectPercentile(score_func=score_func, percentile=percentile)
-    #     selector.fit(X, y)
-    #     document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
-    #     document['target'] = y
-    #     self.update_change_date_in_db(filename)
-    #     DocumentFileCRUD(self._user).update_document(filename, document)
-    #     self.update_pipeline(filename, method='fs_select_percentile')
     #
     # def fs_variance_threshold(
     #         self,
@@ -473,22 +408,4 @@ class DocumentOperator:
     #     DocumentFileCRUD(self._user).update_document(filename, document)
     #     self.update_pipeline(filename, method='fs_variance_threshold')
     #
-    # def fs_generic_univariate_select(
-    #         self,
-    #         filename: str,
-    #         score_func: Callable[
-    #             [np.ndarray, np.ndarray],
-    #             Tuple[np.ndarray, np.ndarray]
-    #         ] = f_classif,
-    #         mode: str = 'percentile',
-    #         param: Union[int, float] = 1e-5
-    # ):
-    #     document = DocumentFileCRUD(self._user).read_document(filename)
-    #     X, y = document.drop('target', axis=1), document['target']
-    #     selector = GenericUnivariateSelect(score_func=score_func, mode=mode, param=param)
-    #     selector.fit(X, y)
-    #     document = pd.DataFrame(selector.transform(X), columns=document.columns[selector.get_support(indices=True)])
-    #     document['target'] = y
-    #     self.update_change_date_in_db(filename)
-    #     DocumentFileCRUD(self._user).update_document(filename, document)
-    #     self.update_pipeline(filename, method='fs_generic_univariate_select')
+
