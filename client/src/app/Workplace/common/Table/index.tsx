@@ -128,6 +128,8 @@ const View: React.FC<TableFixProps> = (props) => {
           // TODO
           // resizable={props.resizable}
           headerGroups={headerGroups}
+          offHeaderPaddings={props.offHeaderPaddings}
+          compact={props.compact}
         />
         <TableFixBody
           compact={props.compact}

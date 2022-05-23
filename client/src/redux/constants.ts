@@ -12,7 +12,7 @@ export const ROUTES = {
     BASE: BASE_API + "/document",
     INFO: "/info",
     STATS_INFO: "/stats/info",
-    STATS_COLUMN: "/stats/column",
+    STATS_COLUMNS: "/stats/columns",
     DESCRIBE: "/stats/describe",
     DOWNLOAD: "/download",
     PIPE: "/pipeline",

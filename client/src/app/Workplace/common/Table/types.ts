@@ -17,6 +17,7 @@ export type RowAction = {
 
 export type TableFixProps = {
   compact?: boolean;
+  offHeaderPaddings?: boolean;
   rowHoverable?: boolean;
   forceResize?: boolean;
   data: object[];
@@ -32,4 +33,5 @@ export type TableFixProps = {
   tableMaxHeight?: string;
   resizable?: boolean;
   rowActions?: RowAction[];
+  columnAlign?: string;
 };

@@ -16,15 +16,21 @@ export const StyledHeadCell = styled.th<{
   fixed?: Fixed;
   borderRight?: boolean;
   borderLeft?: boolean;
+  offHeaderPaddings?: boolean;
+  compact?: boolean;
 }>`
-  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   user-select: none;
   position: relative;
   font-weight: ${theme.typography.fontWeightBold};
   display: flex;
-  padding: ${theme.spacing(1)} ${theme.spacing(3)};
+  padding: ${({ offHeaderPaddings, compact }) =>
+    offHeaderPaddings
+      ? "none"
+      : compact
+      ? `${theme.spacing(1)} ${theme.spacing(1)}`
+      : `${theme.spacing(1)} ${theme.spacing(3)}`};
   font-size: ${theme.typography.body1.fontSize};
   border-bottom: ${theme.additional.borderWidth} solid ${theme.palette.divider};
   justify-content: ${({ fixed }) => {

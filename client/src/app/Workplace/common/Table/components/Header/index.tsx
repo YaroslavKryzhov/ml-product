@@ -13,11 +13,15 @@ import {
 type TableFixHeaderProps = {
   headerGroups: HeaderGroup<object>[];
   resizable?: boolean;
+  offHeaderPaddings?: boolean;
+  compact?: boolean;
 };
 
 const TableFixHeader: React.FC<TableFixHeaderProps> = ({
   resizable,
   headerGroups,
+  offHeaderPaddings,
+  compact,
 }) => (
   <StyledTableHead>
     {headerGroups.map((headerGroup) => {
@@ -34,10 +38,17 @@ const TableFixHeader: React.FC<TableFixHeaderProps> = ({
                 fixed={(column as CustomColumn).fixed}
                 {...headerProps}
                 key={headerKey}
+                offHeaderPaddings={offHeaderPaddings}
+                compact={compact}
               >
-                <HeadCellContent {...column.getSortByToggleProps()}>
-                  {column.render(TABLE_PARTS.Header)}
-                </HeadCellContent>
+                {typeof column.Header === "string" ? (
+                  <HeadCellContent {...column.getSortByToggleProps()}>
+                    {column.render(TABLE_PARTS.Header)}
+                  </HeadCellContent>
+                ) : (
+                  column.render(TABLE_PARTS.Header)
+                )}
+
                 {column.isSorted && (
                   <SortedArrowUp isFlipped={column.isSortedDesc} />
                 )}

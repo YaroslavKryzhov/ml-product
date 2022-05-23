@@ -73,9 +73,9 @@ export type DocumentStatsColumnInfo = {
 };
 
 export type DocumentStatsInfo = {
-  Column: string[];
-  Dtype: string[];
-  "Non-Null": string[];
+  column_name: string[];
+  data_type: string[];
+  non_null_count: string[];
 };
 
 export type DescribeDoc = {
@@ -94,13 +94,25 @@ export enum CategoryMark {
   target = "target",
 }
 
+export type NumericData = { value: number; left: number; right: number };
+export type CategoricalData = { name: string; value: number };
+
+export type ColumnStats = {
+  name: string;
+  type: CategoryMark;
+  data: (NumericData | CategoricalData)[];
+};
+
 export type ColumnMarksPayload = {
   [CategoryMark.numeric]: string[];
   [CategoryMark.categorical]: string[];
   [CategoryMark.target]: string;
 };
 
-export type FullDocument = { [key: string]: (string | number)[] };
+export type FullDocument = {
+  total: number;
+  records: Record<string, string | number>;
+};
 
 export enum DocumentMethod {
   removeDuplicates = "remove_duplicates",

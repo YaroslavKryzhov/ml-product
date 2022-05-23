@@ -4,6 +4,7 @@ import { addAuthHeader } from "./helpers";
 import {
   CategoryMark,
   ColumnMarksPayload,
+  ColumnStats,
   DescribeDoc,
   DocumentInfo,
   DocumentInfoShort,
@@ -12,6 +13,7 @@ import {
   DocumentStatsInfo,
   FullDocument,
 } from "../types";
+import { values } from "lodash";
 
 const buildFileForm = (file: File) => {
   const form = new FormData();
@@ -35,10 +37,10 @@ export const documentsApi = createApi({
   }),
   tagTypes: Object.values(Tags),
   endpoints: (builder) => ({
-    document: builder.query<FullDocument, string>({
-      query: (filename) => ({
+    document: builder.query<FullDocument, { filename: string; page: number }>({
+      query: ({ filename, page }) => ({
         url: ROUTES.DOCUMENTS.BASE,
-        params: { filename },
+        params: { filename, page },
       }),
     }),
     postDocument: builder.mutation<string, { filename: string; file: File }>({
@@ -85,7 +87,10 @@ export const documentsApi = createApi({
         params: { filename },
       }),
       providesTags: [Tags.singleDocument],
-      transformResponse: (response: string) => JSON.parse(response),
+      transformResponse: (res: Record<string, Record<string, string>>) =>
+        Object.fromEntries(
+          Object.entries(res).map(([key, val]) => [key, values(val)])
+        ) as DocumentStatsInfo,
     }),
     describeDocument: builder.query<DescribeDoc, string>({
       query: (filename) => ({
@@ -93,7 +98,6 @@ export const documentsApi = createApi({
         params: { filename },
       }),
       providesTags: [Tags.singleDocument],
-      transformResponse: (response: string) => JSON.parse(response),
     }),
     pipelineDocument: builder.query<
       string,
@@ -184,6 +188,12 @@ export const documentsApi = createApi({
       }),
       invalidatesTags: [Tags.pipeline],
     }),
+    columnsStatsDocument: builder.query<ColumnStats[], string>({
+      query: (filename) => ({
+        url: ROUTES.DOCUMENTS.STATS_COLUMNS,
+        params: { filename },
+      }),
+    }),
   }),
 });
 
@@ -202,5 +212,6 @@ export const {
   useDescribeDocumentQuery,
   useInfoStatsDocumentQuery,
   useInfoStatsColumnDocumentQuery,
+  useColumnsStatsDocumentQuery,
 } = documentsApi;
 export default documentsApi.reducer;

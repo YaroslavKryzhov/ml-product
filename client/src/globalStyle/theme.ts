@@ -35,6 +35,9 @@ const themeOptions: ThemeOptions = {
     success: {
       main: "#83d344",
     },
+    info: {
+      main: "#8884d8",
+    },
   },
   typography: {
     fontSize: 20,

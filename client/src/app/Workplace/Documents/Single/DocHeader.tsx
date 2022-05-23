@@ -8,10 +8,7 @@ import {
   useInfoDocumentQuery,
   useRenameDocumentMutation,
 } from "ducks/reducers/api/documents.api";
-import PreviewIcon from "@mui/icons-material/Preview";
-import { pathify, useAppDispatch } from "ducks/hooks";
-import { DocumentPreview } from "./DocumentPreview";
-import { setDialog } from "ducks/reducers/dialog";
+import { pathify } from "ducks/hooks";
 import DownloadIcon from "@mui/icons-material/Download";
 import { useDeleteFile } from "../hooks";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -37,7 +34,6 @@ export const DocHeader: React.FC<{ initName: string }> = ({ initName }) => {
   const [rename] = useRenameDocumentMutation();
   const [downloadDoc] = useDownloadDocumentMutation();
   const deleteDoc = useDeleteFile({ redirectAfter: true });
-  const dispatch = useAppDispatch();
   const matchName = customName.match(/(.*)(\.csv)/);
   const navigate = useNavigate();
   const onKeyDown = useCallback(
@@ -60,18 +56,6 @@ export const DocHeader: React.FC<{ initName: string }> = ({ initName }) => {
   useEffect(() => {
     editMode && inputRef.current?.focus();
   }, [editMode]);
-
-  const setDialogProps = useCallback(() => {
-    dispatch(
-      setDialog({
-        title: "Просмотр",
-        Content: <DocumentPreview docName={customName} />,
-        onDismiss: () => {},
-        fullWidth: true,
-        dismissText: "Закрыть",
-      })
-    );
-  }, []);
 
   if (!matchName) return <>{customName}</>;
 
@@ -145,13 +129,6 @@ export const DocHeader: React.FC<{ initName: string }> = ({ initName }) => {
           direction="row"
           sx={{ gap: theme.spacing(1), height: "min-content" }}
         >
-          <Button
-            onClick={setDialogProps}
-            variant="outlined"
-            startIcon={<PreviewIcon />}
-          >
-            Просмотр
-          </Button>
           <Button
             onClick={() => downloadDoc(customName)}
             variant="outlined"
