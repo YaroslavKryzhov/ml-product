@@ -37,6 +37,8 @@ const themeOptions: ThemeOptions = {
     },
     info: {
       main: "#8884d8",
+      dark: "#7c40df",
+      light: "#e4e2ff",
     },
   },
   typography: {

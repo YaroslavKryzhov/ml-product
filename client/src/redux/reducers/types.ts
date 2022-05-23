@@ -127,3 +127,9 @@ export enum DocumentMethod {
   outliersLocalFactor = "outliers_local_factor",
   outliersOneClassSvm = "outliers_one_class_svm",
 }
+
+export enum PandasInfoColumns {
+  columnName = "column_name",
+  dataType = "data_type",
+  nonNullCount = "non_null_count",
+}
