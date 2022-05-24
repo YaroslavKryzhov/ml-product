@@ -126,11 +126,16 @@ documents_method_router = APIRouter(
 )
 
 
-@documents_method_router.put("/apply")
+@documents_method_router.post("/apply")
 def apply_method(filename: str, function_name: AvailableFunctions, db: get_db = Depends(), user: User = Depends(current_active_user)):
     DocumentService(db, user).apply_function(filename, function_name=function_name.value)
     return {"filename": filename}
 
+
+@documents_method_router.post("/delete_column")
+def apply_method(filename: str, column_name: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
+    DocumentService(db, user).apply_function(filename, function_name='drop_column', param=column_name)
+    return {"filename": filename}
 
 # @documents_method_router.put("/duplicates")
 # def remove_duplicates(filename: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
