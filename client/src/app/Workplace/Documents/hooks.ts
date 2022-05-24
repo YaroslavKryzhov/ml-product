@@ -2,6 +2,7 @@ import { pathify, useAppDispatch } from "ducks/hooks";
 import { useDeleteDocumentMutation } from "ducks/reducers/api/documents.api";
 import { setDialog, setDialogLoading } from "ducks/reducers/dialog";
 import { AppPage, DocumentPage, WorkPage } from "ducks/reducers/types";
+import { first } from "lodash";
 import { T } from "ramda";
 import { useNavigate } from "react-router-dom";
 
@@ -33,3 +34,6 @@ export const useDeleteFile = (options?: { redirectAfter?: boolean }) => {
       })
     );
 };
+
+export const useDocumentNameForce = (): string | null =>
+  first(window.location.pathname.match(/(?<=documents\/list\/).*$/g)) || null;

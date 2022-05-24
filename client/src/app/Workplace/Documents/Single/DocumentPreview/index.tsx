@@ -5,21 +5,19 @@ import {
   useDocumentQuery,
   useInfoStatsDocumentQuery,
 } from "ducks/reducers/api/documents.api";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { zipObject, unzip, values, keys, entries, first } from "lodash";
 import {
   CategoryMark,
-  ColumnStats,
   DocumentStatsInfo,
   PandasInfoColumns,
 } from "ducks/reducers/types";
 import { BallTriangle } from "react-loader-spinner";
 import { theme } from "globalStyle/theme";
 import { CenteredContainer } from "components/muiOverride";
-import { Box, Pagination, Typography } from "@mui/material";
+import { Box, Pagination } from "@mui/material";
 import { Fixed } from "app/Workplace/common/Table/types";
-import { StatsGraph } from "./statGraph";
-import OpenInFullIcon from "@mui/icons-material/OpenInFull";
+import { HeaderCell } from "./HeaderCell";
 
 const convertData = (data: Record<string, string | number>) =>
   unzip(values(data).map((x) => values(x as any))).map((zipArr) =>
@@ -36,59 +34,6 @@ const findFieldInInfo = (
   return info[field][columnInx];
 };
 
-const DataHeaderCaption: React.FC<{
-  children: React.ReactNode;
-  important?: boolean;
-}> = (props) => (
-  <Typography
-    sx={{
-      display: "block",
-      lineHeight: theme.typography.body1.fontSize,
-      color: props.important
-        ? theme.palette.info.dark
-        : theme.palette.primary.light,
-    }}
-    variant={props.important ? "body2" : "caption"}
-  >
-    {props.children}
-  </Typography>
-);
-
-const HeaderCell: React.FC<{
-  name: string;
-  notNullNum: string;
-  dType: string;
-  columnData: ColumnStats;
-  right?: boolean;
-  type: CategoryMark;
-}> = ({ name, notNullNum, dType, columnData, right, type }) => (
-  <Box
-    sx={{
-      padding: theme.spacing(1),
-      overflow: "visible",
-      textAlign: right ? "right" : "left",
-      cursor: "pointer",
-      "&:hover": { background: theme.palette.info.light },
-    }}
-  >
-    <Box sx={{ mb: theme.spacing(1) }}>
-      {name}
-      <OpenInFullIcon
-        sx={{
-          ml: theme.spacing(1),
-          fontSize: theme.typography.caption.fontSize,
-        }}
-      />
-    </Box>
-    <DataHeaderCaption important>Type: {type}</DataHeaderCaption>
-    <DataHeaderCaption>Not Null: {notNullNum}</DataHeaderCaption>
-    <DataHeaderCaption>DataType: {dType}</DataHeaderCaption>
-    <Box>
-      <StatsGraph isSimple {...columnData} />
-    </Box>
-  </Box>
-);
-
 export const DocumentPreview: React.FC<{ docName: string }> = ({ docName }) => {
   const [page, setPage] = useState<number>(1);
   const { data, isLoading } = useDocumentQuery({ filename: docName, page });
@@ -100,8 +45,6 @@ export const DocumentPreview: React.FC<{ docName: string }> = ({ docName }) => {
     () => (data?.records ? convertData(data.records) : []),
     [data]
   );
-
-  const showFullSizeColumnInfo = useCallback(() => {}, []);
 
   const columns = useMemo(
     () =>

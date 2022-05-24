@@ -23,15 +23,6 @@ const composeAny = compose as any;
 
 export const MainInfo: React.FC<{ docName: string }> = ({ docName }) => {
   const { data: describeData } = useDescribeDocumentQuery(docName);
-  // const { data: columnData } = useInfoStatsColumnDocumentQuery({
-  //   filename: docName,
-  // });
-
-  // const { data: columnMarks } = useColumnMarksDocumentQuery(docName);
-
-  // const isNumeric = (name: string) => columnMarks?.numeric.includes(name);
-  // const isCategorial = (name: string) =>
-  //   columnMarks?.categorical.includes(name);
 
   const describeColumns = useMemo(
     () =>

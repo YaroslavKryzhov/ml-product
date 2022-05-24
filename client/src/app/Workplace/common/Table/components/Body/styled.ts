@@ -64,6 +64,7 @@ export const EmptyData = styled.div`
   align-items: center;
   justify-content: center !important;
   padding: ${theme.spacing(3)} 0;
+  flex-grow: 1;
 `;
 
 export const TableFixContainer = styled.tbody`

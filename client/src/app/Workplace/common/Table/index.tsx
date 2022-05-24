@@ -20,11 +20,12 @@ import TableFixBody from "./components/Body";
 import TableFixHeader from "./components/Header";
 import { DEFAULT_COLUMN } from "./const";
 import { TableFixProps } from "./types";
-import { Paper } from "@mui/material";
+import { Box, Paper } from "@mui/material";
 import moment from "moment";
 import { MenuContext } from "app/Workplace";
 import { theme } from "globalStyle/theme";
 import { nanoid } from "@reduxjs/toolkit";
+import { isEmpty } from "lodash";
 export * as TableFixTypes from "./types";
 
 export const compareDate = (field: string) => (a: Row, b: Row) =>
@@ -118,29 +119,34 @@ const View: React.FC<TableFixProps> = (props) => {
   }, []);
 
   return (
-    <Paper elevation={3} ref={containerRef}>
-      <StyledTable
-        {...getTableProps()}
-        maxHeight={props.tableMaxHeight}
-        isFirstColumnFixed={props.isFirstColumnFixed}
+    <Box ref={containerRef} sx={{ display: "flex", justifyContent: "center" }}>
+      <Paper
+        elevation={3}
+        sx={{ width: isEmpty(page) ? "100%" : "min-content" }}
       >
-        <TableFixHeader
-          // TODO
-          // resizable={props.resizable}
-          headerGroups={headerGroups}
-          offHeaderPaddings={props.offHeaderPaddings}
-          compact={props.compact}
-        />
-        <TableFixBody
-          compact={props.compact}
-          rowActions={props.rowActions}
-          rowHoverable={props.rowHoverable}
-          page={page}
-          prepareRow={prepareRow}
-          tableBodyProps={getTableBodyProps()}
-        />
-      </StyledTable>
-    </Paper>
+        <StyledTable
+          {...getTableProps()}
+          maxHeight={props.tableMaxHeight}
+          isFirstColumnFixed={props.isFirstColumnFixed}
+        >
+          <TableFixHeader
+            // TODO
+            // resizable={props.resizable}
+            headerGroups={headerGroups}
+            offHeaderPaddings={props.offHeaderPaddings}
+            compact={props.compact}
+          />
+          <TableFixBody
+            compact={props.compact}
+            rowActions={props.rowActions}
+            rowHoverable={props.rowHoverable}
+            page={page}
+            prepareRow={prepareRow}
+            tableBodyProps={getTableBodyProps()}
+          />
+        </StyledTable>
+      </Paper>
+    </Box>
   );
 };
 
