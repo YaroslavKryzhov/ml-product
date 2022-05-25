@@ -1,6 +1,7 @@
 from typing import List, Union, Dict, Any
 from enum import Enum
 from uuid import UUID
+from datetime import datetime
 
 from pydantic import BaseModel
 
@@ -31,16 +32,16 @@ class PipelineElement(BaseModel):
 class DocumentFullInfo(BaseModel):
     id: UUID
     name: str
-    upload_date: str
-    change_date: str
+    upload_date: datetime
+    change_date: datetime
     pipeline: List[PipelineElement]
     column_marks: ColumnMarks
 
 
 class DocumentShortInfo(BaseModel):
     name: str
-    upload_date: str
-    change_date: str
+    upload_date: datetime
+    change_date: datetime
 
 
 class ReadDocumentResponse(BaseModel):
@@ -56,7 +57,6 @@ class ServiceResponse(BaseModel):
 class AvailableFunctions(Enum):
     remove_duplicates = 'remove_duplicates'
     drop_na = 'drop_na'
-    drop_column = 'drop_column'
     miss_insert_mean_mode = 'miss_insert_mean_mode'
     miss_linear_imputer = 'miss_linear_imputer'
     miss_knn_imputer = 'miss_knn_imputer'

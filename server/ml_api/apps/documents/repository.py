@@ -47,7 +47,8 @@ class DocumentPostgreCRUD(BaseCRUD):
     # READ
     def read_document_by_name(self, filename: str) -> DocumentFullInfo:
         filepath = self.file_path(filename)
-        document = self.session.query(Document.id, Document.name, Document.upload_date, Document.change_date, Document.pipeline,
+        document = self.session.query(Document.id, Document.name, Document.upload_date, Document.change_date,
+                                      Document.pipeline,
                                       Document.column_marks).filter(Document.filepath == filepath).first()
         return document  # can return None
 

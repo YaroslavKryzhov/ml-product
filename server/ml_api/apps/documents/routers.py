@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from fastapi import APIRouter, Depends, UploadFile, File, status
 from fastapi.responses import JSONResponse
@@ -139,12 +139,12 @@ def delete_column(filename: str, column_name: str, db: get_db = Depends(), user:
 
 
 @documents_method_router.post("/apply/method", response_model=ServiceResponse)
-def apply_method(filename: str, function_name: AvailableFunctions, db: get_db = Depends(),
-                 user: User = Depends(current_active_user)):
-    result = DocumentService(db, user).apply_function(filename, function_name=function_name.value)
+def apply_method(filename: str, function_name: AvailableFunctions, param: Optional[float] = None,
+                 db: get_db = Depends(), user: User = Depends(current_active_user)):
+    result = DocumentService(db, user).apply_function(filename, function_name=function_name.value, param=param)
     if result:
-        return ServiceResponse(status_code=status.HTTP_200_OK, content=f"The method '{function_name}' successfully "
-                                                                       f"applied")
+        return ServiceResponse(status_code=status.HTTP_200_OK, content=f"The method '{function_name.value}' "
+                                                                       f"successfully applied")
     else:
         return ServiceResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=f"Error with applying")
 

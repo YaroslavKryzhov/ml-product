@@ -95,11 +95,11 @@ class DocumentService:
             start_index = (page - 1) * rows_on_page
             stop_index = page * rows_on_page
             if stop_index < length:
-                return {'total': pages_count, 'records': df.iloc[start_index:stop_index].to_dict()}
+                return {'total': pages_count, 'records': df.iloc[start_index:stop_index].fillna("").to_dict()}
             elif start_index < length:
-                return {'total': pages_count, 'records': df.iloc[start_index:].to_dict()}
+                return {'total': pages_count, 'records': df.iloc[start_index:].fillna("").to_dict()}
             else:
-                return {'total': pages_count, 'records': pd.DataFrame().to_dict()}
+                return {'total': pages_count, 'records': pd.DataFrame().fillna("").to_dict()}
         return None
 
     def get_document_stat_info(self, filename: str) -> Dict[str, Dict]:
@@ -316,7 +316,7 @@ class DocumentOperator:
         self.df[numeric_columns] = pd.DataFrame(SimpleImputer(strategy='mean').fit_transform(self.df[numeric_columns]),
                                                 self.df.index, numeric_columns)
         self.df[categorical_columns] = pd.DataFrame(SimpleImputer(strategy='most_frequent').fit_transform(
-                                                    self.df[numeric_columns]), self.df.index, categorical_columns)
+                                                    self.df[categorical_columns]), self.df.index, categorical_columns)
 
     def miss_linear_imputer(self):
         numeric_columns = self.column_marks.numeric
@@ -407,9 +407,10 @@ class DocumentOperator:
     # CHAPTER 4: FEATURE SELECTION (required: all columns are numeric)--------------------------------------------------
 
     def fs_select_percentile(self, param: int = 10):
-        percentile = param
+        percentile = int(param)
         if self.check_categorical():
             self.error.append('categorical_select')
+            return
         target = self.column_marks.target
         x, y = self.df.drop(target, axis=1), self.df[target]
         if self.column_marks.task_type.value == 'classification':
@@ -417,16 +418,17 @@ class DocumentOperator:
         else:
             selector = SelectPercentile(f_regression, percentile=percentile)
         selector.fit(x, y)
-        selected_columns = self.df.columns[selector.get_support(indices=True)]
+        selected_columns = self.df.columns[selector.get_support(indices=True)].to_list()
         self.df = pd.DataFrame(selector.transform(x), columns=selected_columns)
         self.df[target] = y
         self.column_marks.numeric = selected_columns
         self.update_pipeline = True
 
     def fs_select_k_best(self, param: int = 10):
-        k = param
+        k = int(param)
         if self.check_categorical():
             self.error.append('categorical_select')
+            return
         target = self.column_marks.target
         x, y = self.df.drop(target, axis=1), self.df[target]
         if self.column_marks.task_type.value == 'classification':
@@ -434,7 +436,7 @@ class DocumentOperator:
         else:
             selector = SelectKBest(f_regression, k=k)
         selector.fit(x, y)
-        selected_columns = self.df.columns[selector.get_support(indices=True)]
+        selected_columns = self.df.columns[selector.get_support(indices=True)].to_list()
         self.df = pd.DataFrame(selector.transform(x), columns=selected_columns)
         self.df[target] = y
         self.column_marks.numeric = selected_columns
@@ -444,6 +446,7 @@ class DocumentOperator:
         alpha = param
         if self.check_categorical():
             self.error.append('categorical_select')
+            return
         target = self.column_marks.target
         x, y = self.df.drop(target, axis=1), self.df[target]
         if self.column_marks.task_type.value == 'classification':
@@ -451,7 +454,7 @@ class DocumentOperator:
         else:
             selector = SelectFpr(f_regression, alpha=alpha)
         selector.fit(x, y)
-        selected_columns = self.df.columns[selector.get_support(indices=True)]
+        selected_columns = self.df.columns[selector.get_support(indices=True)].to_list()
         self.df = pd.DataFrame(selector.transform(x), columns=selected_columns)
         self.df[target] = y
         self.column_marks.numeric = selected_columns
@@ -461,6 +464,7 @@ class DocumentOperator:
         alpha = param
         if self.check_categorical():
             self.error.append('categorical_select')
+            return
         target = self.column_marks.target
         x, y = self.df.drop(target, axis=1), self.df[target]
         if self.column_marks.task_type.value == 'classification':
@@ -468,7 +472,7 @@ class DocumentOperator:
         else:
             selector = SelectFdr(f_regression, alpha=alpha)
         selector.fit(x, y)
-        selected_columns = self.df.columns[selector.get_support(indices=True)]
+        selected_columns = self.df.columns[selector.get_support(indices=True)].to_list()
         self.df = pd.DataFrame(selector.transform(x), columns=selected_columns)
         self.df[target] = y
         self.column_marks.numeric = selected_columns
@@ -478,6 +482,7 @@ class DocumentOperator:
         alpha = param
         if self.check_categorical():
             self.error.append('categorical_select')
+            return
         target = self.column_marks.target
         x, y = self.df.drop(target, axis=1), self.df[target]
         if self.column_marks.task_type.value == 'classification':
@@ -485,50 +490,55 @@ class DocumentOperator:
         else:
             selector = SelectFwe(f_regression, alpha=alpha)
         selector.fit(x, y)
-        selected_columns = self.df.columns[selector.get_support(indices=True)]
+        selected_columns = self.df.columns[selector.get_support(indices=True)].to_list()
         self.df = pd.DataFrame(selector.transform(x), columns=selected_columns)
         self.df[target] = y
         self.column_marks.numeric = selected_columns
         self.update_pipeline = True
 
     def fs_select_rfe(self, param: int = None):
+        n_features_to_select = int(param)
         if self.check_categorical():
             self.error.append('categorical_select')
+            return
         target = self.column_marks.target
         x, y = self.df.drop(target, axis=1), self.df[target]
         if self.column_marks.task_type.value == 'classification':
-            selector = RFE(LogisticRegression(), n_features_to_select=param)
+            selector = RFE(LogisticRegression(), n_features_to_select=n_features_to_select)
         else:
-            selector = RFE(LinearRegression(), n_features_to_select=param)
+            selector = RFE(LinearRegression(), n_features_to_select=n_features_to_select)
         selector.fit(x, y)
-        selected_columns = self.df.columns[selector.get_support(indices=True)]
+        selected_columns = self.df.columns[selector.get_support(indices=True)].to_list()
         self.df = pd.DataFrame(selector.transform(x), columns=selected_columns)
         self.df[target] = y
         self.column_marks.numeric = selected_columns
         self.update_pipeline = True
 
     def fs_select_from_model(self, param: int = None):
+        max_features = int(param)
         if self.check_categorical():
             self.error.append('categorical_select')
+            return
         target = self.column_marks.target
         x, y = self.df.drop(target, axis=1), self.df[target]
         if self.column_marks.task_type.value == 'classification':
-            selector = SelectFromModel(LogisticRegression(), max_features=param)
+            selector = SelectFromModel(LogisticRegression(), max_features=max_features)
         else:
-            selector = SelectFromModel(LinearRegression(), max_features=param)
+            selector = SelectFromModel(LinearRegression(), max_features=max_features)
         selector.fit(x, y)
-        selected_columns = self.df.columns[selector.get_support(indices=True)]
+        selected_columns = self.df.columns[selector.get_support(indices=True)].to_list()
         self.df = pd.DataFrame(selector.transform(x), columns=selected_columns)
         self.df[target] = y
         self.column_marks.numeric = selected_columns
         self.update_pipeline = True
 
     def fs_select_pca(self, param: int = None):
+        n_components = int(param)
         if self.check_categorical():
             self.error.append('categorical_select')
+            return
         target = self.column_marks.target
         x, y = self.df.drop(target, axis=1), self.df[target]
-        n_components = param
         if n_components is None:
             selector = PCA().fit(x)
             n_components = len(selector.singular_values_[selector.singular_values_ > 1])
