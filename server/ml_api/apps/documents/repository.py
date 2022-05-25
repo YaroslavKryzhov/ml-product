@@ -48,9 +48,7 @@ class DocumentPostgreCRUD(BaseCRUD):
         filepath = self.file_path(filename)
         document = self.session.query(Document.id, Document.name, Document.upload_date, Document.change_date, Document.pipeline,
                                       Document.column_marks).filter(Document.filepath == filepath).first()
-        if document is not None:
-            return document
-        return None
+        return document  # can return None
 
     def read_all_documents_by_user(self):
         return self.session.query(Document.name, Document.upload_date, Document.change_date).\

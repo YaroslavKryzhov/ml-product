@@ -20,7 +20,9 @@ def load_document(filename: str, file: UploadFile = File(...), db: get_db = Depe
     result = DocumentService(db, user).upload_document_to_db(file=file.file, filename=filename)
     if result:
         return JSONResponse(status_code=status.HTTP_200_OK, content=f"The document '{filename}' successfully added")
-    return JSONResponse(status_code=status.HTTP_409_CONFLICT, content=f"The document name '{result}' is already taken")
+    else:
+        return JSONResponse(status_code=status.HTTP_409_CONFLICT, content=f"The document name '{filename}'"
+                                                                          f" is already taken")
 
 
 @documents_crud_router.get("")
@@ -133,7 +135,7 @@ def apply_method(filename: str, function_name: AvailableFunctions, db: get_db = 
 
 
 @documents_method_router.post("/delete_column")
-def apply_method(filename: str, column_name: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
+def delete_column(filename: str, column_name: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
     DocumentService(db, user).apply_function(filename, function_name='drop_column', param=column_name)
     return {"filename": filename}
 
