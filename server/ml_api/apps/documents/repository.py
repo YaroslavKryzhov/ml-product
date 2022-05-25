@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import Dict
+from typing import Dict, Any, List
 from datetime import datetime
 
 import pandas as pd
@@ -9,6 +9,7 @@ from fastapi.responses import FileResponse
 
 from ml_api.common.config import ROOT_DIR
 from ml_api.apps.documents.models import Document
+from ml_api.apps.documents.schemas import DocumentShortInfo, DocumentFullInfo
 
 
 class BaseCRUD:
@@ -19,7 +20,7 @@ class BaseCRUD:
         if not os.path.exists(self.user_path):
             os.makedirs(self.user_path)
 
-    def file_path(self, filename):
+    def file_path(self, filename) -> str:
         return os.path.join(self.user_path, filename)
 
 
@@ -44,15 +45,14 @@ class DocumentPostgreCRUD(BaseCRUD):
         self.session.commit()
 
     # READ
-    def read_document_by_name(self, filename: str):
+    def read_document_by_name(self, filename: str) -> DocumentFullInfo:
         filepath = self.file_path(filename)
-        document = self.session.query(Document.id, Document.name, Document.upload_date, Document.change_date, Document.pipeline,
+        document = self.session.query(Document.id, Document.name, Document.upload_date, Document.change_date,
+                                      Document.pipeline,
                                       Document.column_marks).filter(Document.filepath == filepath).first()
-        if document is not None:
-            return document
-        return None
+        return document  # can return None
 
-    def read_all_documents_by_user(self):
+    def read_all_documents_by_user(self) -> List[DocumentShortInfo]:
         return self.session.query(Document.name, Document.upload_date, Document.change_date).\
             filter(Document.user_id == self.user_id).all()
 
@@ -66,6 +66,7 @@ class DocumentPostgreCRUD(BaseCRUD):
 
     # DELETE
     def delete_document(self, filename: str):
+        # sqlalchemy.exc.IntegrityError:
         filepath = self.file_path(filename)
         self.session.query(Document).filter(Document.filepath == filepath).delete()
         self.session.commit()

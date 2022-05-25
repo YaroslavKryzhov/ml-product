@@ -47,8 +47,8 @@ class ModelService:
         return models
 
     def delete_model_from_db(self, model_name: str):
-        ModelPickleCRUD(self._user).delete_model(model_name)
         ModelPostgreCRUD(self._db, self._user).delete_model(model_name)
+        ModelPickleCRUD(self._user).delete_model(model_name)
 
     def train_model(self, task_type: str, composition_type: str,
                     model_params: List[ModelWithParams], params_type: str, document_name: str,
