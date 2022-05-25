@@ -119,10 +119,17 @@ const View: React.FC<TableFixProps> = (props) => {
   }, []);
 
   return (
-    <Box ref={containerRef} sx={{ display: "flex", justifyContent: "center" }}>
+    <Box
+      ref={containerRef}
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        maxWidth: "100%",
+      }}
+    >
       <Paper
         elevation={3}
-        sx={{ width: isEmpty(page) ? "100%" : "min-content" }}
+        sx={{ width: isEmpty(page) ? "100%" : "min-content", maxWidth: "100%" }}
       >
         <StyledTable
           {...getTableProps()}
@@ -137,6 +144,7 @@ const View: React.FC<TableFixProps> = (props) => {
             compact={props.compact}
           />
           <TableFixBody
+            offCellsPaddings={props.offCellsPaddings}
             compact={props.compact}
             rowActions={props.rowActions}
             rowHoverable={props.rowHoverable}

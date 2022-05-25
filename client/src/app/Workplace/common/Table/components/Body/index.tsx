@@ -20,6 +20,7 @@ type TableFixBodyProps = {
   rowHoverable?: boolean;
   rowActions?: RowAction[];
   compact?: boolean;
+  offCellsPaddings?: boolean;
 };
 
 export const ActionIconSx = {
@@ -41,6 +42,7 @@ const TableFixBody: React.FC<TableFixBodyProps> = ({
   rowHoverable,
   rowActions,
   compact,
+  offCellsPaddings,
 }) =>
   page?.length ? (
     <TableFixContainer {...tableBodyProps}>
@@ -61,6 +63,7 @@ const TableFixBody: React.FC<TableFixBodyProps> = ({
                 <StyledTableCell
                   {...cellProps}
                   compact={compact}
+                  offCellsPaddings={offCellsPaddings}
                   fixed={(cell.column as CustomColumn).fixed}
                   key={cellKey}
                 >

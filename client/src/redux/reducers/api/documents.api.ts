@@ -39,7 +39,7 @@ export const documentsApi = createApi({
   endpoints: (builder) => ({
     document: builder.query<FullDocument, { filename: string; page: number }>({
       query: ({ filename, page }) => ({
-        url: ROUTES.DOCUMENTS.BASE,
+        url: ROUTES.DOCUMENTS.SHOW,
         params: { filename, page },
       }),
     }),

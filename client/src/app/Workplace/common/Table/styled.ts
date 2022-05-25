@@ -21,7 +21,8 @@ export const StyledTable = styled.table<{
   border-collapse: collapse;
   max-height: ${({ maxHeight }) => maxHeight || "none"};
   overflow-y: ${({ maxHeight }) => (maxHeight ? "auto" : "hidden")};
-  overflow-x: auto;
+  overflow-x: scroll;
+  max-width: 100%;
 
   tbody tr td:first-of-type {
     ${({ isFirstColumnFixed }) => isFirstColumnFixed && fixedTableCellStyles}

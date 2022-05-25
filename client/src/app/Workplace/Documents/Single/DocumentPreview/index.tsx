@@ -93,7 +93,7 @@ export const DocumentPreview: React.FC<{ docName: string }> = ({ docName }) => {
       <TableFix
         compact
         offHeaderPaddings
-        defaultColumnSizing={{ minWidth: 70 }}
+        defaultColumnSizing={{ minWidth: 135 }}
         forceResize
         resizable
         data={convertedData}

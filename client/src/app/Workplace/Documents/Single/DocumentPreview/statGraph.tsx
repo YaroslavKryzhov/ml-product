@@ -65,7 +65,15 @@ export const StatsGraph: React.FC<ColumnStats & { isSimple?: boolean }> = ({
         <>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="name" />
-          <YAxis />
+          <YAxis
+            tickFormatter={(n: number) => {
+              const num = n.toPrecision(2);
+
+              return String(
+                String(num).length > 5 ? Number(num).toExponential() : num
+              );
+            }}
+          />
         </>
       )}
 

@@ -35,7 +35,6 @@ export const DocumentSingle: React.FC = () => {
             {!!docInfo?.pipeline?.length && (
               <Pipeline steps={docInfo.pipeline} />
             )}
-            {docName && <ColumnMarks />}
             {docName && <DocumentMethods docName={docName} />}
           </>
         )}

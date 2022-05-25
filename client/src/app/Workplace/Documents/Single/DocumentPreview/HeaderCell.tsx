@@ -5,7 +5,7 @@ import {
   ColumnStats,
 } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
-import { Box, Grid, Typography } from "@mui/material";
+import { Box, Tooltip, Typography } from "@mui/material";
 import { StatsGraph } from "./statGraph";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import { useAppDispatch } from "ducks/hooks";
@@ -15,6 +15,8 @@ import { TableFix } from "app/Workplace/common/Table";
 import { useDescribeDocumentQuery } from "ducks/reducers/api/documents.api";
 import { useDocumentNameForce } from "../../hooks";
 import { INFO_WIDTH } from "./contants";
+import { CellProps } from "react-table";
+import { OverflowText } from "app/Workplace/common/styles";
 
 type HeaderCellType = {
   name: string;
@@ -58,11 +60,25 @@ const MoreColumnInfo: React.FC<Omit<HeaderCellType, "right">> = ({
     [notNullNum, dType, type, describeData, name]
   );
 
+  const CellUnit: React.FC<{ value: string }> = ({ value }) => (
+    <Tooltip followCursor title={value}>
+      <Box
+        sx={{
+          padding: `${theme.spacing(1)} ${theme.spacing(1)}`,
+          ...OverflowText,
+        }}
+      >
+        {String(value)}
+      </Box>
+    </Tooltip>
+  );
+
   const describeColumns = useMemo(
     () =>
       describeDataMerged
         ? keys(describeDataMerged).map((x, _, arr) => ({
-            Header: String(x),
+            Header: <CellUnit value={x} />,
+            Cell: (x: CellProps<{}>) => <CellUnit value={x.cell.value} />,
             accessor: String(x),
             maxWidth: 150,
             width: INFO_WIDTH / arr.length,
@@ -72,7 +88,9 @@ const MoreColumnInfo: React.FC<Omit<HeaderCellType, "right">> = ({
   );
 
   return (
-    <Box>
+    <Box
+      sx={{ display: "flex", alignItems: "center", flexDirection: "column" }}
+    >
       <StatsGraph {...columnData} />
       <Box
         sx={{
@@ -82,28 +100,52 @@ const MoreColumnInfo: React.FC<Omit<HeaderCellType, "right">> = ({
         }}
       >
         {type === CategoryMark.categorical && (
-          <Grid
-            container
+          <Box
             sx={{
-              justifyContent: "center",
+              display: "grid",
+              gridTemplateColumns: "repeat(3,1fr)",
+              padding: `${theme.spacing(2)} ${theme.spacing(4)}`,
+              gap: `${theme.spacing(1)} ${theme.spacing(4)}`,
             }}
           >
             {(columnData.data as CategoricalData[]).map((x) => (
-              <Grid
-                item
-                sx={{ padding: `${theme.spacing(2)} ${theme.spacing(4)}` }}
+              <Box
+                sx={{
+                  display: "flex",
+                  overflow: "hidden",
+                  justifyContent: "space-between",
+                  gap: theme.spacing(2),
+                }}
               >
-                <Typography variant="body2">
-                  {x.name}: {x.value.toFixed(2)}
+                <Tooltip followCursor title={x.name}>
+                  <Typography
+                    sx={{
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                    }}
+                    variant="body2"
+                  >
+                    {x.name}:
+                  </Typography>
+                </Tooltip>
+
+                <Typography variant="body2" sx={{ fontWeight: "bold" }}>
+                  {x.value.toFixed(2)}
                 </Typography>
-              </Grid>
+              </Box>
             ))}
-          </Grid>
+          </Box>
         )}
       </Box>
 
       <Box sx={{ mt: theme.spacing(4) }}>
-        <TableFix columns={describeColumns} data={[describeDataMerged]} />
+        <TableFix
+          offHeaderPaddings
+          offCellsPaddings
+          columns={describeColumns}
+          data={[describeDataMerged]}
+        />
       </Box>
     </Box>
   );
@@ -128,17 +170,21 @@ export const HeaderCell: React.FC<HeaderCellType> = (props) => {
       sx={{
         flexGrow: 1,
         padding: theme.spacing(1),
-        overflow: "visible",
+        overflow: "hidden",
         textAlign: props.right ? "right" : "left",
         cursor: "pointer",
         "&:hover": { background: theme.palette.info.light },
       }}
     >
-      <Box sx={{ mb: theme.spacing(1) }}>
-        {props.name}
+      <Box sx={{ mb: theme.spacing(1), display: "flex", ...OverflowText }}>
+        <Tooltip followCursor title={props.name}>
+          <Box sx={{ ...OverflowText }}>{props.name}</Box>
+        </Tooltip>
+
         <OpenInFullIcon
           sx={{
             ml: theme.spacing(1),
+            mt: "7px",
             fontSize: theme.typography.caption.fontSize,
           }}
         />
