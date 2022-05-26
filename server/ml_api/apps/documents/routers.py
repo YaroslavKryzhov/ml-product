@@ -83,7 +83,7 @@ def read_document_with_pagination(filename: str, page: int = 1, db: get_db = Dep
     return result
 
 
-@documents_df_router.get("/stats/info", response_model=Dict[str, Dict])
+@documents_df_router.get("/stats/info", response_model=Dict[str, List])
 def document_stat_info(filename: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
     result = DocumentService(db, user).get_document_stat_info(filename)
     return result
@@ -120,6 +120,14 @@ def set_target_feature(filename: str, target_column: str, task_type: TaskType, d
     DocumentService(db, user).set_column_marks(filename, target_column, task_type)
     return ServiceResponse(status_code=status.HTTP_200_OK, content=f"The column '{target_column}' is set as target for"
                                                                    f" '{filename}'")
+
+
+@documents_method_router.put("/categorical", response_model=ServiceResponse)
+def set_column_as_categorical(filename: str, column_name: str, db: get_db = Depends(),
+                              user: User = Depends(current_active_user)):
+    DocumentService(db, user).set_column_as_categorical_string(filename, column_name)
+    return ServiceResponse(status_code=status.HTTP_200_OK, content=f"The column '{column_name}' is set as categorical "
+                                                                   f"for '{filename}'")
 
 
 @documents_method_router.get("/column_marks", response_model=ColumnMarks)

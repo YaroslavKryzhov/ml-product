@@ -46,7 +46,7 @@ class DocumentShortInfo(BaseModel):
 
 class ReadDocumentResponse(BaseModel):
     total: int
-    records: Dict[str, Dict]
+    records: Dict[str, List]
 
 
 class ServiceResponse(BaseModel):
