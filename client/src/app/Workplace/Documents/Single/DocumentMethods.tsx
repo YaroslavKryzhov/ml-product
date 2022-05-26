@@ -3,12 +3,16 @@ import MuiAccordion, { AccordionProps } from "@mui/material/Accordion";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import Typography from "@mui/material/Typography";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Box, Stack, styled } from "@mui/material";
 import { theme } from "globalStyle/theme";
 import { LoadingButton } from "@mui/lab";
 import { DocumentMethod } from "ducks/reducers/types";
-import { useApplyDocMethodMutation } from "ducks/reducers/api/documents.api";
+import {
+  useApplyDocMethodMutation,
+  useColumnMarksDocumentQuery,
+} from "ducks/reducers/api/documents.api";
+import { useParams } from "react-router-dom";
+import { UnavailableBlock } from "./common";
 
 enum BtnGroups {
   group1 = "group1",
@@ -30,7 +34,7 @@ const ButtonsData = {
     },
   ],
   [BtnGroups.group2]: [
-    { value: DocumentMethod.standartizeFeatures, label: "Стандартизация" },
+    { value: DocumentMethod.standardize_features, label: "Стандартизация" },
     {
       value: DocumentMethod.ordinalEncoding,
       label: DocumentMethod.ordinalEncoding,
@@ -67,7 +71,11 @@ const Accordion = styled((props: AccordionProps) => (
   marginBottom: theme.spacing(2),
 }));
 
-export const DocumentMethods: React.FC<{ docName: string }> = ({ docName }) => {
+export const DocumentMethods: React.FC = () => {
+  const { docName } = useParams();
+
+  const { isError: columnMarksError, isLoading: columnMarksLoading } =
+    useColumnMarksDocumentQuery(docName!);
   const [applyMethod, { isLoading }] = useApplyDocMethodMutation();
 
   return (
@@ -76,29 +84,36 @@ export const DocumentMethods: React.FC<{ docName: string }> = ({ docName }) => {
         Методы
       </Typography>
 
-      {Object.keys(ButtonsData).map((groupKey) => (
-        <Accordion key={groupKey} expanded>
-          <AccordionSummary>
-            <Typography variant="h6">{groupKey}</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Stack direction="row" sx={{ gap: theme.spacing(1) }}>
-              {ButtonsData[groupKey as BtnGroups].map((act) => (
-                <LoadingButton
-                  loading={isLoading}
-                  variant="contained"
-                  key={act.value}
-                  onClick={() =>
-                    applyMethod({ function_name: act.value, filename: docName })
-                  }
-                >
-                  {act.label}
-                </LoadingButton>
-              ))}
-            </Stack>
-          </AccordionDetails>
-        </Accordion>
-      ))}
+      {columnMarksError || columnMarksLoading ? (
+        <UnavailableBlock label="Методы доступны только после разметки" />
+      ) : (
+        Object.keys(ButtonsData).map((groupKey) => (
+          <Accordion key={groupKey} expanded>
+            <AccordionSummary>
+              <Typography variant="h6">{groupKey}</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Stack direction="row" sx={{ gap: theme.spacing(1) }}>
+                {ButtonsData[groupKey as BtnGroups].map((act) => (
+                  <LoadingButton
+                    loading={isLoading}
+                    variant="contained"
+                    key={act.value}
+                    onClick={() =>
+                      applyMethod({
+                        function_name: act.value,
+                        filename: docName!,
+                      })
+                    }
+                  >
+                    {act.label}
+                  </LoadingButton>
+                ))}
+              </Stack>
+            </AccordionDetails>
+          </Accordion>
+        ))
+      )}
     </Box>
   );
 };

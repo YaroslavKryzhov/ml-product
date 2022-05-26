@@ -20,10 +20,18 @@ import { OverflowText } from "app/Workplace/common/styles";
 
 type HeaderCellType = {
   name: string;
-  notNullNum: string;
-  dType: string;
-  columnData: ColumnStats;
+  notNullNum: string | null;
+  dType: string | null;
+  columnData: ColumnStats | null;
   right?: boolean;
+  type: CategoryMark;
+};
+
+type MoreColumnInfoType = {
+  name: string;
+  notNullNum: string | null;
+  dType: string | null;
+  columnData: ColumnStats;
   type: CategoryMark;
 };
 
@@ -45,7 +53,7 @@ const DataHeaderCaption: React.FC<{
   </Typography>
 );
 
-const MoreColumnInfo: React.FC<Omit<HeaderCellType, "right">> = ({
+const MoreColumnInfo: React.FC<MoreColumnInfoType> = ({
   name,
   notNullNum,
   dType,
@@ -154,15 +162,24 @@ const MoreColumnInfo: React.FC<Omit<HeaderCellType, "right">> = ({
 export const HeaderCell: React.FC<HeaderCellType> = (props) => {
   const dispatch = useAppDispatch();
   const setDialogProps = useCallback(() => {
-    dispatch(
-      setDialog({
-        title: `Подробности о ${props.name}`,
-        Content: <MoreColumnInfo {...props} />,
-        onDismiss: T,
-        dismissText: "Закрыть",
-      })
-    );
-  }, []);
+    props.columnData &&
+      dispatch(
+        setDialog({
+          title: `Подробности о ${props.name}`,
+          Content: (
+            <MoreColumnInfo
+              name={props.name}
+              notNullNum={props.notNullNum}
+              dType={props.dType}
+              columnData={props.columnData}
+              type={props.type}
+            />
+          ),
+          onDismiss: T,
+          dismissText: "Закрыть",
+        })
+      );
+  }, [props.columnData, props.dType, props.name, props.notNullNum, props.type]);
 
   return (
     <Box
@@ -172,26 +189,37 @@ export const HeaderCell: React.FC<HeaderCellType> = (props) => {
         padding: theme.spacing(1),
         overflow: "hidden",
         textAlign: props.right ? "right" : "left",
-        cursor: "pointer",
-        "&:hover": { background: theme.palette.info.light },
+        cursor: props.columnData ? "pointer" : "auto",
+        "&:hover": {
+          background: props.columnData ? theme.palette.info.light : "auto",
+        },
       }}
     >
-      <Box sx={{ mb: theme.spacing(1), display: "flex", ...OverflowText }}>
+      <Box
+        sx={{
+          mb: theme.spacing(1),
+          display: "flex",
+          ...OverflowText,
+          justifyContent: props.right ? "flex-end" : "flex-start",
+        }}
+      >
         <Tooltip followCursor title={props.name}>
           <Box sx={{ ...OverflowText }}>{props.name}</Box>
         </Tooltip>
 
-        <OpenInFullIcon
-          sx={{
-            ml: theme.spacing(1),
-            mt: "7px",
-            fontSize: theme.typography.caption.fontSize,
-          }}
-        />
+        {props.columnData && (
+          <OpenInFullIcon
+            sx={{
+              ml: theme.spacing(1),
+              mt: "7px",
+              fontSize: theme.typography.caption.fontSize,
+            }}
+          />
+        )}
       </Box>
-      <DataHeaderCaption important>
-        Type: {props.type || "NO TYPE"}
-      </DataHeaderCaption>
+      {props.type && (
+        <DataHeaderCaption important>Type: {props.type}</DataHeaderCaption>
+      )}
       <DataHeaderCaption>Not Null: {props.notNullNum}</DataHeaderCaption>
       <DataHeaderCaption>DataType: {props.dType}</DataHeaderCaption>
       {props.columnData && (

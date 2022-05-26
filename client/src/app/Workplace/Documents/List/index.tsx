@@ -93,8 +93,6 @@ export const DocumentsList: React.FC = () => {
     [allDocuments]
   );
 
-  console.log(convertedData);
-
   return (
     <>
       <WorkPageHeader />

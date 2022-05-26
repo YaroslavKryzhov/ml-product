@@ -21,6 +21,7 @@ export const ROUTES = {
     RENAME: "/rename",
     COLUMNS: "/df/columns",
     COLUMN_MARKS: "/process/column_marks",
-    APPLY_METHOD: "/process/apply",
+    APPLY_METHOD: "/process/apply/method",
+    SELECT_TARGET: "/process/target",
   },
 };

@@ -5,6 +5,7 @@ import { theme } from "globalStyle/theme";
 import { entries, first, zip } from "lodash";
 import { compose, map, zipObj, values, keys } from "ramda";
 import React, { useMemo } from "react";
+import { useParams } from "react-router-dom";
 import { DocumentPreview } from "./DocumentPreview";
 
 enum DescribeRows {
@@ -21,8 +22,9 @@ enum DescribeRows {
 
 const composeAny = compose as any;
 
-export const MainInfo: React.FC<{ docName: string }> = ({ docName }) => {
-  const { data: describeData } = useDescribeDocumentQuery(docName);
+export const MainInfo: React.FC = () => {
+  const { docName } = useParams();
+  const { data: describeData } = useDescribeDocumentQuery(docName!);
 
   const describeColumns = useMemo(
     () =>
@@ -60,7 +62,7 @@ export const MainInfo: React.FC<{ docName: string }> = ({ docName }) => {
         Основное
       </Typography>
       <Box>
-        <DocumentPreview docName={docName} />
+        <DocumentPreview />
         <Typography sx={{ mt: theme.spacing(3) }} variant="body1">
           Pandas Description
         </Typography>

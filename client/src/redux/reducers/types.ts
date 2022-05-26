@@ -57,9 +57,11 @@ export type Document = {
   [key: string]: string[] | number[];
 };
 
+export type PipelineUnit = { function_name: string; param: string | null };
+
 export type DocumentInfo = DocumentInfoShort & {
   id: string;
-  pipeline: string[];
+  pipeline: PipelineUnit[];
   column_marks: {
     numeric: string[];
     categorical: string[];
@@ -119,7 +121,7 @@ export enum DocumentMethod {
   dropNa = "drop_na",
   missInsertMeanMode = "miss_insert_mean_mode",
   missLinearImputer = "miss_linear_imputer",
-  standartizeFeatures = "standartize_features",
+  standardize_features = "standardize_features",
   ordinalEncoding = "ordinal_encoding",
   oneHotEncoding = "one_hot_encoding",
   outliersIsolationForest = "outliers_isolation_forest",
@@ -132,4 +134,9 @@ export enum PandasInfoColumns {
   columnName = "column_name",
   dataType = "data_type",
   nonNullCount = "non_null_count",
+}
+
+export enum TaskType {
+  regression = "regression",
+  classification = "classification",
 }

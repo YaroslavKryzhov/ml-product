@@ -66,16 +66,22 @@ export const DocHeader: React.FC<{ initName: string }> = ({ initName }) => {
           size={Size.small}
           label="Загружено"
           info={
-            docData &&
-            moment(docData.upload_date).format(theme.additional.timeFormat)
+            (docData &&
+              moment(docData.upload_date).format(
+                theme.additional.timeFormat
+              )) ||
+            "***"
           }
         />
         <InfoChip
           size={Size.small}
           label="Изменено"
           info={
-            docData &&
-            moment(docData.change_date).format(theme.additional.timeFormat)
+            (docData &&
+              moment(docData.change_date).format(
+                theme.additional.timeFormat
+              )) ||
+            "***"
           }
         />
       </Stack>
