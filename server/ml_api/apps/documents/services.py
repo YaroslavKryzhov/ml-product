@@ -95,14 +95,14 @@ class DocumentService:
             start_index = (page - 1) * rows_on_page
             stop_index = page * rows_on_page
             if stop_index < length:
-                return {'total': pages_count, 'records': df.iloc[start_index:stop_index].fillna("").to_dict()}
+                return {'total': pages_count, 'records': df.iloc[start_index:stop_index].fillna("").to_dict('list')}
             elif start_index < length:
-                return {'total': pages_count, 'records': df.iloc[start_index:].fillna("").to_dict()}
+                return {'total': pages_count, 'records': df.iloc[start_index:].fillna("").to_dict('list')}
             else:
-                return {'total': pages_count, 'records': pd.DataFrame().fillna("").to_dict()}
+                return {'total': pages_count, 'records': pd.DataFrame().fillna("").to_dict('list')}
         return None
 
-    def get_document_stat_info(self, filename: str) -> Dict[str, Dict]:
+    def get_document_stat_info(self, filename: str) -> Dict[str, List]:
         if self.check_if_document_name_exists(filename):
             df = DocumentFileCRUD(self._user).read_document(filename)
             buffer = io.StringIO()
@@ -111,7 +111,7 @@ class DocumentService:
             df = (pd.DataFrame([x.split() for x in lines[5:-2]], columns=lines[3].split())
                   .drop(['#', 'Count'], axis=1))
             df.columns = ['column_name', 'non_null_count', 'data_type']
-            return df.to_dict()
+            return df.to_dict('list')
         return None
 
     def get_document_stat_description(self, filename: str) -> Dict[str, Dict]:
@@ -127,12 +127,16 @@ class DocumentService:
         df = DocumentFileCRUD(self._user).read_document(filename)
         return df.columns.to_list()
 
+    def read_column_marks(self, filename: str) -> ColumnMarks:
+        column_marks = DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename).column_marks
+        return column_marks
+
     def set_column_marks(self, filename: str, target_column: str, task_type: str):
         column_marks = self.validate_column_marks(filename, target_column, task_type)
         self.update_column_marks(filename, column_marks)
 
     def validate_column_marks(self, filename: str, target_column: str, task_type: TaskType) -> ColumnMarks:
-        df = DocumentFileCRUD(self._user).read_document(filename)
+        df = DocumentFileCRUD(self._user).read_document(filename).drop(target_column, axis=1)
         numeric_columns = df.select_dtypes('number').columns.to_list()
         categorical_columns = df.select_dtypes(include=['object', 'category']).columns.to_list()
         return ColumnMarks(
@@ -148,9 +152,13 @@ class DocumentService:
         }
         DocumentPostgreCRUD(self._db, self._user).update_document(filename, query)
 
-    def read_column_marks(self, filename: str) -> ColumnMarks:
-        column_marks = DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename).column_marks
-        return column_marks
+    def set_column_as_categorical_string(self, filename: str, column_name: str):
+        df = DocumentFileCRUD(self._user).read_document(filename)
+        df[column_name] = df[column_name].astype('str')
+        DocumentFileCRUD(self._user).update_document(filename, df)
+        self.update_change_date_in_db(filename)
+        column_marks = self.read_column_marks(filename)
+        self.set_column_marks(filename, column_marks.target, column_marks.task_type)
 
     def get_column_stat_description(self, filename: str, bins: int = 10) -> List[ColumnDescription]:
         if DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename) is not None:
