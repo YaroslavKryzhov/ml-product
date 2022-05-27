@@ -1,4 +1,4 @@
-from typing import List, Union, Dict, Any
+from typing import List, Union, Dict, Any, Optional
 from enum import Enum
 from uuid import UUID
 from datetime import datetime
@@ -11,17 +11,28 @@ class TaskType(Enum):
     regression = 'regression'
 
 
-class ColumnMarks(BaseModel):
+class ColumnTypes(BaseModel):
     numeric: List[str]
     categorical: List[str]
-    target: str
-    task_type: TaskType
+    target: Optional[str] = None
+    task_type: Optional[TaskType] = None
 
 
 class ColumnDescription(BaseModel):
     name: str
     type: str
+    not_null_count: int
+    data_type: str
     data: List[Dict]
+
+
+class DocumentDescription(BaseModel):
+    count: Dict
+    mean: Dict
+    std: Dict
+    first_percentile: Dict
+    second_percentile: Dict
+    third_percentile: Dict
 
 
 class PipelineElement(BaseModel):
@@ -35,7 +46,7 @@ class DocumentFullInfo(BaseModel):
     upload_date: datetime
     change_date: datetime
     pipeline: List[PipelineElement]
-    column_marks: ColumnMarks
+    column_types: Optional[ColumnTypes]
 
 
 class DocumentShortInfo(BaseModel):

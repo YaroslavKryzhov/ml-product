@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import Dict, Any, List
+from typing import Dict, List
 from datetime import datetime
 
 import pandas as pd
@@ -39,7 +39,7 @@ class DocumentPostgreCRUD(BaseCRUD):
             upload_date=str(datetime.now()),
             change_date=str(datetime.now()),
             pipeline=[],
-            column_marks={}
+            column_types=None
         )
         self.session.add(new_obj)
         self.session.commit()
@@ -49,7 +49,7 @@ class DocumentPostgreCRUD(BaseCRUD):
         filepath = self.file_path(filename)
         document = self.session.query(Document.id, Document.name, Document.upload_date, Document.change_date,
                                       Document.pipeline,
-                                      Document.column_marks).filter(Document.filepath == filepath).first()
+                                      Document.column_types).filter(Document.filepath == filepath).first()
         return document  # can return None
 
     def read_all_documents_by_user(self) -> List[DocumentShortInfo]:
