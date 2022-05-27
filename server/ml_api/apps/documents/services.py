@@ -17,22 +17,7 @@ from sklearn.decomposition import PCA
 
 from ml_api.apps.documents.repository import DocumentFileCRUD, DocumentPostgreCRUD
 from ml_api.apps.documents.schemas import DocumentShortInfo, DocumentFullInfo, TaskType, PipelineElement, ColumnTypes, \
-    ColumnDescription, ReadDocumentResponse
-
-
-def create_hist_data(df: pd.DataFrame, column_name: str, bins: int) -> List[Dict]:
-    ints = df[column_name].value_counts(bins=bins).sort_index().reset_index()
-    ints['start'] = ints['index'].apply(lambda x: x.left)
-    ints['end'] = ints['index'].apply(lambda x: x.right)
-    ints.drop('index', axis=1, inplace=True)
-    ints.columns = ['value', 'left', 'right']
-    return list(ints.to_dict('index').values())
-
-
-def create_counts_data(df: pd.DataFrame, column_name: str) -> List[Dict]:
-    ints = df[column_name].value_counts(normalize=True).reset_index()
-    ints.columns = ['name', 'value']
-    return list(ints.to_dict('index').values())
+    ColumnDescription, ReadDocumentResponse, DocumentDescription
 
 
 class DocumentService:
@@ -41,7 +26,7 @@ class DocumentService:
         self._db = db
         self._user = user
 
-    def check_if_document_name_exists(self, filename):
+    def check_if_document_name_exists(self, filename) -> bool:
         if DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename) is None:
             return False
         else:
@@ -58,7 +43,7 @@ class DocumentService:
         file = DocumentFileCRUD(self._user).download_document(filename)
         return file
 
-    def rename_document(self, filename: str, new_filename: str):
+    def rename_document(self, filename: str, new_filename: str) -> bool:
         if self.check_if_document_name_exists(new_filename):
             return False
         DocumentFileCRUD(self._user).rename_document(filename, new_filename)
@@ -68,7 +53,7 @@ class DocumentService:
         DocumentPostgreCRUD(self._db, self._user).update_document(filename, query)
         return True
 
-    def delete_document_from_db(self, filename: str):
+    def delete_document_from_db(self, filename: str) -> bool:
         try:
             DocumentPostgreCRUD(self._db, self._user).delete_document(filename)
             DocumentFileCRUD(self._user).delete_document(filename)
@@ -86,6 +71,10 @@ class DocumentService:
             return document
         return None
 
+    def read_document_columns(self, filename: str) -> List[str]:
+        df = DocumentFileCRUD(self._user).read_document(filename)
+        return df.columns.to_list()
+
     def read_document_with_pagination(self, filename: str, page: int = 1,
                                       rows_on_page: int = 50) -> ReadDocumentResponse:
         if self.check_if_document_name_exists(filename):
@@ -102,49 +91,91 @@ class DocumentService:
                 return {'total': pages_count, 'records': pd.DataFrame().fillna("").to_dict('list')}
         return None
 
-    def get_document_stat_info(self, filename: str) -> Dict[str, List]:
-        if self.check_if_document_name_exists(filename):
+    @staticmethod
+    def create_hist_data(df: pd.DataFrame, column_name: str, bins: int) -> ColumnDescription:
+        ints = df[column_name].value_counts(bins=bins).sort_index().reset_index()
+        ints['start'] = ints['index'].apply(lambda x: x.left)
+        ints['end'] = ints['index'].apply(lambda x: x.right)
+        ints.drop('index', axis=1, inplace=True)
+        ints.columns = ['value', 'left', 'right']
+        data = list(ints.to_dict('index').values())
+        not_null_count = df[column_name].notna().sum()
+        data_type = str(df[column_name].dtype)
+        print(not_null_count, data_type)
+        return ColumnDescription(name=column_name, type='numeric', not_null_count=not_null_count,
+                                 data_type=data_type, data=data)
+
+    @staticmethod
+    def create_counts_data(df: pd.DataFrame, column_name: str) -> ColumnDescription:
+        ints = df[column_name].value_counts(normalize=True).reset_index()
+        ints.columns = ['name', 'value']
+        data = list(ints.to_dict('index').values())
+        not_null_count = df[column_name].notna().sum()
+        data_type = str(df[column_name].dtype)
+        print(not_null_count, data_type)
+        return ColumnDescription(name=column_name, type='categorical', not_null_count=not_null_count,
+                                 data_type=data_type, data=data)
+
+    def create_column_stats(self, df: pd.DataFrame, column_types: ColumnTypes, bins: int) -> List[ColumnDescription]:
+        result = []
+        for column_name in column_types.numeric:
+            result.append(self.create_hist_data(df=df, column_name=column_name, bins=bins))
+        for column_name in column_types.categorical:
+            result.append(self.create_counts_data(df=df, column_name=column_name))
+        target_name = column_types.target
+        if target_name:
+            task_type = column_types.task_type.value
+            if task_type == 'regression':
+                result.append(self.create_hist_data(df=df, column_name=target_name, bins=bins))
+            elif task_type == 'classification':
+                result.append(self.create_counts_data(df=df, column_name=target_name))
+        return result
+
+    def get_document_columns_info(self, filename: str, bins: int = 10) -> List[ColumnDescription]:
+        if DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename) is not None:
             df = DocumentFileCRUD(self._user).read_document(filename)
-            buffer = io.StringIO()
-            df.info(buf=buffer)
-            lines = buffer.getvalue().splitlines()
-            df = (pd.DataFrame([x.split() for x in lines[5:-2]], columns=lines[3].split())
-                  .drop(['#', 'Count'], axis=1))
-            df.columns = ['column_name', 'non_null_count', 'data_type']
-            return df.to_dict('list')
+            column_types = self.read_column_types(filename)
+            if column_types:
+                return self.create_column_stats(df, column_types, bins)
+            else:
+                numeric_columns, categorical_columns = self.split_numeric_categorical_columns(df)
+                column_types = ColumnTypes(numeric=numeric_columns,
+                                           categorical=categorical_columns)
+                return self.create_column_stats(df, column_types, bins)
         return None
 
-    def get_document_stat_description(self, filename: str) -> Dict[str, Dict]:
+    def get_document_stat_description(self, filename: str) -> DocumentDescription:
         if self.check_if_document_name_exists(filename):
             df = DocumentFileCRUD(self._user).read_document(filename)
             result = df.describe()
             result.index = ["count", "mean", "std", "min", "first_percentile", "second_percentile",  "third_percentile",
                             "max"]
-            return result.to_dict()
+            return result.to_dict('index')
         return None
 
-    def read_document_columns(self, filename: str) -> List:
-        df = DocumentFileCRUD(self._user).read_document(filename)
-        return df.columns.to_list()
-
-    def read_column_types(self, filename: str) -> ColumnTypes:
-        column_types = DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename).column_types
-        return column_types
-
-    def set_column_types(self, filename: str, target_column: str, task_type: str):
-        column_types = self.validate_column_types(filename, target_column, task_type)
-        self.update_column_types(filename, column_types)
+    @staticmethod
+    def split_numeric_categorical_columns(df) -> (List[str], List[str]):
+        numeric_columns = df.select_dtypes('number').columns.to_list()
+        categorical_columns = df.select_dtypes(include=['object', 'category']).columns.to_list()
+        return numeric_columns, categorical_columns
 
     def validate_column_types(self, filename: str, target_column: str, task_type: TaskType) -> ColumnTypes:
         df = DocumentFileCRUD(self._user).read_document(filename).drop(target_column, axis=1)
-        numeric_columns = df.select_dtypes('number').columns.to_list()
-        categorical_columns = df.select_dtypes(include=['object', 'category']).columns.to_list()
+        numeric_columns, categorical_columns = self.split_numeric_categorical_columns(df)
         return ColumnTypes(
             numeric=numeric_columns,
             categorical=categorical_columns,
             target=target_column,
             task_type=task_type.value
         )
+
+    def set_column_types(self, filename: str, target_column: str, task_type: str):
+        column_types = self.validate_column_types(filename, target_column, task_type)
+        self.update_column_types(filename, column_types)
+
+    def read_column_types(self, filename: str) -> ColumnTypes:
+        column_types = DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename).column_types
+        return column_types
 
     def update_column_types(self, filename: str, column_types: ColumnTypes):
         query = {
@@ -160,35 +191,13 @@ class DocumentService:
         column_types = self.read_column_types(filename)
         self.set_column_types(filename, column_types.target, column_types.task_type)
 
-    def get_column_stat_description(self, filename: str, bins: int = 10) -> List[ColumnDescription]:
-        if DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename) is not None:
-            result = []
-            df = DocumentFileCRUD(self._user).read_document(filename)
-            column_types = self.read_column_types(filename)
-            for column_name in column_types.numeric:
-                data = create_hist_data(df=df, column_name=column_name, bins=bins)
-                result.append(ColumnDescription(name=column_name, type='numeric', data=data))
-            for column_name in column_types.categorical:
-                data = create_counts_data(df=df, column_name=column_name)
-                result.append(ColumnDescription(name=column_name, type='categorical', data=data))
-            column_name = column_types.target
-            task_type = column_types.task_type.value
-            if task_type == 'classification':
-                data = create_counts_data(df=df, column_name=column_name)
-                result.append(ColumnDescription(name=column_name, type='categorical', data=data))
-            else:
-                data = create_hist_data(df=df, column_name=column_name, bins=bins)
-                result.append(ColumnDescription(name=column_name, type='numeric', data=data))
-            return result
-        return None
-
     def update_change_date_in_db(self, filename: str):
         query = {
             'change_date': str(datetime.now())
         }
         DocumentPostgreCRUD(self._db, self._user).update_document(filename, query)
 
-    def read_pipeline(self, filename: str):
+    def read_pipeline(self, filename: str) -> List[PipelineElement]:
         pipeline = DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename).pipeline
         return pipeline
 

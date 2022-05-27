@@ -7,8 +7,7 @@ from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.models import User
 from ml_api.apps.documents.services import DocumentService
 from ml_api.apps.documents.schemas import DocumentFullInfo, DocumentShortInfo, ColumnTypes, AvailableFunctions, \
-    ServiceResponse, ReadDocumentResponse, TaskType, ColumnDescription
-
+    ServiceResponse, ReadDocumentResponse, TaskType, ColumnDescription, DocumentDescription
 documents_file_router = APIRouter(
     prefix="/document",
     tags=["Document As File"],
@@ -52,8 +51,8 @@ def delete_document(filename: str, db: get_db = Depends(), user: User = Depends(
         return ServiceResponse(status_code=status.HTTP_200_OK, content=f"The document '{filename}' "
                                                                        f"successfully deleted")
     else:
-        return ServiceResponse(status_code=status.HTTP_409_CONFLICT, content=f"The document '{filename}'"
-                                                                             f" is is used in some model!")
+        return ServiceResponse(status_code=status.HTTP_409_CONFLICT, content="Error with deletion")
+# f"The document '{filename}' is is used in some model!"
 
 
 @documents_file_router.get("/all", response_model=List[DocumentShortInfo])
@@ -82,38 +81,32 @@ def read_document_with_pagination(filename: str, page: int = 1, db: get_db = Dep
     return result
 
 
-@documents_df_router.get("/stats/info", response_model=Dict[str, List])
-def document_stat_info(filename: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
-    result = DocumentService(db, user).get_document_stat_info(filename)
+@documents_df_router.get("/info", response_model=List[ColumnDescription])
+def document_columns_stat_info(filename: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
+    result = DocumentService(db, user).get_document_columns_info(filename)
     return result
 
 
-@documents_df_router.get("/stats/describe", response_model=Dict[str, Dict])
+@documents_df_router.get("/describe", response_model=DocumentDescription)
 def document_stat_describe(filename: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
     result = DocumentService(db, user).get_document_stat_description(filename)
     return result
 
 
-@documents_df_router.get("/columns", response_model=List)
+@documents_df_router.get("/columns", response_model=List[str])
 def get_column_names(filename: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
     result = DocumentService(db, user).read_document_columns(filename)
     return result
 
 
-@documents_df_router.get("/stats/columns", response_model=List[ColumnDescription])
-def column_stat_description(filename: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
-    result = DocumentService(db, user).get_column_stat_description(filename)
-    return result
-
-
 documents_method_router = APIRouter(
-    prefix="/document/process",
-    tags=["Document Methods"],
+    prefix="/document/edit",
+    tags=["Document Editions"],
     responses={404: {"description": "Not found"}}
 )
 
 
-@documents_method_router.put("/target", response_model=ServiceResponse)
+@documents_method_router.post("/target", response_model=ServiceResponse)
 def set_target_feature(filename: str, target_column: str, task_type: TaskType, db: get_db = Depends(),
                        user: User = Depends(current_active_user)):
     DocumentService(db, user).set_column_types(filename, target_column, task_type)
@@ -121,7 +114,7 @@ def set_target_feature(filename: str, target_column: str, task_type: TaskType, d
                                                                    f" '{filename}'")
 
 
-@documents_method_router.put("/categorical", response_model=ServiceResponse)
+@documents_method_router.post("/categorical", response_model=ServiceResponse)
 def set_column_as_categorical(filename: str, column_name: str, db: get_db = Depends(),
                               user: User = Depends(current_active_user)):
     DocumentService(db, user).set_column_as_categorical_string(filename, column_name)
@@ -129,13 +122,7 @@ def set_column_as_categorical(filename: str, column_name: str, db: get_db = Depe
                                                                    f"for '{filename}'")
 
 
-@documents_method_router.get("/column_types", response_model=ColumnTypes)
-def read_column_types(filename: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
-    result = DocumentService(db, user).read_column_types(filename)
-    return result
-
-
-@documents_method_router.post("/apply/delete_column", response_model=ServiceResponse)
+@documents_method_router.delete("/column", response_model=ServiceResponse)
 def delete_column(filename: str, column_name: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
     result = DocumentService(db, user).apply_function(filename, function_name='drop_column', param=column_name)
     if result:
@@ -145,7 +132,7 @@ def delete_column(filename: str, column_name: str, db: get_db = Depends(), user:
         return ServiceResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=f"Error with deletion")
 
 
-@documents_method_router.post("/apply/method", response_model=ServiceResponse)
+@documents_method_router.put("/apply_method", response_model=ServiceResponse)
 def apply_method(filename: str, function_name: AvailableFunctions, param: Optional[float] = None,
                  db: get_db = Depends(), user: User = Depends(current_active_user)):
     result = DocumentService(db, user).apply_function(filename, function_name=function_name.value, param=param)
@@ -156,7 +143,7 @@ def apply_method(filename: str, function_name: AvailableFunctions, param: Option
         return ServiceResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=f"Error with applying")
 
 
-@documents_method_router.put("/apply/pipeline", response_model=ServiceResponse)
+@documents_method_router.put("/copy_pipeline", response_model=ServiceResponse)
 def copy_pipeline(from_document: str, to_document: str, db: get_db = Depends(),
                   user: User = Depends(current_active_user)):
     DocumentService(db, user).copy_and_apply_pipeline_to_another_document(filename_orig=from_document,
