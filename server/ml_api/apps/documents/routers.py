@@ -1,13 +1,12 @@
 from typing import List, Dict, Optional
 
 from fastapi import APIRouter, Depends, UploadFile, File, status
-from fastapi.responses import JSONResponse
 
 from ml_api.common.database.db_deps import get_db
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.models import User
 from ml_api.apps.documents.services import DocumentService
-from ml_api.apps.documents.schemas import DocumentFullInfo, DocumentShortInfo, ColumnMarks, AvailableFunctions, \
+from ml_api.apps.documents.schemas import DocumentFullInfo, DocumentShortInfo, ColumnTypes, AvailableFunctions, \
     ServiceResponse, ReadDocumentResponse, TaskType, ColumnDescription
 
 documents_file_router = APIRouter(
@@ -117,7 +116,7 @@ documents_method_router = APIRouter(
 @documents_method_router.put("/target", response_model=ServiceResponse)
 def set_target_feature(filename: str, target_column: str, task_type: TaskType, db: get_db = Depends(),
                        user: User = Depends(current_active_user)):
-    DocumentService(db, user).set_column_marks(filename, target_column, task_type)
+    DocumentService(db, user).set_column_types(filename, target_column, task_type)
     return ServiceResponse(status_code=status.HTTP_200_OK, content=f"The column '{target_column}' is set as target for"
                                                                    f" '{filename}'")
 
@@ -130,9 +129,9 @@ def set_column_as_categorical(filename: str, column_name: str, db: get_db = Depe
                                                                    f"for '{filename}'")
 
 
-@documents_method_router.get("/column_marks", response_model=ColumnMarks)
-def read_column_marks(filename: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
-    result = DocumentService(db, user).read_column_marks(filename)
+@documents_method_router.get("/column_types", response_model=ColumnTypes)
+def read_column_types(filename: str, db: get_db = Depends(), user: User = Depends(current_active_user)):
+    result = DocumentService(db, user).read_column_types(filename)
     return result
 
 

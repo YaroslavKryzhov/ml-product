@@ -18,8 +18,7 @@ class Document(Base):
     upload_date = Column(DateTime)
     change_date = Column(DateTime)
     pipeline = Column(PickleType)
-    column_marks = Column(PickleType)
+    column_types = Column(PickleType)
 
     user = relationship('User', back_populates='documents')
     used_in_model = relationship('Model', back_populates='used_csv')
-
