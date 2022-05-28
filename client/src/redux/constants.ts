@@ -23,5 +23,6 @@ export const ROUTES = {
     SET_CATEGORICAL: "/edit/apply_method",
     SELECT_TARGET: "/edit/target",
     MARK_CATEGORICAL: "/edit/categorical",
+    COPY_PIPELINE: "/edit/copy_pipeline",
   },
 };

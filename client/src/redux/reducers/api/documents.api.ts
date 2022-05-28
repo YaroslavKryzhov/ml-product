@@ -160,6 +160,14 @@ export const documentsApi = createApi({
       }),
       invalidatesTags: [Tags.singleDocument],
     }),
+    copyPipeline: builder.mutation<void, { from: string; to: string }>({
+      query: ({ from, to }) => ({
+        url: ROUTES.DOCUMENTS.COPY_PIPELINE,
+        params: { from_document: from, to_document: to },
+        method: "PUT",
+      }),
+      invalidatesTags: [Tags.singleDocument],
+    }),
     markAsCategorical: builder.mutation<
       void,
       { filename: string; columnName: string }
@@ -206,5 +214,6 @@ export const {
   useInfoStatsDocumentQuery,
   useSelectDocumentTargetMutation,
   useMarkAsCategoricalMutation,
+  useCopyPipelineMutation,
 } = documentsApi;
 export default documentsApi.reducer;
