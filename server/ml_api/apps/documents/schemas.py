@@ -30,9 +30,11 @@ class DocumentDescription(BaseModel):
     count: Dict
     mean: Dict
     std: Dict
+    min: Dict
     first_percentile: Dict
     second_percentile: Dict
     third_percentile: Dict
+    max: Dict
 
 
 class PipelineElement(BaseModel):
