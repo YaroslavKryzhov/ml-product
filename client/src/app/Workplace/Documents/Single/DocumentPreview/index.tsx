@@ -44,7 +44,7 @@ export const DocumentPreview: React.FC = () => {
       <TableFix
         compact
         offHeaderPaddings
-        defaultColumnSizing={{ minWidth: 135 }}
+        defaultColumnSizing={{ minWidth: 165 }}
         forceResize
         resizable
         data={convertedData}

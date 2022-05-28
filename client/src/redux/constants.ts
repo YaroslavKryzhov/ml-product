@@ -22,5 +22,6 @@ export const ROUTES = {
     APPLY_METHOD: "/edit/apply_method",
     SET_CATEGORICAL: "/edit/apply_method",
     SELECT_TARGET: "/edit/target",
+    MARK_CATEGORICAL: "/edit/categorical",
   },
 };

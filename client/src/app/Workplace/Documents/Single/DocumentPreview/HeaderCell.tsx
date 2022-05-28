@@ -1,7 +1,14 @@
-import React, { useCallback } from "react";
-import { DFInfo } from "ducks/reducers/types";
+import React, { SyntheticEvent, useCallback, useRef, useState } from "react";
+import { CategoryMark, DFInfo } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
-import { Box, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  IconButton,
+  Menu,
+  MenuItem,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { StatsGraph } from "./statGraph";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import { useAppDispatch } from "ducks/hooks";
@@ -10,6 +17,9 @@ import { setDialog } from "ducks/reducers/dialog";
 import { SIMPLE_HEIGHT } from "./contants";
 import { OverflowText } from "app/Workplace/common/styles";
 import { MoreColumnInfo } from "./MoreColumnInfo";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { useMarkAsCategoricalMutation } from "ducks/reducers/api/documents.api";
+import { useParams } from "react-router-dom";
 
 const DataHeaderCaption: React.FC<{
   children: React.ReactNode;
@@ -37,7 +47,9 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
   data_type,
   right,
 }) => {
+  const { docName } = useParams();
   const dispatch = useAppDispatch();
+  const [markAsCategorical] = useMarkAsCategoricalMutation();
   const setDialogProps = useCallback(() => {
     data &&
       dispatch(
@@ -58,6 +70,31 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
       );
   }, [data, type, name, data_type, not_null_count, type]);
 
+  const [categoryMenuOpened, setCategoryMenuOpened] = useState(false);
+
+  const onCategoryMenuClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+
+      setCategoryMenuOpened(!categoryMenuOpened);
+    },
+    [categoryMenuOpened]
+  );
+
+  const onCategoryChange = useCallback(
+    (e: React.MouseEvent<HTMLLIElement>) => {
+      e.stopPropagation();
+
+      if (type !== CategoryMark.categorical) {
+        markAsCategorical({ filename: docName!, columnName: name });
+      }
+
+      setCategoryMenuOpened(false);
+    },
+    [docName, name, type]
+  );
+  const anchorEl = useRef<HTMLButtonElement>(null);
+
   return (
     <Box
       onClick={setDialogProps}
@@ -67,6 +104,7 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
         overflow: "hidden",
         textAlign: right ? "right" : "left",
         cursor: "pointer",
+        backgroundColor: categoryMenuOpened ? theme.palette.info.light : "none",
         "&:hover": {
           background: theme.palette.info.light,
         },
@@ -94,7 +132,41 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
           />
         )}
       </Box>
-      {type && <DataHeaderCaption important>Type: {type}</DataHeaderCaption>}
+      {type && (
+        <DataHeaderCaption important>
+          Type: {type}
+          <IconButton
+            sx={{ padding: 0, ml: theme.spacing(1) }}
+            ref={anchorEl}
+            onClick={onCategoryMenuClick}
+            size="small"
+          >
+            <MoreVertIcon
+              sx={{
+                fontSize: theme.typography.h6.fontSize,
+                color: theme.palette.info.main,
+              }}
+            />
+          </IconButton>
+          <Menu
+            transformOrigin={{ vertical: "top", horizontal: "center" }}
+            onClose={onCategoryChange}
+            onClick={(e) => e.stopPropagation()}
+            anchorEl={anchorEl.current}
+            open={categoryMenuOpened}
+          >
+            <MenuItem disabled selected={type === CategoryMark.numeric}>
+              {CategoryMark.numeric}
+            </MenuItem>
+            <MenuItem
+              selected={type === CategoryMark.categorical}
+              onClick={onCategoryChange}
+            >
+              {CategoryMark.categorical}
+            </MenuItem>
+          </Menu>
+        </DataHeaderCaption>
+      )}
       <DataHeaderCaption>Not Null: {not_null_count}</DataHeaderCaption>
       <DataHeaderCaption>DataType: {data_type}</DataHeaderCaption>
       {data && (

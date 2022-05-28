@@ -79,7 +79,7 @@ export const StatsGraph: React.FC<{
   return (
     <Box ref={ref}>
       <BarChart
-        width={isSimple ? 120 : INFO_WIDTH}
+        width={isSimple ? 147 : INFO_WIDTH}
         height={isSimple ? SIMPLE_HEIGHT : 370}
         margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
         data={

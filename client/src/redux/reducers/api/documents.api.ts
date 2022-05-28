@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { ROUTES } from "../../constants";
 import { addAuthHeader } from "./helpers";
 import {
+  CategoryMark,
   DescribeDoc,
   DFInfo,
   DocumentInfo,
@@ -159,6 +160,35 @@ export const documentsApi = createApi({
       }),
       invalidatesTags: [Tags.singleDocument],
     }),
+    markAsCategorical: builder.mutation<
+      void,
+      { filename: string; columnName: string }
+    >({
+      query: ({ columnName, filename }) => ({
+        url: ROUTES.DOCUMENTS.MARK_CATEGORICAL,
+        params: { filename, column_name: columnName },
+        method: "POST",
+      }),
+      async onQueryStarted({ columnName }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          documentsApi.util.updateQueryData(
+            "infoStatsDocument",
+            columnName,
+            (draft) => {
+              const col = draft.find((x) => x.name === columnName);
+
+              if (col) col.type = CategoryMark.categorical;
+            }
+          )
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
+      invalidatesTags: [Tags.singleDocument],
+    }),
   }),
 });
 
@@ -175,5 +205,6 @@ export const {
   useDescribeDocumentQuery,
   useInfoStatsDocumentQuery,
   useSelectDocumentTargetMutation,
+  useMarkAsCategoricalMutation,
 } = documentsApi;
 export default documentsApi.reducer;

@@ -59,7 +59,7 @@ const ButtonsData = {
     },
     {
       value: DocumentMethod.outliersOneClassSvm,
-      label: "outliers_one_class_svm",
+      label: DocumentMethod.outliersOneClassSvm,
     },
   ],
 };
