@@ -2,17 +2,14 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { ROUTES } from "../../constants";
 import { addAuthHeader } from "./helpers";
 import {
-  ColumnMarksPayload,
-  ColumnStats,
   DescribeDoc,
+  DFInfo,
   DocumentInfo,
   DocumentInfoShort,
   DocumentMethod,
-  DocumentStatsInfo,
   FullDocument,
   TaskType,
 } from "../types";
-import { values } from "lodash";
 
 const buildFileForm = (file: File) => {
   const form = new FormData();
@@ -67,16 +64,12 @@ export const documentsApi = createApi({
       }),
       providesTags: [Tags.singleDocument],
     }),
-    infoStatsDocument: builder.query<DocumentStatsInfo, string>({
+    infoStatsDocument: builder.query<DFInfo[], string>({
       query: (filename) => ({
-        url: ROUTES.DOCUMENTS.STATS_INFO,
+        url: ROUTES.DOCUMENTS.DF_INFO,
         params: { filename },
       }),
       providesTags: [Tags.singleDocument],
-      transformResponse: (res: Record<string, Record<string, string>>) =>
-        Object.fromEntries(
-          Object.entries(res).map(([key, val]) => [key, values(val)])
-        ) as DocumentStatsInfo,
     }),
     describeDocument: builder.query<DescribeDoc, string>({
       query: (filename) => ({
@@ -144,26 +137,6 @@ export const documentsApi = createApi({
         params: { filename },
       }),
     }),
-
-    columnMarksDocument: builder.query<ColumnMarksPayload, string>({
-      query: (filename) => ({
-        url: ROUTES.DOCUMENTS.COLUMN_MARKS,
-        params: { filename },
-      }),
-      providesTags: [Tags.singleDocument],
-    }),
-    changeColumnMarks: builder.mutation<
-      string,
-      { filename: string; body: ColumnMarksPayload }
-    >({
-      query: ({ filename, body }) => ({
-        url: ROUTES.DOCUMENTS.COLUMN_MARKS,
-        params: { filename },
-        body,
-        method: "PUT",
-      }),
-      invalidatesTags: [Tags.singleDocument],
-    }),
     applyDocMethod: builder.mutation<
       string,
       { filename: string; function_name: DocumentMethod }
@@ -171,25 +144,18 @@ export const documentsApi = createApi({
       query: ({ filename, function_name }) => ({
         url: ROUTES.DOCUMENTS.APPLY_METHOD,
         params: { filename, function_name },
-        method: "POST",
+        method: "PUT",
       }),
       invalidatesTags: [Tags.pipeline, Tags.singleDocument],
     }),
-    columnsStatsDocument: builder.query<ColumnStats[], string>({
-      query: (filename) => ({
-        url: ROUTES.DOCUMENTS.STATS_COLUMNS,
-        params: { filename },
-      }),
-      providesTags: [Tags.singleDocument],
-    }),
     selectDocumentTarget: builder.mutation<
-      ColumnStats[],
+      void,
       { filename: string; targetColumn: string; taskType: TaskType }
     >({
       query: ({ targetColumn, filename, taskType }) => ({
         url: ROUTES.DOCUMENTS.SELECT_TARGET,
         params: { filename, target_column: targetColumn, task_type: taskType },
-        method: "PUT",
+        method: "POST",
       }),
       invalidatesTags: [Tags.singleDocument],
     }),
@@ -203,14 +169,11 @@ export const {
   useInfoDocumentQuery,
   useRenameDocumentMutation,
   useDownloadDocumentMutation,
-  useColumnMarksDocumentQuery,
   useDocumentQuery,
   useColumnsDocumentQuery,
-  useChangeColumnMarksMutation,
   useApplyDocMethodMutation,
   useDescribeDocumentQuery,
   useInfoStatsDocumentQuery,
-  useColumnsStatsDocumentQuery,
   useSelectDocumentTargetMutation,
 } = documentsApi;
 export default documentsApi.reducer;

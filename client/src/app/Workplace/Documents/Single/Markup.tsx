@@ -10,9 +10,9 @@ import {
 } from "@mui/material";
 import { useAppDispatch, useSESelector } from "ducks/hooks";
 import {
-  useColumnMarksDocumentQuery,
   useColumnsDocumentQuery,
   useSelectDocumentTargetMutation,
+  useInfoDocumentQuery,
 } from "ducks/reducers/api/documents.api";
 import {
   changeSelectedTarget,
@@ -33,7 +33,7 @@ export const Markup: React.FC = () => {
   const [saveMarkup, { isLoading: isSaving }] =
     useSelectDocumentTargetMutation();
   const { data: columns } = useColumnsDocumentQuery(docName!);
-  const { isError: columnMarksError } = useColumnMarksDocumentQuery(docName!);
+  const { data: docInfo } = useInfoDocumentQuery(docName!);
 
   const dispatch = useAppDispatch();
 
@@ -51,7 +51,7 @@ export const Markup: React.FC = () => {
       <Typography sx={{ mb: theme.spacing(2) }} variant="h5">
         Разметка
       </Typography>
-      {columnMarksError && (
+      {!docInfo?.column_types && (
         <UnavailableBlock label=" Внимание, вы сможете произвести разметку только один раз!!! Будьте Внимательны!!!" />
       )}
       <Box
@@ -63,9 +63,9 @@ export const Markup: React.FC = () => {
       >
         <FormControl sx={{ width: "400px" }}>
           <InputLabel>Target</InputLabel>
-
           <Select
-            value={selectedTargetColumn || ""}
+            disabled={!!docInfo?.column_types}
+            value={docInfo?.column_types?.target || selectedTargetColumn || ""}
             label="Target"
             onChange={(event) =>
               dispatch(changeSelectedTarget(event.target.value))
@@ -79,7 +79,8 @@ export const Markup: React.FC = () => {
         <FormControl sx={{ width: "400px" }}>
           <InputLabel>Task Type</InputLabel>
           <Select
-            value={selectedTaskType || ""}
+            disabled={!!docInfo?.column_types}
+            value={docInfo?.column_types?.task_type || selectedTaskType || ""}
             label="Task Type"
             onChange={(event) =>
               dispatch(changeSelectedTaskType(event.target.value as TaskType))
@@ -93,14 +94,16 @@ export const Markup: React.FC = () => {
             </MenuItem>
           </Select>
         </FormControl>
-        <LoadingButton
-          disabled={!selectedTargetColumn || !selectedTaskType}
-          onClick={onSaveClick}
-          loading={isSaving}
-          variant="contained"
-        >
-          Сохранить
-        </LoadingButton>
+        {!docInfo?.column_types && (
+          <LoadingButton
+            disabled={!selectedTargetColumn || !selectedTaskType}
+            onClick={onSaveClick}
+            loading={isSaving}
+            variant="contained"
+          >
+            Сохранить
+          </LoadingButton>
+        )}
       </Box>
       <Divider sx={{ mb: theme.spacing(3), mt: theme.spacing(3) }} />
     </Box>

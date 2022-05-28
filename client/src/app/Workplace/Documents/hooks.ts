@@ -36,4 +36,6 @@ export const useDeleteFile = (options?: { redirectAfter?: boolean }) => {
 };
 
 export const useDocumentNameForce = (): string | null =>
-  first(window.location.pathname.match(/(?<=documents\/list\/).*$/g)) || null;
+  decodeURI(
+    first(window.location.pathname.match(/(?<=documents\/list\/).*$/g)) || ""
+  ) || null;

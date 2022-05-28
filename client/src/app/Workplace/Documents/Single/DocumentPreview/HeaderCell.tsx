@@ -1,39 +1,15 @@
-import React, { useCallback, useMemo } from "react";
-import {
-  CategoricalData,
-  CategoryMark,
-  ColumnStats,
-} from "ducks/reducers/types";
+import React, { useCallback } from "react";
+import { DFInfo } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
 import { Box, Tooltip, Typography } from "@mui/material";
 import { StatsGraph } from "./statGraph";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import { useAppDispatch } from "ducks/hooks";
-import { keys, T } from "ramda";
+import { T } from "ramda";
 import { setDialog } from "ducks/reducers/dialog";
-import { TableFix } from "app/Workplace/common/Table";
-import { useDescribeDocumentQuery } from "ducks/reducers/api/documents.api";
-import { useDocumentNameForce } from "../../hooks";
-import { INFO_WIDTH } from "./contants";
-import { CellProps } from "react-table";
+import { SIMPLE_HEIGHT } from "./contants";
 import { OverflowText } from "app/Workplace/common/styles";
-
-type HeaderCellType = {
-  name: string;
-  notNullNum: string | null;
-  dType: string | null;
-  columnData: ColumnStats | null;
-  right?: boolean;
-  type: CategoryMark;
-};
-
-type MoreColumnInfoType = {
-  name: string;
-  notNullNum: string | null;
-  dType: string | null;
-  columnData: ColumnStats;
-  type: CategoryMark;
-};
+import { MoreColumnInfo } from "./MoreColumnInfo";
 
 const DataHeaderCaption: React.FC<{
   children: React.ReactNode;
@@ -53,133 +29,34 @@ const DataHeaderCaption: React.FC<{
   </Typography>
 );
 
-const MoreColumnInfo: React.FC<MoreColumnInfoType> = ({
-  name,
-  notNullNum,
-  dType,
-  columnData,
+export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
   type,
+  data,
+  name,
+  not_null_count,
+  data_type,
+  right,
 }) => {
-  const docName = useDocumentNameForce();
-  const { data: describeData } = useDescribeDocumentQuery(docName!);
-  const describeDataMerged = useMemo(
-    () =>
-      describeData ? { type, notNullNum, dType, ...describeData[name] } : {},
-    [notNullNum, dType, type, describeData, name]
-  );
-
-  const CellUnit: React.FC<{ value: string }> = ({ value }) => (
-    <Tooltip followCursor title={value}>
-      <Box
-        sx={{
-          padding: `${theme.spacing(1)} ${theme.spacing(1)}`,
-          ...OverflowText,
-        }}
-      >
-        {String(value)}
-      </Box>
-    </Tooltip>
-  );
-
-  const describeColumns = useMemo(
-    () =>
-      describeDataMerged
-        ? keys(describeDataMerged).map((x, _, arr) => ({
-            Header: <CellUnit value={x} />,
-            Cell: (x: CellProps<{}>) => <CellUnit value={x.cell.value} />,
-            accessor: String(x),
-            maxWidth: 150,
-            width: INFO_WIDTH / arr.length,
-          }))
-        : [],
-    [describeDataMerged]
-  );
-
-  return (
-    <Box
-      sx={{ display: "flex", alignItems: "center", flexDirection: "column" }}
-    >
-      <StatsGraph {...columnData} />
-      <Box
-        sx={{
-          mt: theme.spacing(2),
-          background: theme.palette.secondary.light,
-          borderRadius: theme.shape.borderRadius,
-        }}
-      >
-        {type === CategoryMark.categorical && (
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3,1fr)",
-              padding: `${theme.spacing(2)} ${theme.spacing(4)}`,
-              gap: `${theme.spacing(1)} ${theme.spacing(4)}`,
-            }}
-          >
-            {(columnData.data as CategoricalData[]).map((x) => (
-              <Box
-                sx={{
-                  display: "flex",
-                  overflow: "hidden",
-                  justifyContent: "space-between",
-                  gap: theme.spacing(2),
-                }}
-              >
-                <Tooltip followCursor title={x.name}>
-                  <Typography
-                    sx={{
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                    }}
-                    variant="body2"
-                  >
-                    {x.name}:
-                  </Typography>
-                </Tooltip>
-
-                <Typography variant="body2" sx={{ fontWeight: "bold" }}>
-                  {x.value.toFixed(2)}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-        )}
-      </Box>
-
-      <Box sx={{ mt: theme.spacing(4) }}>
-        <TableFix
-          offHeaderPaddings
-          offCellsPaddings
-          columns={describeColumns}
-          data={[describeDataMerged]}
-        />
-      </Box>
-    </Box>
-  );
-};
-
-export const HeaderCell: React.FC<HeaderCellType> = (props) => {
   const dispatch = useAppDispatch();
   const setDialogProps = useCallback(() => {
-    props.columnData &&
+    data &&
       dispatch(
         setDialog({
-          title: `Подробности о ${props.name}`,
+          title: `Подробности о ${name}`,
           Content: (
             <MoreColumnInfo
-              name={props.name}
-              notNullNum={props.notNullNum}
-              dType={props.dType}
-              columnData={props.columnData}
-              type={props.type}
+              type={type}
+              data={data}
+              name={name}
+              not_null_count={not_null_count}
+              data_type={data_type}
             />
           ),
           onDismiss: T,
           dismissText: "Закрыть",
         })
       );
-  }, [props.columnData, props.dType, props.name, props.notNullNum, props.type]);
+  }, [data, type, name, data_type, not_null_count, type]);
 
   return (
     <Box
@@ -188,10 +65,10 @@ export const HeaderCell: React.FC<HeaderCellType> = (props) => {
         flexGrow: 1,
         padding: theme.spacing(1),
         overflow: "hidden",
-        textAlign: props.right ? "right" : "left",
-        cursor: props.columnData ? "pointer" : "auto",
+        textAlign: right ? "right" : "left",
+        cursor: "pointer",
         "&:hover": {
-          background: props.columnData ? theme.palette.info.light : "auto",
+          background: theme.palette.info.light,
         },
       }}
     >
@@ -200,14 +77,14 @@ export const HeaderCell: React.FC<HeaderCellType> = (props) => {
           mb: theme.spacing(1),
           display: "flex",
           ...OverflowText,
-          justifyContent: props.right ? "flex-end" : "flex-start",
+          justifyContent: right ? "flex-end" : "flex-start",
         }}
       >
-        <Tooltip followCursor title={props.name}>
-          <Box sx={{ ...OverflowText }}>{props.name}</Box>
+        <Tooltip followCursor title={name}>
+          <Box sx={{ ...OverflowText }}>{name}</Box>
         </Tooltip>
 
-        {props.columnData && (
+        {data && (
           <OpenInFullIcon
             sx={{
               ml: theme.spacing(1),
@@ -217,19 +94,20 @@ export const HeaderCell: React.FC<HeaderCellType> = (props) => {
           />
         )}
       </Box>
-      {props.type && (
-        <DataHeaderCaption important>Type: {props.type}</DataHeaderCaption>
-      )}
-      <DataHeaderCaption>Not Null: {props.notNullNum}</DataHeaderCaption>
-      <DataHeaderCaption>DataType: {props.dType}</DataHeaderCaption>
-      {props.columnData && (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: props.right ? "flex-end" : "flex-start",
-          }}
-        >
-          <StatsGraph isSimple {...props.columnData} />
+      {type && <DataHeaderCaption important>Type: {type}</DataHeaderCaption>}
+      <DataHeaderCaption>Not Null: {not_null_count}</DataHeaderCaption>
+      <DataHeaderCaption>DataType: {data_type}</DataHeaderCaption>
+      {data && (
+        <Box sx={{ height: SIMPLE_HEIGHT }}>
+          <Box
+            sx={{
+              display: "flex",
+              position: "absolute",
+              justifyContent: right ? "flex-end" : "flex-start",
+            }}
+          >
+            <StatsGraph isSimple data={data} type={type} />
+          </Box>
         </Box>
       )}
     </Box>

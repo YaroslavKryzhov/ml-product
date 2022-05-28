@@ -1,21 +1,11 @@
 import { TableFix } from "app/Workplace/common/Table";
 import {
-  useColumnMarksDocumentQuery,
-  useColumnsStatsDocumentQuery,
   useDocumentQuery,
   useInfoStatsDocumentQuery,
 } from "ducks/reducers/api/documents.api";
-import React, { useCallback, useMemo, useState } from "react";
-import { zipObject, unzip, values, keys, entries, first } from "lodash";
-import {
-  CategoryMark,
-  ColumnStats,
-  DocumentStatsInfo,
-  PandasInfoColumns,
-} from "ducks/reducers/types";
-import { BallTriangle } from "react-loader-spinner";
+import React, { useMemo, useState } from "react";
+import { zipObject, unzip, values, keys } from "lodash";
 import { theme } from "globalStyle/theme";
-import { CenteredContainer } from "components/muiOverride";
 import { Box, Pagination } from "@mui/material";
 import { Fixed } from "app/Workplace/common/Table/types";
 import { HeaderCell } from "./HeaderCell";
@@ -26,86 +16,27 @@ const convertData = (data: Record<string, string | number>) =>
     zipObject(keys(data), zipArr)
   );
 
-const findFieldInInfo = (
-  info: DocumentStatsInfo,
-  field: PandasInfoColumns,
-  column: string
-) => {
-  const columnInx = info.column_name.findIndex((x) => x === column);
-
-  return info[field][columnInx];
-};
-
 export const DocumentPreview: React.FC = () => {
   const { docName } = useParams();
   const [page, setPage] = useState<number>(1);
   const { data } = useDocumentQuery({ filename: docName!, page });
   const { data: infoData } = useInfoStatsDocumentQuery(docName!);
-  const { data: columnsStats } = useColumnsStatsDocumentQuery(docName!);
-  const { data: columnMarks } = useColumnMarksDocumentQuery(docName!);
 
   const convertedData = useMemo(
     () => (data?.records ? convertData(data.records) : []),
     [data]
   );
 
-  const getHeaderType = useCallback(
-    (val: string) =>
-      (first(
-        entries(columnMarks).find(
-          ([_, values]) => values.includes(val) || val === values
-        )
-      ) as CategoryMark) || null,
-    [columnMarks]
-  );
-
-  const getHeaderNotNull = useCallback(
-    (val: string) =>
-      infoData
-        ? findFieldInInfo(infoData, PandasInfoColumns.nonNullCount, val)
-        : null,
-    [infoData]
-  );
-
-  const getHeaderDType = useCallback(
-    (val: string) =>
-      infoData
-        ? findFieldInInfo(infoData, PandasInfoColumns.dataType, val)
-        : null,
-    [infoData]
-  );
-
-  const getHeaderColumnsData = useCallback(
-    (val: string) =>
-      columnsStats ? columnsStats.find((col) => col.name === val)! : null,
-    [columnsStats]
-  );
-
   const columns = useMemo(
     () =>
-      data?.records
-        ? Object.keys(data.records).map((x, inx, arr) => ({
-            accessor: x,
+      infoData
+        ? infoData.map((df, inx, arr) => ({
+            accessor: df.name,
             fixed: inx === arr.length - 1 ? Fixed.right : Fixed.left,
-            Header: (
-              <HeaderCell
-                type={getHeaderType(x)}
-                right={inx === arr.length - 1}
-                name={x}
-                notNullNum={getHeaderNotNull(x)}
-                dType={getHeaderDType(x)}
-                columnData={getHeaderColumnsData(x)}
-              />
-            ),
+            Header: <HeaderCell {...df} right={inx === arr.length - 1} />,
           }))
         : [],
-    [
-      data,
-      getHeaderColumnsData,
-      getHeaderNotNull,
-      getHeaderDType,
-      getHeaderType,
-    ]
+    [infoData]
   );
 
   return (

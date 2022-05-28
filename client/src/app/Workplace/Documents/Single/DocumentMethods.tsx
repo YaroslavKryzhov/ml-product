@@ -9,7 +9,7 @@ import { LoadingButton } from "@mui/lab";
 import { DocumentMethod } from "ducks/reducers/types";
 import {
   useApplyDocMethodMutation,
-  useColumnMarksDocumentQuery,
+  useInfoDocumentQuery,
 } from "ducks/reducers/api/documents.api";
 import { useParams } from "react-router-dom";
 import { UnavailableBlock } from "./common";
@@ -74,8 +74,7 @@ const Accordion = styled((props: AccordionProps) => (
 export const DocumentMethods: React.FC = () => {
   const { docName } = useParams();
 
-  const { isError: columnMarksError, isLoading: columnMarksLoading } =
-    useColumnMarksDocumentQuery(docName!);
+  const { data: infoData } = useInfoDocumentQuery(docName!);
   const [applyMethod, { isLoading }] = useApplyDocMethodMutation();
 
   return (
@@ -84,9 +83,7 @@ export const DocumentMethods: React.FC = () => {
         Методы
       </Typography>
 
-      {columnMarksError || columnMarksLoading ? (
-        <UnavailableBlock label="Методы доступны только после разметки" />
-      ) : (
+      {infoData?.column_types ? (
         Object.keys(ButtonsData).map((groupKey) => (
           <Accordion key={groupKey} expanded>
             <AccordionSummary>
@@ -113,6 +110,8 @@ export const DocumentMethods: React.FC = () => {
             </AccordionDetails>
           </Accordion>
         ))
+      ) : (
+        <UnavailableBlock label="Методы доступны только после разметки" />
       )}
     </Box>
   );

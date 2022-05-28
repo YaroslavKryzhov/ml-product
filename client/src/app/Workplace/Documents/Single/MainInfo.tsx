@@ -9,10 +9,10 @@ import { useParams } from "react-router-dom";
 import { DocumentPreview } from "./DocumentPreview";
 
 enum DescribeRows {
-  propNames = " ",
-  firstQuantile = "25%",
-  secondQuantile = "50%",
-  thirdQuantile = "75%",
+  propNames = "Name",
+  firstQuantile = "first_percentile",
+  secondQuantile = "second_percentile",
+  thirdQuantile = "third_percentile",
   count = "count",
   max = "max",
   mean = "mean",
@@ -29,10 +29,10 @@ export const MainInfo: React.FC = () => {
   const describeColumns = useMemo(
     () =>
       describeData
-        ? [DescribeRows.propNames, ...keys(describeData)].map((x) => ({
+        ? values(DescribeRows).map((x) => ({
             accessor: String(x),
             Header: x,
-            width: DescribeRows.propNames === x ? 80 : undefined,
+            width: DescribeRows.propNames === x ? 120 : undefined,
           }))
         : [],
     [describeData]

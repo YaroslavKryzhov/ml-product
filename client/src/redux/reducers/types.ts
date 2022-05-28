@@ -62,22 +62,20 @@ export type PipelineUnit = { function_name: string; param: string | null };
 export type DocumentInfo = DocumentInfoShort & {
   id: string;
   pipeline: PipelineUnit[];
-  column_marks: {
+  column_types: {
     numeric: string[];
     categorical: string[];
     target: string;
+    task_type: TaskType;
   };
 };
 
-export type DocumentStatsColumnInfo = {
+export type DFInfo = {
   type: CategoryMark;
-  data: Record<string, number>;
-};
-
-export type DocumentStatsInfo = {
-  column_name: string[];
-  data_type: string[];
-  non_null_count: string[];
+  data: (NumericData | CategoricalData)[];
+  name: string;
+  not_null_count: number;
+  data_type: string;
 };
 
 export type DescribeDoc = {
@@ -99,18 +97,6 @@ export enum CategoryMark {
 export type NumericData = { value: number; left: number; right: number };
 export type CategoricalData = { name: string; value: number };
 
-export type ColumnStats = {
-  name: string;
-  type: CategoryMark;
-  data: (NumericData | CategoricalData)[];
-};
-
-export type ColumnMarksPayload = {
-  [CategoryMark.numeric]: string[];
-  [CategoryMark.categorical]: string[];
-  [CategoryMark.target]: string;
-};
-
 export type FullDocument = {
   total: number;
   records: Record<string, string | number>;
@@ -130,10 +116,12 @@ export enum DocumentMethod {
   outliersOneClassSvm = "outliers_one_class_svm",
 }
 
-export enum PandasInfoColumns {
-  columnName = "column_name",
+export enum DFInfoColumns {
+  columnName = "name",
   dataType = "data_type",
-  nonNullCount = "non_null_count",
+  nonNullCount = "not_null_count",
+  type = "type",
+  data = "data",
 }
 
 export enum TaskType {
