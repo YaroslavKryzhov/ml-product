@@ -1,9 +1,6 @@
 import * as React from "react";
-import MuiAccordion, { AccordionProps } from "@mui/material/Accordion";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import AccordionSummary from "@mui/material/AccordionSummary";
 import Typography from "@mui/material/Typography";
-import { Box, Stack, styled } from "@mui/material";
+import { Box, Paper, Stack, styled } from "@mui/material";
 import { theme } from "globalStyle/theme";
 import { LoadingButton } from "@mui/lab";
 import { DocumentMethod } from "ducks/reducers/types";
@@ -18,58 +15,100 @@ enum BtnGroups {
   group1 = "group1",
   group2 = "group2",
   group3 = "group3",
+  group4 = "group4",
 }
+
+const ButtonsGroupsLabels = {
+  [BtnGroups.group1]: "Обработка данных",
+  [BtnGroups.group2]: "Трансформация признаков",
+  [BtnGroups.group3]: "Удаление выбросов",
+  [BtnGroups.group4]: "Отбор признаков",
+};
 
 const ButtonsData = {
   [BtnGroups.group1]: [
-    { value: DocumentMethod.removeDuplicates, label: "Удалить дубликаты" },
-    { value: DocumentMethod.dropNa, label: "Удалить пропуски" },
+    { value: DocumentMethod.removeDuplicates, label: "Удаление дубликатов" },
+    { value: DocumentMethod.dropNa, label: "Удаление пропусков" },
     {
       value: DocumentMethod.missInsertMeanMode,
-      label: DocumentMethod.missInsertMeanMode,
+      label: "Замена пропусков: Среднее и мода",
     },
     {
       value: DocumentMethod.missLinearImputer,
-      label: DocumentMethod.missLinearImputer,
+      label: "Замена пропусков: Линейная модель",
+    },
+    {
+      value: DocumentMethod.missKnnImputer,
+      label: "Замена пропусков: К-ближних соседей",
     },
   ],
   [BtnGroups.group2]: [
-    { value: DocumentMethod.standardize_features, label: "Стандартизация" },
+    {
+      value: DocumentMethod.standardize_features,
+      label: "Стандартизация численных признаков",
+    },
     {
       value: DocumentMethod.ordinalEncoding,
-      label: DocumentMethod.ordinalEncoding,
+      label: "Порядковое кодирование",
     },
     {
       value: DocumentMethod.oneHotEncoding,
-      label: DocumentMethod.oneHotEncoding,
+      label: "One-Hot кодирование (OHE)",
     },
   ],
   [BtnGroups.group3]: [
     {
       value: DocumentMethod.outliersIsolationForest,
-      label: DocumentMethod.outliersIsolationForest,
+      label: "IsolationForest",
     },
     {
       value: DocumentMethod.outliersEllipticEnvelope,
-      label: DocumentMethod.outliersEllipticEnvelope,
+      label: "EllipticEnvelope",
     },
     {
       value: DocumentMethod.outliersLocalFactor,
-      label: DocumentMethod.outliersLocalFactor,
+      label: "LocalOutlierFactor",
     },
     {
       value: DocumentMethod.outliersOneClassSvm,
-      label: DocumentMethod.outliersOneClassSvm,
+      label: "OneClassSVM",
+    },
+  ],
+  [BtnGroups.group4]: [
+    {
+      value: DocumentMethod.fsSelectPercentile,
+      label: "По перцентилю",
+    },
+    {
+      value: DocumentMethod.fsSelectKBest,
+      label: "По K лучшим",
+    },
+    {
+      value: DocumentMethod.fsSelectFpr,
+      label: "FPR",
+    },
+    {
+      value: DocumentMethod.fsSelectFdr,
+      label: "FDR",
+    },
+    {
+      value: DocumentMethod.fsSelectFwe,
+      label: "FWE",
+    },
+    {
+      value: DocumentMethod.fsSelectRfe,
+      label: "RFE",
+    },
+    {
+      value: DocumentMethod.fsSelectFromModel,
+      label: "Из линейной модели",
+    },
+    {
+      value: DocumentMethod.fsSelectPca,
+      label: "Метод главных компонент",
     },
   ],
 };
-
-const Accordion = styled((props: AccordionProps) => (
-  <MuiAccordion elevation={3} {...props} />
-))(() => ({
-  backgroundColor: theme.palette.secondary.light,
-  marginBottom: theme.spacing(2),
-}));
 
 export const DocumentMethods: React.FC = () => {
   const { docName } = useParams();
@@ -84,18 +123,47 @@ export const DocumentMethods: React.FC = () => {
       </Typography>
 
       {infoData?.column_types ? (
-        Object.keys(ButtonsData).map((groupKey) => (
-          <Accordion key={groupKey} expanded>
-            <AccordionSummary>
-              <Typography variant="h6">{groupKey}</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Stack direction="row" sx={{ gap: theme.spacing(1) }}>
-                {ButtonsData[groupKey as BtnGroups].map((act) => (
+        <Stack
+          sx={{
+            columnGap: theme.spacing(2),
+            rowGap: theme.spacing(3),
+            flexWrap: "wrap",
+            justifyContent: "center",
+          }}
+          direction="row"
+        >
+          {Object.values(BtnGroups).map((groupKey) => (
+            <Paper
+              sx={{
+                backgroundColor: theme.palette.secondary.light,
+                padding: theme.spacing(3),
+                flexGrow: 1,
+                maxWidth: "33%",
+              }}
+              key={groupKey}
+              elevation={3}
+            >
+              <Typography
+                variant="h6"
+                sx={{ textAlign: "center", mb: theme.spacing(2) }}
+              >
+                {ButtonsGroupsLabels[groupKey]}
+              </Typography>
+
+              <Stack
+                sx={{
+                  gap: theme.spacing(1),
+                  flexWrap: "wrap",
+                }}
+              >
+                {ButtonsData[groupKey].map((act) => (
                   <LoadingButton
                     loading={isLoading}
                     variant="contained"
                     key={act.value}
+                    sx={{
+                      flexGrow: 1,
+                    }}
                     onClick={() =>
                       applyMethod({
                         function_name: act.value,
@@ -107,9 +175,9 @@ export const DocumentMethods: React.FC = () => {
                   </LoadingButton>
                 ))}
               </Stack>
-            </AccordionDetails>
-          </Accordion>
-        ))
+            </Paper>
+          ))}
+        </Stack>
       ) : (
         <UnavailableBlock label="Методы доступны только после разметки" />
       )}

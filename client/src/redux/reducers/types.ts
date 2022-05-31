@@ -107,6 +107,7 @@ export enum DocumentMethod {
   dropNa = "drop_na",
   missInsertMeanMode = "miss_insert_mean_mode",
   missLinearImputer = "miss_linear_imputer",
+  missKnnImputer = "miss_knn_imputer",
   standardize_features = "standardize_features",
   ordinalEncoding = "ordinal_encoding",
   oneHotEncoding = "one_hot_encoding",
@@ -114,6 +115,14 @@ export enum DocumentMethod {
   outliersEllipticEnvelope = "outliers_elliptic_envelope",
   outliersLocalFactor = "outliers_local_factor",
   outliersOneClassSvm = "outliers_one_class_svm",
+  fsSelectPercentile = "fs_select_percentile",
+  fsSelectKBest = "fs_select_k_best",
+  fsSelectFpr = "fs_select_fpr",
+  fsSelectFdr = "fs_select_fdr",
+  fsSelectFwe = "fs_select_fwe",
+  fsSelectRfe = "fs_select_rfe",
+  fsSelectFromModel = "fs_select_from_model",
+  fsSelectPca = "fs_select_pca",
 }
 
 export enum DFInfoColumns {
