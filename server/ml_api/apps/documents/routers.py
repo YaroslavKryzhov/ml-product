@@ -114,12 +114,28 @@ def set_target_feature(filename: str, target_column: str, task_type: TaskType, d
                                                                    f" '{filename}'")
 
 
-@documents_method_router.post("/categorical", response_model=ServiceResponse)
+@documents_method_router.post("/to_categorical", response_model=ServiceResponse)
 def set_column_as_categorical(filename: str, column_name: str, db: get_db = Depends(),
                               user: User = Depends(current_active_user)):
-    DocumentService(db, user).set_column_as_categorical_string(filename, column_name)
-    return ServiceResponse(status_code=status.HTTP_200_OK, content=f"The column '{column_name}' is set as categorical "
-                                                                   f"for '{filename}'")
+    result = DocumentService(db, user).set_column_as_categorical(filename, column_name)
+    if result:
+        return ServiceResponse(status_code=status.HTTP_200_OK,
+                               content=f"The column '{column_name}' is set as categorical for '{filename}'")
+    else:
+        return ServiceResponse(status_code=status.HTTP_409_CONFLICT,
+                               content=f"The column '{column_name}' can't be set as categorical for '{filename}'")
+
+
+@documents_method_router.post("/to_numeric", response_model=ServiceResponse)
+def set_column_as_numeric(filename: str, column_name: str, db: get_db = Depends(),
+                          user: User = Depends(current_active_user)):
+    result = DocumentService(db, user).set_column_as_numeric(filename, column_name)
+    if result:
+        return ServiceResponse(status_code=status.HTTP_200_OK,
+                               content=f"The column '{column_name}' is set as numeric for '{filename}'")
+    else:
+        return ServiceResponse(status_code=status.HTTP_409_CONFLICT,
+                               content=f"The column '{column_name}' can't be set as numeric for '{filename}'")
 
 
 @documents_method_router.delete("/column", response_model=ServiceResponse)

@@ -47,14 +47,17 @@ class DocumentPostgreCRUD(BaseCRUD):
     # READ
     def read_document_by_name(self, filename: str) -> DocumentFullInfo:
         filepath = self.file_path(filename)
-        document = self.session.query(Document.id, Document.name, Document.upload_date, Document.change_date,
+        document = self.session.query(Document.id, Document.name,
+                                      Document.upload_date,
+                                      Document.change_date,
                                       Document.pipeline,
-                                      Document.column_types).filter(Document.filepath == filepath).first()
+                                      Document.column_types
+                                      ).filter(Document.filepath == filepath).first()
         return document  # can return None
 
     def read_all_documents_by_user(self) -> List[DocumentShortInfo]:
-        return self.session.query(Document.name, Document.upload_date, Document.change_date).\
-            filter(Document.user_id == self.user_id).all()
+        return self.session.query(Document.name, Document.upload_date, Document.change_date, Document.pipeline
+                                  ).filter(Document.user_id == self.user_id).all()
 
     # UPDATE
     def update_document(self, filename: str, query: Dict):

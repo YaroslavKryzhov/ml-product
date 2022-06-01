@@ -160,6 +160,7 @@ class DocumentService:
 
     def validate_column_types(self, filename: str, target_column: str, task_type: TaskType) -> ColumnTypes:
         df = DocumentFileCRUD(self._user).read_document(filename).drop(target_column, axis=1)
+        df.info()
         numeric_columns, categorical_columns = self.split_numeric_categorical_columns(df)
         return ColumnTypes(
             numeric=numeric_columns,
@@ -182,13 +183,27 @@ class DocumentService:
         }
         DocumentPostgreCRUD(self._db, self._user).update_document(filename, query)
 
-    def set_column_as_categorical_string(self, filename: str, column_name: str):
+    def set_column_as_categorical(self, filename: str, column_name: str):
+        column_types = self.read_column_types(filename)
+        column_types.numeric.remove(column_name)
+        column_types.categorical.append(column_name)
+        self.update_column_types(filename, column_types)
+        self.update_change_date_in_db(filename)
+        return True
+
+    def set_column_as_numeric(self, filename: str, column_name: str):
         df = DocumentFileCRUD(self._user).read_document(filename)
-        df[column_name] = df[column_name].astype('str')
-        DocumentFileCRUD(self._user).update_document(filename, df)
+        try:
+            df[column_name] = pd.to_numeric(df[column_name])
+            DocumentFileCRUD(self._user).update_document(filename, df)
+        except ValueError:
+            return False
         self.update_change_date_in_db(filename)
         column_types = self.read_column_types(filename)
-        self.set_column_types(filename, column_types.target, column_types.task_type)
+        column_types.categorical.remove(column_name)
+        column_types.numeric.append(column_name)
+        self.update_column_types(filename, column_types)
+        return True
 
     def update_change_date_in_db(self, filename: str):
         query = {

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, BackgroundTasks
-from typing import Dict, Any, List
+from typing import List
 
 from ml_api.common.database.db_deps import get_db
 from ml_api.apps.users.routers import current_active_user
@@ -54,7 +54,7 @@ def download_model(model_name: str, db: get_db = Depends(), user: User = Depends
 
 @models_router.put("/rename")
 def rename_model(model_name: str, new_model_name: str, db: get_db = Depends(),
-                    user: User = Depends(current_active_user)):
+                 user: User = Depends(current_active_user)):
     ModelService(db, user).rename_model(model_name, new_model_name)
     return {"filename": new_model_name}
 

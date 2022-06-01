@@ -1,8 +1,8 @@
-from typing import Union, Literal, Dict, Any
+from typing import Dict, Any
 from enum import Enum
 from ml_api.apps.ml_models.configs.classification_models_config import AvailableModels
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 
 
 class AvailableTaskTypes(Enum):
