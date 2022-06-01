@@ -1,11 +1,10 @@
-import React, { SyntheticEvent, useCallback, useRef, useState } from "react";
-import { CategoryMark, DFInfo } from "ducks/reducers/types";
+import React, { useCallback } from "react";
+import { CategoryMark, DFInfo, ErrorResponse } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
 import {
   Box,
-  IconButton,
-  Menu,
-  MenuItem,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -13,13 +12,19 @@ import { StatsGraph } from "./statGraph";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import { useAppDispatch } from "ducks/hooks";
 import { T } from "ramda";
-import { setDialog } from "ducks/reducers/dialog";
+import { setDialog, setDialogLoading } from "ducks/reducers/dialog";
 import { SIMPLE_HEIGHT } from "./contants";
 import { OverflowText } from "app/Workplace/common/styles";
 import { MoreColumnInfo } from "./MoreColumnInfo";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { useMarkAsCategoricalMutation } from "ducks/reducers/api/documents.api";
+import {
+  useMarkAsCategoricalMutation,
+  useMarkAsNumericMutation,
+} from "ducks/reducers/api/documents.api";
 import { useParams } from "react-router-dom";
+import Filter1Icon from "@mui/icons-material/Filter1";
+import TextFormatIcon from "@mui/icons-material/TextFormat";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { SnackBarType, useNotice } from "app/Workplace/common/useNotice";
 
 const DataHeaderCaption: React.FC<{
   children: React.ReactNode;
@@ -50,6 +55,13 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
   const { docName } = useParams();
   const dispatch = useAppDispatch();
   const [markAsCategorical] = useMarkAsCategoricalMutation();
+  const [markAsNumeric] = useMarkAsNumericMutation();
+
+  const showColumnError = useNotice({
+    label: " Не удалось изменить тип колонки",
+    type: SnackBarType.error,
+  });
+
   const setDialogProps = useCallback(() => {
     data &&
       dispatch(
@@ -70,41 +82,59 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
       );
   }, [data, type, name, data_type, not_null_count, type]);
 
-  const [categoryMenuOpened, setCategoryMenuOpened] = useState(false);
+  const markChange = useCallback(
+    (newMark: CategoryMark) => {
+      console.log(1212);
+      dispatch(
+        setDialog({
+          title: "Изменение типа колонки",
+          text: `Вы действительно хотите изменить тип ${name} на ${newMark}?`,
+          onAccept: async () => {
+            dispatch(setDialogLoading(true));
 
-  const onCategoryMenuClick = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>) => {
-      e.stopPropagation();
+            let res: any = null;
 
-      setCategoryMenuOpened(!categoryMenuOpened);
+            try {
+              if (newMark === CategoryMark.categorical)
+                res = await markAsCategorical({
+                  filename: docName!,
+                  columnName: name,
+                });
+
+              if (newMark === CategoryMark.numeric) {
+                res = await markAsNumeric({
+                  filename: docName!,
+                  columnName: name,
+                });
+              }
+              if ((res.data as ErrorResponse)?.status_code === 409)
+                throw new Error();
+            } catch {
+              showColumnError(true);
+            }
+
+            dispatch(setDialogLoading(false));
+          },
+          onDismiss: T,
+        })
+      );
     },
-    [categoryMenuOpened]
+    [docName]
   );
 
   const onCategoryChange = useCallback(
-    (e: React.MouseEvent<HTMLLIElement>) => {
-      e.stopPropagation();
-
-      if (type !== CategoryMark.categorical) {
-        markAsCategorical({ filename: docName!, columnName: name });
-      }
-
-      setCategoryMenuOpened(false);
-    },
-    [docName, name, type]
+    (_: unknown, val: CategoryMark) => val && markChange(val),
+    [markChange]
   );
-  const anchorEl = useRef<HTMLButtonElement>(null);
 
   return (
     <Box
-      onClick={setDialogProps}
       sx={{
         flexGrow: 1,
         padding: theme.spacing(1),
         overflow: "hidden",
         textAlign: right ? "right" : "left",
         cursor: "pointer",
-        backgroundColor: categoryMenuOpened ? theme.palette.info.light : "none",
         "&:hover": {
           background: theme.palette.info.light,
         },
@@ -112,7 +142,6 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
     >
       <Box
         sx={{
-          mb: theme.spacing(1),
           display: "flex",
           ...OverflowText,
           justifyContent: right ? "flex-end" : "flex-start",
@@ -121,52 +150,54 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
         <Tooltip followCursor title={name}>
           <Box sx={{ ...OverflowText }}>{name}</Box>
         </Tooltip>
-
+      </Box>
+      <Box
+        sx={{
+          mb: theme.spacing(1),
+          mt: theme.spacing(1),
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         {data && (
-          <OpenInFullIcon
+          <ToggleButton value="size" sx={{ p: "2px" }}>
+            <OpenInFullIcon
+              onClick={setDialogProps}
+              sx={{
+                fontSize: theme.typography.caption.fontSize,
+              }}
+            />
+          </ToggleButton>
+        )}
+
+        <ToggleButtonGroup
+          exclusive
+          value={type}
+          onChange={onCategoryChange}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ToggleButton sx={{ p: "2px" }} value={CategoryMark.numeric}>
+            <Filter1Icon sx={{ fontSize: theme.typography.caption.fontSize }} />
+          </ToggleButton>
+          <ToggleButton sx={{ p: "2px" }} value={CategoryMark.categorical}>
+            <TextFormatIcon
+              sx={{ fontSize: theme.typography.caption.fontSize }}
+            />
+          </ToggleButton>
+        </ToggleButtonGroup>
+
+        <ToggleButton value="delete" sx={{ p: "2px" }}>
+          <DeleteIcon
             sx={{
-              ml: theme.spacing(1),
-              mt: "7px",
               fontSize: theme.typography.caption.fontSize,
             }}
           />
-        )}
+        </ToggleButton>
       </Box>
-      {type && (
-        <DataHeaderCaption important>
-          Type: {type}
-          <IconButton
-            sx={{ padding: 0, ml: theme.spacing(1) }}
-            ref={anchorEl}
-            onClick={onCategoryMenuClick}
-            size="small"
-          >
-            <MoreVertIcon
-              sx={{
-                fontSize: theme.typography.h6.fontSize,
-                color: theme.palette.info.main,
-              }}
-            />
-          </IconButton>
-          <Menu
-            transformOrigin={{ vertical: "top", horizontal: "center" }}
-            onClose={onCategoryChange}
-            onClick={(e) => e.stopPropagation()}
-            anchorEl={anchorEl.current}
-            open={categoryMenuOpened}
-          >
-            <MenuItem disabled selected={type === CategoryMark.numeric}>
-              {CategoryMark.numeric}
-            </MenuItem>
-            <MenuItem
-              selected={type === CategoryMark.categorical}
-              onClick={onCategoryChange}
-            >
-              {CategoryMark.categorical}
-            </MenuItem>
-          </Menu>
-        </DataHeaderCaption>
-      )}
+
+      {type && <DataHeaderCaption important>Type: {type}</DataHeaderCaption>}
+
       <DataHeaderCaption>Not Null: {not_null_count}</DataHeaderCaption>
       <DataHeaderCaption>DataType: {data_type}</DataHeaderCaption>
       {data && (

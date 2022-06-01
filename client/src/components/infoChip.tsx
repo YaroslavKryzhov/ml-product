@@ -17,13 +17,13 @@ export const StyledBox = styled.div<{ size?: Size }>`
   font-size: ${({ size }) =>
     size === Size.small ? theme.typography.caption.fontSize : "inherit"};
 
-  &:first-child {
+  &:first-of-type {
     background-color: ${theme.palette.primary.dark};
     color: ${theme.palette.primary.contrastText};
     border-radius: ${theme.shape.borderRadiusRound}px 0 0
       ${theme.shape.borderRadiusRound}px;
   }
-  &:last-child {
+  &:last-of-type {
     border: ${theme.additional.borderWidth}px solid
       ${theme.palette.primary.dark};
     border-radius: 0 ${theme.shape.borderRadiusRound}px

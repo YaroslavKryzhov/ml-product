@@ -12,6 +12,7 @@ import { Workplace } from "./app/Workplace";
 import { DialogCustom } from "components/Dialog";
 import { Route, Routes } from "react-router";
 import { BrowserRouter } from "react-router-dom";
+import { NOTICE_CONTAINER_ID } from "app/Workplace/common/useNotice";
 
 const App: React.FC = () => {
   const { isBlockingLoader } = useSESelector((state) => state.main);
@@ -21,6 +22,7 @@ const App: React.FC = () => {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <DialogCustom />
+        <div id={NOTICE_CONTAINER_ID} />
         <Box sx={{ backgroundColor: "secondary.main" }}>
           {isBlockingLoader && (
             <CenteredContainer

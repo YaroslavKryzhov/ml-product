@@ -2,12 +2,12 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { ROUTES } from "../../constants";
 import { addAuthHeader } from "./helpers";
 import {
-  CategoryMark,
   DescribeDoc,
   DFInfo,
   DocumentInfo,
   DocumentInfoShort,
   DocumentMethod,
+  ErrorResponse,
   FullDocument,
   TaskType,
 } from "../types";
@@ -169,7 +169,7 @@ export const documentsApi = createApi({
       invalidatesTags: [Tags.singleDocument],
     }),
     markAsCategorical: builder.mutation<
-      void,
+      void | ErrorResponse,
       { filename: string; columnName: string }
     >({
       query: ({ columnName, filename }) => ({
@@ -177,24 +177,17 @@ export const documentsApi = createApi({
         params: { filename, column_name: columnName },
         method: "POST",
       }),
-      async onQueryStarted({ columnName }, { dispatch, queryFulfilled }) {
-        const patchResult = dispatch(
-          documentsApi.util.updateQueryData(
-            "infoStatsDocument",
-            columnName,
-            (draft) => {
-              const col = draft.find((x) => x.name === columnName);
-
-              if (col) col.type = CategoryMark.categorical;
-            }
-          )
-        );
-        try {
-          await queryFulfilled;
-        } catch {
-          patchResult.undo();
-        }
-      },
+      invalidatesTags: [Tags.singleDocument],
+    }),
+    markAsNumeric: builder.mutation<
+      void | ErrorResponse,
+      { filename: string; columnName: string }
+    >({
+      query: ({ columnName, filename }) => ({
+        url: ROUTES.DOCUMENTS.MARK_NUMERIC,
+        params: { filename, column_name: columnName },
+        method: "POST",
+      }),
       invalidatesTags: [Tags.singleDocument],
     }),
   }),
@@ -214,6 +207,7 @@ export const {
   useInfoStatsDocumentQuery,
   useSelectDocumentTargetMutation,
   useMarkAsCategoricalMutation,
+  useMarkAsNumericMutation,
   useCopyPipelineMutation,
 } = documentsApi;
 export default documentsApi.reducer;

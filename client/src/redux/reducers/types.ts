@@ -137,3 +137,8 @@ export enum TaskType {
   regression = "regression",
   classification = "classification",
 }
+
+export type ErrorResponse = {
+  status_code: number;
+  content: string;
+};

@@ -1,14 +1,7 @@
-import {
-  Box,
-  Slide,
-  SlideProps,
-  Snackbar,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, TextField, Typography } from "@mui/material";
 import { CenteredContainer, helperTextProps } from "components/muiOverride";
 import { theme } from "globalStyle/theme";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { first } from "lodash";
 import AttachmentIcon from "@mui/icons-material/Attachment";
@@ -18,14 +11,18 @@ import {
   changeSelectedFile,
 } from "ducks/reducers/documents";
 import { setDialogAcceptDisabled } from "ducks/reducers/dialog";
-import { SlideTr } from "app/Workplace/common/styled";
+import { SnackBarType, useNotice } from "app/Workplace/common/useNotice";
 
 export const DocumentDrop: React.FC = () => {
   const { customFileName, selectedFile } = useSESelector(
     (state) => state.documents
   );
-  const [errorNoticeOpened, setErrorNoticeOpened] = useState<boolean>(false);
   const dispatch = useAppDispatch();
+
+  const showTypeError = useNotice({
+    label: "Разрешены только CSV файлы",
+    type: SnackBarType.error,
+  });
 
   const onDropAccepted = useCallback((files: File[]) => {
     const file = first(files);
@@ -36,9 +33,8 @@ export const DocumentDrop: React.FC = () => {
   }, []);
 
   const onDropRejected = useCallback(
-    () => setErrorNoticeOpened(true),
-
-    []
+    () => showTypeError(true),
+    [showTypeError]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -69,18 +65,6 @@ export const DocumentDrop: React.FC = () => {
 
   return (
     <Box sx={{ mt: theme.spacing(1) }}>
-      <Snackbar
-        autoHideDuration={3000}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-        open={errorNoticeOpened}
-        onClose={() => setErrorNoticeOpened(false)}
-        message={
-          <Typography variant="body2" sx={{ color: theme.palette.error.main }}>
-            Разрешены только CSV файлы
-          </Typography>
-        }
-        TransitionComponent={SlideTr}
-      />
       <TextField
         disabled={!selectedFile}
         size="small"

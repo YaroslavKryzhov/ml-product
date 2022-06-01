@@ -121,6 +121,7 @@ export const Pipeline: React.FC = () => {
             >
               {filteredDocs?.map((doc) => (
                 <MenuItem
+                  key={doc.name}
                   onClick={applyPipelineConfirm(doc.name)}
                   sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
                 >

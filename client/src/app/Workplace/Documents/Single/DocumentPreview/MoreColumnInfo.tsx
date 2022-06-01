@@ -42,7 +42,9 @@ export const MoreColumnInfo: React.FC<DFInfo> = ({
             not_null_count,
             data_type,
             ...Object.fromEntries(
-              entries(describeData).map(([key, value]) => [key, value[name]])
+              entries(describeData)
+                .filter(([_, value]) => value[name])
+                .map(([key, value]) => [key, value[name]])
             ),
           }
         : {},
@@ -86,6 +88,7 @@ export const MoreColumnInfo: React.FC<DFInfo> = ({
           >
             {(data as CategoricalData[]).map((x) => (
               <Box
+                key={x.name}
                 sx={{
                   display: "flex",
                   overflow: "hidden",

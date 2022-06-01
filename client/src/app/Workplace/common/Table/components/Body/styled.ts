@@ -52,11 +52,11 @@ export const StyledTableCell = styled.td<{
     return "center";
   }};
 
-  &:last-child {
+  &:last-of-type {
     justify-content: flex-end;
   }
 
-  &:first-child {
+  &:first-of-type {
     justify-content: flex-start;
   }
 `;

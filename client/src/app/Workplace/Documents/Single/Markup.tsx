@@ -72,7 +72,9 @@ export const Markup: React.FC = () => {
             }
           >
             {columns?.map((x) => (
-              <MenuItem value={x}>{x}</MenuItem>
+              <MenuItem key={x} value={x}>
+                {x}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
