@@ -25,7 +25,7 @@ const ButtonsGroupsLabels = {
   [BtnGroups.group4]: "Отбор признаков",
 };
 
-const ButtonsData = {
+export const ButtonsData = {
   [BtnGroups.group1]: [
     { value: DocumentMethod.removeDuplicates, label: "Удаление дубликатов" },
     { value: DocumentMethod.dropNa, label: "Удаление пропусков" },

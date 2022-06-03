@@ -138,7 +138,11 @@ export enum TaskType {
   classification = "classification",
 }
 
-export type ErrorResponse = {
+export type StandardResponse = {
   status_code: number;
   content: string;
+};
+
+export type StandardResponseData = {
+  data: StandardResponse;
 };

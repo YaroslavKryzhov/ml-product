@@ -8,9 +8,10 @@ import documentsApi, {
 } from "./reducers/api/documents.api";
 import main from "./reducers/main";
 import dialog from "./reducers/dialog";
+import notices from "./reducers/notices";
 
 export const store = configureStore({
-  reducer: { authApi, main, auth, documents, documentsApi, dialog },
+  reducer: { authApi, main, auth, documents, documentsApi, dialog, notices },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }).concat([
       authApiSlice.middleware,

@@ -23,6 +23,8 @@ import { useNavigate } from "react-router-dom";
 import { WorkPageHeader } from "app/Workplace/common/WorkPageHeader";
 import DownloadIcon from "@mui/icons-material/Download";
 import { useDeleteFile } from "../hooks";
+import { addNotice, SnackBarType } from "ducks/reducers/notices";
+import { StandardResponseData } from "ducks/reducers/types";
 
 enum Columns {
   upload = "upload_date",
@@ -65,12 +67,23 @@ export const DocumentsList: React.FC = () => {
           const { customFileName, selectedFile } = store.getState().documents;
           if (!selectedFile) return;
           dispatch(setDialogLoading(true));
-          await postDoc({
+          const res = (await postDoc({
             filename: customFileName,
             file: selectedFile,
-          });
+          })) as StandardResponseData;
           dispatch(setDialogLoading(false));
+
+          if (res.data.status_code === 200) {
+            dispatch(
+              addNotice({
+                label: "Файл успешно загружен",
+                type: SnackBarType.success,
+                id: Date.now(),
+              })
+            );
+          }
         },
+
         acceptDisabled: true,
         onClose: () => {
           dispatch(changeCustomFileName(""));

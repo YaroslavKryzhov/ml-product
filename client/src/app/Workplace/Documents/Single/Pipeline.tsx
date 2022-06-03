@@ -17,7 +17,6 @@ import {
   MenuItem,
   Typography,
 } from "@mui/material";
-import { DocumentMethod } from "ducks/reducers/types";
 import CopyAllIcon from "@mui/icons-material/CopyAll";
 import { useParams } from "react-router-dom";
 import {
@@ -28,7 +27,8 @@ import {
 import { UnavailableBlock } from "./common";
 import { useAppDispatch } from "ducks/hooks";
 import { setDialog, setDialogLoading } from "ducks/reducers/dialog";
-import { T } from "ramda";
+import { compose, flatten, map, prop, T, values, zipObj } from "ramda";
+import { ButtonsData } from "./DocumentMethods";
 
 const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
@@ -53,15 +53,11 @@ const ColorlibStepIconRoot = styled("div")(({ theme }) => ({
   alignItems: "center",
 }));
 
-const ColorlibStepIcon: React.FC<StepIconProps> = (props: StepIconProps) => (
+const ColorlibStepIcon: React.FC<StepIconProps> = () => (
   <ColorlibStepIconRoot>
     <SettingsIcon />
   </ColorlibStepIconRoot>
 );
-
-const Labels: { [key: string]: string } = {
-  [DocumentMethod.standardize_features]: "Стандартизация",
-};
 
 export const Pipeline: React.FC = () => {
   const { docName } = useParams();
@@ -92,7 +88,22 @@ export const Pipeline: React.FC = () => {
         })
       );
     },
-    [docName]
+    [docName, copyPipeline, dispatch]
+  );
+
+  const mapPath = useCallback(
+    (key: string) =>
+      (compose as any)(
+        map(prop(key)),
+        flatten,
+        values
+      )(ButtonsData) as string[],
+    []
+  );
+
+  const labels = useMemo(
+    () => zipObj(mapPath("value"), mapPath("label")),
+    [mapPath]
   );
 
   return (
@@ -154,7 +165,9 @@ export const Pipeline: React.FC = () => {
               }}
             >
               <StepLabel StepIconComponent={ColorlibStepIcon}>
-                {Labels[unit.function_name]}
+                <Box sx={{ padding: `0 ${theme.spacing(1)}` }}>
+                  {labels[unit.function_name]}
+                </Box>
               </StepLabel>
             </Step>
           ))}

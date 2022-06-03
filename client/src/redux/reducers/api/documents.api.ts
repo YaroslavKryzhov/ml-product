@@ -7,7 +7,7 @@ import {
   DocumentInfo,
   DocumentInfoShort,
   DocumentMethod,
-  ErrorResponse,
+  StandardResponse,
   FullDocument,
   TaskType,
 } from "../types";
@@ -41,7 +41,10 @@ export const documentsApi = createApi({
       }),
       providesTags: [Tags.singleDocument],
     }),
-    postDocument: builder.mutation<string, { filename: string; file: File }>({
+    postDocument: builder.mutation<
+      string | StandardResponse,
+      { filename: string; file: File }
+    >({
       query: ({ filename, file }) => ({
         url: ROUTES.DOCUMENTS.BASE,
         params: { filename },
@@ -169,7 +172,7 @@ export const documentsApi = createApi({
       invalidatesTags: [Tags.singleDocument],
     }),
     markAsCategorical: builder.mutation<
-      void | ErrorResponse,
+      void | StandardResponse,
       { filename: string; columnName: string }
     >({
       query: ({ columnName, filename }) => ({
@@ -180,13 +183,24 @@ export const documentsApi = createApi({
       invalidatesTags: [Tags.singleDocument],
     }),
     markAsNumeric: builder.mutation<
-      void | ErrorResponse,
+      void | StandardResponse,
       { filename: string; columnName: string }
     >({
       query: ({ columnName, filename }) => ({
         url: ROUTES.DOCUMENTS.MARK_NUMERIC,
         params: { filename, column_name: columnName },
         method: "POST",
+      }),
+      invalidatesTags: [Tags.singleDocument],
+    }),
+    deleteColumn: builder.mutation<
+      void | StandardResponse,
+      { filename: string; columnName: string }
+    >({
+      query: ({ columnName, filename }) => ({
+        url: ROUTES.DOCUMENTS.DELETE_COLUMN,
+        params: { filename, column_name: columnName },
+        method: "DELETE",
       }),
       invalidatesTags: [Tags.singleDocument],
     }),
@@ -209,5 +223,6 @@ export const {
   useMarkAsCategoricalMutation,
   useMarkAsNumericMutation,
   useCopyPipelineMutation,
+  useDeleteColumnMutation,
 } = documentsApi;
 export default documentsApi.reducer;

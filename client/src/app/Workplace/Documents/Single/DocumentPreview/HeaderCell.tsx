@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { CategoryMark, DFInfo, ErrorResponse } from "ducks/reducers/types";
+import { CategoryMark, DFInfo } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
 import {
   Box,
@@ -17,14 +17,14 @@ import { SIMPLE_HEIGHT } from "./contants";
 import { OverflowText } from "app/Workplace/common/styles";
 import { MoreColumnInfo } from "./MoreColumnInfo";
 import {
-  useMarkAsCategoricalMutation,
-  useMarkAsNumericMutation,
+  useDeleteColumnMutation,
+  useInfoDocumentQuery,
 } from "ducks/reducers/api/documents.api";
 import { useParams } from "react-router-dom";
 import Filter1Icon from "@mui/icons-material/Filter1";
 import TextFormatIcon from "@mui/icons-material/TextFormat";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { SnackBarType, useNotice } from "app/Workplace/common/useNotice";
+import { useChangeColumnType } from "./useChangeColumnType";
 
 const DataHeaderCaption: React.FC<{
   children: React.ReactNode;
@@ -54,13 +54,9 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
 }) => {
   const { docName } = useParams();
   const dispatch = useAppDispatch();
-  const [markAsCategorical] = useMarkAsCategoricalMutation();
-  const [markAsNumeric] = useMarkAsNumericMutation();
 
-  const showColumnError = useNotice({
-    label: " Не удалось изменить тип колонки",
-    type: SnackBarType.error,
-  });
+  const { data: infoDocument } = useInfoDocumentQuery(docName!);
+  const [deleteColumn] = useDeleteColumnMutation();
 
   const setDialogProps = useCallback(() => {
     data &&
@@ -80,52 +76,25 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
           dismissText: "Закрыть",
         })
       );
-  }, [data, type, name, data_type, not_null_count, type]);
+  }, [data, name, data_type, not_null_count, type, dispatch]);
 
-  const markChange = useCallback(
-    (newMark: CategoryMark) => {
-      console.log(1212);
-      dispatch(
-        setDialog({
-          title: "Изменение типа колонки",
-          text: `Вы действительно хотите изменить тип ${name} на ${newMark}?`,
-          onAccept: async () => {
-            dispatch(setDialogLoading(true));
+  const setDialogDeleteProps = useCallback(() => {
+    dispatch(
+      setDialog({
+        title: `Удаление ${name}`,
+        text: `Вы действительно хотите удалить колонку ${name}?`,
+        onAccept: async () => {
+          dispatch(setDialogLoading(true));
+          await deleteColumn({ filename: docName!, columnName: name });
 
-            let res: any = null;
+          dispatch(setDialogLoading(false));
+        },
+        onDismiss: T,
+      })
+    );
+  }, [name, dispatch, deleteColumn, docName]);
 
-            try {
-              if (newMark === CategoryMark.categorical)
-                res = await markAsCategorical({
-                  filename: docName!,
-                  columnName: name,
-                });
-
-              if (newMark === CategoryMark.numeric) {
-                res = await markAsNumeric({
-                  filename: docName!,
-                  columnName: name,
-                });
-              }
-              if ((res.data as ErrorResponse)?.status_code === 409)
-                throw new Error();
-            } catch {
-              showColumnError(true);
-            }
-
-            dispatch(setDialogLoading(false));
-          },
-          onDismiss: T,
-        })
-      );
-    },
-    [docName]
-  );
-
-  const onCategoryChange = useCallback(
-    (_: unknown, val: CategoryMark) => val && markChange(val),
-    [markChange]
-  );
+  const markChange = useChangeColumnType(name);
 
   return (
     <Box
@@ -160,35 +129,42 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
           justifyContent: "space-between",
         }}
       >
-        {data && (
-          <ToggleButton value="size" sx={{ p: "2px" }}>
-            <OpenInFullIcon
-              onClick={setDialogProps}
-              sx={{
-                fontSize: theme.typography.caption.fontSize,
-              }}
-            />
-          </ToggleButton>
-        )}
+        <ToggleButton value="size" sx={{ p: "2px" }}>
+          <OpenInFullIcon
+            onClick={setDialogProps}
+            sx={{
+              fontSize: theme.typography.caption.fontSize,
+            }}
+          />
+        </ToggleButton>
 
-        <ToggleButtonGroup
-          exclusive
-          value={type}
-          onChange={onCategoryChange}
-          onClick={(e) => e.stopPropagation()}
+        <Tooltip
+          disableHoverListener={!!infoDocument?.column_types?.target}
+          followCursor
+          title="Доступно только после разметки"
         >
-          <ToggleButton sx={{ p: "2px" }} value={CategoryMark.numeric}>
-            <Filter1Icon sx={{ fontSize: theme.typography.caption.fontSize }} />
-          </ToggleButton>
-          <ToggleButton sx={{ p: "2px" }} value={CategoryMark.categorical}>
-            <TextFormatIcon
-              sx={{ fontSize: theme.typography.caption.fontSize }}
-            />
-          </ToggleButton>
-        </ToggleButtonGroup>
+          <ToggleButtonGroup
+            disabled={!infoDocument?.column_types?.target}
+            exclusive
+            value={type}
+            onChange={(_: unknown, val: CategoryMark) => val && markChange(val)}
+          >
+            <ToggleButton sx={{ p: "2px" }} value={CategoryMark.numeric}>
+              <Filter1Icon
+                sx={{ fontSize: theme.typography.caption.fontSize }}
+              />
+            </ToggleButton>
+            <ToggleButton sx={{ p: "2px" }} value={CategoryMark.categorical}>
+              <TextFormatIcon
+                sx={{ fontSize: theme.typography.caption.fontSize }}
+              />
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Tooltip>
 
         <ToggleButton value="delete" sx={{ p: "2px" }}>
           <DeleteIcon
+            onClick={setDialogDeleteProps}
             sx={{
               fontSize: theme.typography.caption.fontSize,
             }}

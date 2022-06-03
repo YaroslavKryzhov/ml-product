@@ -11,18 +11,13 @@ import {
   changeSelectedFile,
 } from "ducks/reducers/documents";
 import { setDialogAcceptDisabled } from "ducks/reducers/dialog";
-import { SnackBarType, useNotice } from "app/Workplace/common/useNotice";
+import { addNotice, SnackBarType } from "ducks/reducers/notices";
 
 export const DocumentDrop: React.FC = () => {
   const { customFileName, selectedFile } = useSESelector(
     (state) => state.documents
   );
   const dispatch = useAppDispatch();
-
-  const showTypeError = useNotice({
-    label: "Разрешены только CSV файлы",
-    type: SnackBarType.error,
-  });
 
   const onDropAccepted = useCallback((files: File[]) => {
     const file = first(files);
@@ -33,8 +28,15 @@ export const DocumentDrop: React.FC = () => {
   }, []);
 
   const onDropRejected = useCallback(
-    () => showTypeError(true),
-    [showTypeError]
+    () =>
+      dispatch(
+        addNotice({
+          label: "Разрешены только CSV файлы",
+          type: SnackBarType.error,
+          id: Date.now(),
+        })
+      ),
+    []
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -105,7 +107,7 @@ export const DocumentDrop: React.FC = () => {
         {selectedFile ? (
           <AttachmentIcon sx={{ fontSize: theme.typography.h4 }} />
         ) : (
-          <Typography variant="body2">
+          <Typography sx={{ pointerEvents: "none" }} variant="body2">
             Перетащите файл сюда или нажмите, чтобы выбрать (только CSV)
           </Typography>
         )}

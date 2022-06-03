@@ -25,5 +25,6 @@ export const ROUTES = {
     MARK_CATEGORICAL: "/edit/to_categorical",
     MARK_NUMERIC: "/edit/to_numeric",
     COPY_PIPELINE: "/edit/copy_pipeline",
+    DELETE_COLUMN: "/edit/column",
   },
 };
