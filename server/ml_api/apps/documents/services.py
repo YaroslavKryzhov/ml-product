@@ -302,6 +302,7 @@ class DocumentOperator:
         return self.update_pipeline
 
     def no_func_error(self, param=None):
+        del param  # func is empty
         self.error.append('no_func')
 
     def apply_function(self, function_name: str, param: Union[int, float, str] = None):
@@ -331,15 +332,15 @@ class DocumentOperator:
 
     def drop_column(self, param: str):
         column = param
+        self.df.drop(column, axis=1)
+        self.update_pipeline = True
         try:
             self.column_types.numeric.remove(column)
         except ValueError:
             try:
                 self.column_types.categorical.remove(column)
             except ValueError:
-                print('Something wrong! def drop_column()')
-        self.df.drop(column, axis=1)
-        self.update_pipeline = True
+                pass
 
     def miss_insert_mean_mode(self):
         numeric_columns = self.column_types.numeric
