@@ -1,4 +1,4 @@
-import { Box, Button, Stack } from "@mui/material";
+import { Box, Button, Skeleton, Stack } from "@mui/material";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import { theme } from "globalStyle/theme";
@@ -51,7 +51,8 @@ export const DocHeader: React.FC<{ initName: string }> = ({ initName }) => {
     [matchName]
   );
 
-  const { data: docData } = useInfoDocumentQuery(customName);
+  const { data: docData, isLoading: docInfoLoading } =
+    useInfoDocumentQuery(customName);
 
   useEffect(() => {
     editMode && inputRef.current?.focus();
@@ -62,25 +63,34 @@ export const DocHeader: React.FC<{ initName: string }> = ({ initName }) => {
   return (
     <Box>
       <Stack direction="row" sx={{ gap: theme.spacing(2) }}>
-        <InfoChip
-          size={Size.small}
-          label="Загружено"
-          info={
-            (docData &&
-              moment(docData.upload_date).format(
-                theme.additional.timeFormat
-              )) ||
-            "***"
-          }
-        />
-        <InfoChip
-          size={Size.small}
-          label="Изменено"
-          info={
-            docData &&
-            moment(docData.change_date).format(theme.additional.timeFormat)
-          }
-        />
+        {docInfoLoading ? (
+          <>
+            <Skeleton variant="rectangular" width={215} height={22} />
+            <Skeleton variant="rectangular" width={215} height={22} />
+          </>
+        ) : (
+          <>
+            <InfoChip
+              size={Size.small}
+              label="Загружено"
+              info={
+                (docData &&
+                  moment(docData.upload_date).format(
+                    theme.additional.timeFormat
+                  )) ||
+                "***"
+              }
+            />
+            <InfoChip
+              size={Size.small}
+              label="Изменено"
+              info={
+                docData &&
+                moment(docData.change_date).format(theme.additional.timeFormat)
+              }
+            />
+          </>
+        )}
       </Stack>
 
       <Box

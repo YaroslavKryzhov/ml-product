@@ -6,7 +6,7 @@ import {
 import React, { useMemo, useState } from "react";
 import { zipObject, unzip, values, keys } from "lodash";
 import { theme } from "globalStyle/theme";
-import { Box, Pagination } from "@mui/material";
+import { Box, Pagination, Skeleton } from "@mui/material";
 import { Fixed } from "app/Workplace/common/Table/types";
 import { HeaderCell } from "./HeaderCell";
 import { useParams } from "react-router-dom";
@@ -19,8 +19,12 @@ const convertData = (data: Record<string, string | number>) =>
 export const DocumentPreview: React.FC = () => {
   const { docName } = useParams();
   const [page, setPage] = useState<number>(1);
-  const { data } = useDocumentQuery({ filename: docName!, page });
-  const { data: infoData } = useInfoStatsDocumentQuery(docName!);
+  const { data, isLoading: isDocLoading } = useDocumentQuery({
+    filename: docName!,
+    page,
+  });
+  const { data: infoData, isLoading: isInfoLoading } =
+    useInfoStatsDocumentQuery(docName!);
 
   const convertedData = useMemo(
     () => (data?.records ? convertData(data.records) : []),
@@ -41,24 +45,37 @@ export const DocumentPreview: React.FC = () => {
 
   return (
     <Box>
-      <TableFix
-        compact
-        offHeaderPaddings
-        defaultColumnSizing={{ minWidth: 135 }}
-        forceResize
-        resizable
-        data={convertedData}
-        columns={columns}
-        tableMaxHeight="500px"
-      />
-      <Pagination
-        sx={{ mt: theme.spacing(2) }}
-        page={page}
-        onChange={(_, page) => setPage(page)}
-        count={data?.total}
-        variant="outlined"
-        shape="rounded"
-      />
+      {isDocLoading || isInfoLoading ? (
+        <Skeleton variant="rectangular" width="100%" height={500} />
+      ) : (
+        <TableFix
+          compact
+          offHeaderPaddings
+          defaultColumnSizing={{ minWidth: 135 }}
+          forceResize
+          resizable
+          data={convertedData}
+          columns={columns}
+          tableMaxHeight="500px"
+        />
+      )}
+      {isInfoLoading ? (
+        <Skeleton
+          sx={{ mt: theme.spacing(2) }}
+          variant="rectangular"
+          width={300}
+          height={32}
+        />
+      ) : (
+        <Pagination
+          sx={{ mt: theme.spacing(2) }}
+          page={page}
+          onChange={(_, page) => setPage(page)}
+          count={data?.total}
+          variant="outlined"
+          shape="rounded"
+        />
+      )}
     </Box>
   );
 };

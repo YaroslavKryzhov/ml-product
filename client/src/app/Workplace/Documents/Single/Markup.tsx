@@ -6,6 +6,8 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Skeleton,
+  Stack,
   Typography,
 } from "@mui/material";
 import { useAppDispatch, useSESelector } from "ducks/hooks";
@@ -32,8 +34,12 @@ export const Markup: React.FC = () => {
   );
   const [saveMarkup, { isLoading: isSaving }] =
     useSelectDocumentTargetMutation();
-  const { data: columns } = useColumnsDocumentQuery(docName!);
-  const { data: docInfo } = useInfoDocumentQuery(docName!);
+  const { data: columns, isLoading: columnsLoading } = useColumnsDocumentQuery(
+    docName!
+  );
+  const { data: docInfo, isLoading: docInfoLoading } = useInfoDocumentQuery(
+    docName!
+  );
 
   const dispatch = useAppDispatch();
 
@@ -44,69 +50,88 @@ export const Markup: React.FC = () => {
         targetColumn: selectedTargetColumn,
         taskType: selectedTaskType,
       });
-  }, [selectedTargetColumn, selectedTaskType, docName]);
+  }, [selectedTargetColumn, selectedTaskType, docName, saveMarkup]);
 
   return (
     <Box>
       <Typography sx={{ mb: theme.spacing(2) }} variant="h5">
         Разметка
       </Typography>
-      {!docInfo?.column_types && (
-        <UnavailableBlock label=" Внимание, вы сможете произвести разметку только один раз!!! Будьте Внимательны!!!" />
+      {docInfoLoading || columnsLoading ? (
+        <Stack
+          direction="row"
+          gap={theme.spacing(6)}
+          sx={{ mt: theme.spacing(3) }}
+        >
+          <Skeleton variant="rectangular" width={400} height={60} />
+          <Skeleton variant="rectangular" width={400} height={60} />
+        </Stack>
+      ) : (
+        <>
+          {!docInfo?.column_types && (
+            <UnavailableBlock label=" Внимание, вы сможете произвести разметку только один раз!!! Будьте Внимательны!!!" />
+          )}
+          <Box
+            sx={{
+              mt: theme.spacing(3),
+              display: "flex",
+              gap: theme.spacing(6),
+            }}
+          >
+            <FormControl sx={{ width: "400px" }}>
+              <InputLabel>Target</InputLabel>
+              <Select
+                disabled={!!docInfo?.column_types}
+                value={
+                  docInfo?.column_types?.target || selectedTargetColumn || ""
+                }
+                label="Target"
+                onChange={(event) =>
+                  dispatch(changeSelectedTarget(event.target.value))
+                }
+              >
+                {columns?.map((x) => (
+                  <MenuItem key={x} value={x}>
+                    {x}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl sx={{ width: "400px" }}>
+              <InputLabel>Task Type</InputLabel>
+              <Select
+                disabled={!!docInfo?.column_types}
+                value={
+                  docInfo?.column_types?.task_type || selectedTaskType || ""
+                }
+                label="Task Type"
+                onChange={(event) =>
+                  dispatch(
+                    changeSelectedTaskType(event.target.value as TaskType)
+                  )
+                }
+              >
+                <MenuItem value={TaskType.classification}>
+                  {TASK_TYPE_LABEL.classification}
+                </MenuItem>
+                <MenuItem value={TaskType.regression}>
+                  {TASK_TYPE_LABEL.regression}
+                </MenuItem>
+              </Select>
+            </FormControl>
+            {!docInfo?.column_types && (
+              <LoadingButton
+                disabled={!selectedTargetColumn || !selectedTaskType}
+                onClick={onSaveClick}
+                loading={isSaving}
+                variant="contained"
+              >
+                Сохранить
+              </LoadingButton>
+            )}
+          </Box>
+        </>
       )}
-      <Box
-        sx={{
-          mt: theme.spacing(3),
-          display: "flex",
-          gap: theme.spacing(6),
-        }}
-      >
-        <FormControl sx={{ width: "400px" }}>
-          <InputLabel>Target</InputLabel>
-          <Select
-            disabled={!!docInfo?.column_types}
-            value={docInfo?.column_types?.target || selectedTargetColumn || ""}
-            label="Target"
-            onChange={(event) =>
-              dispatch(changeSelectedTarget(event.target.value))
-            }
-          >
-            {columns?.map((x) => (
-              <MenuItem key={x} value={x}>
-                {x}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl sx={{ width: "400px" }}>
-          <InputLabel>Task Type</InputLabel>
-          <Select
-            disabled={!!docInfo?.column_types}
-            value={docInfo?.column_types?.task_type || selectedTaskType || ""}
-            label="Task Type"
-            onChange={(event) =>
-              dispatch(changeSelectedTaskType(event.target.value as TaskType))
-            }
-          >
-            <MenuItem value={TaskType.classification}>
-              {TASK_TYPE_LABEL.classification}
-            </MenuItem>
-            <MenuItem value={TaskType.regression}>
-              {TASK_TYPE_LABEL.regression}
-            </MenuItem>
-          </Select>
-        </FormControl>
-        {!docInfo?.column_types && (
-          <LoadingButton
-            disabled={!selectedTargetColumn || !selectedTaskType}
-            onClick={onSaveClick}
-            loading={isSaving}
-            variant="contained"
-          >
-            Сохранить
-          </LoadingButton>
-        )}
-      </Box>
       <Divider sx={{ mb: theme.spacing(3), mt: theme.spacing(3) }} />
     </Box>
   );

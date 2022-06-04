@@ -15,6 +15,8 @@ import {
   Divider,
   Menu,
   MenuItem,
+  Skeleton,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import CopyAllIcon from "@mui/icons-material/CopyAll";
@@ -67,13 +69,18 @@ const PipelineGroups = {
 
 export const Pipeline: React.FC = () => {
   const { docName } = useParams();
-  const { data: docInfo } = useInfoDocumentQuery(docName!);
+  const { data: docInfo, isLoading: docInfoLoading } = useInfoDocumentQuery(
+    docName!
+  );
   const { data: allDocuments } = useAllDocumentsQuery();
   const [copyPipeline] = useCopyPipelineMutation();
   const dispatch = useAppDispatch();
 
   const filteredDocs = useMemo(
-    () => allDocuments?.filter((doc) => doc.name !== docName),
+    () =>
+      allDocuments?.filter(
+        (doc) => doc.name !== docName && doc.pipeline?.length
+      ),
     [allDocuments, docName]
   );
   const [fromDocumentMenuOpened, setDromDocumentMenuOpened] = useState(false);
@@ -118,16 +125,23 @@ export const Pipeline: React.FC = () => {
         Пайплайн
         {!!allDocuments?.length && (
           <>
-            <Button
-              ref={anchorEl}
-              sx={{ ml: theme.spacing(3) }}
-              size="small"
-              variant="outlined"
-              endIcon={<CopyAllIcon />}
-              onClick={() => setDromDocumentMenuOpened(true)}
+            <Tooltip
+              followCursor
+              disableHoverListener={!!filteredDocs?.length}
+              title="Не найдено документов с непустым пайплайном"
             >
-              Применить из
-            </Button>
+              <Button
+                disabled={!filteredDocs?.length}
+                ref={anchorEl}
+                sx={{ ml: theme.spacing(3) }}
+                size="small"
+                variant="outlined"
+                endIcon={<CopyAllIcon />}
+                onClick={() => setDromDocumentMenuOpened(true)}
+              >
+                Применить из
+              </Button>
+            </Tooltip>
             <Menu
               PaperProps={{ sx: { mt: theme.spacing(1) } }}
               anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
@@ -149,40 +163,47 @@ export const Pipeline: React.FC = () => {
           </>
         )}
       </Typography>
-      {docInfo?.pipeline?.length ? (
-        <Stepper
-          sx={{
-            width: (docInfo?.pipeline?.length || 0) * 200,
-            border: `${theme.additional.borderWidth}px solid ${theme.palette.primary.main}`,
-            p: theme.spacing(1),
-            borderRadius: `${theme.shape.borderRadiusRound}px`,
-          }}
-          alternativeLabel
-          connector={<ColorlibConnector />}
-        >
-          {docInfo?.pipeline.map((unit, inx) => (
-            <Step
-              key={inx}
-              sx={{
-                p: 0,
-                "& .MuiStepLabel-label": {
-                  lineHeight: theme.typography.body1.fontSize,
-                },
-              }}
-            >
-              <StepLabel StepIconComponent={ColorlibStepIcon}>
-                <Box sx={{ padding: `0 ${theme.spacing(1)}` }}>
-                  {`${labels[unit.function_name]} ${
-                    unit.param ? `(${unit.param})` : ""
-                  }`}
-                </Box>
-              </StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+      {docInfoLoading ? (
+        <Skeleton variant="rectangular" width="100%" height={132} />
       ) : (
-        <UnavailableBlock label="Пока что пусто, примените методы" />
+        <>
+          {docInfo?.pipeline?.length ? (
+            <Stepper
+              sx={{
+                width: (docInfo?.pipeline?.length || 0) * 200,
+                border: `${theme.additional.borderWidth}px solid ${theme.palette.primary.main}`,
+                p: theme.spacing(1),
+                borderRadius: `${theme.shape.borderRadiusRound}px`,
+              }}
+              alternativeLabel
+              connector={<ColorlibConnector />}
+            >
+              {docInfo?.pipeline.map((unit, inx) => (
+                <Step
+                  key={inx}
+                  sx={{
+                    p: 0,
+                    "& .MuiStepLabel-label": {
+                      lineHeight: theme.typography.body1.fontSize,
+                    },
+                  }}
+                >
+                  <StepLabel StepIconComponent={ColorlibStepIcon}>
+                    <Box sx={{ padding: `0 ${theme.spacing(1)}` }}>
+                      {`${labels[unit.function_name]} ${
+                        unit.param ? `(${unit.param})` : ""
+                      }`}
+                    </Box>
+                  </StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+          ) : (
+            <UnavailableBlock label="Пока что пусто, примените методы" />
+          )}
+        </>
       )}
+
       <Divider sx={{ mb: theme.spacing(3), mt: theme.spacing(3) }} />
     </Box>
   );

@@ -61,7 +61,6 @@ export type PipelineUnit = { function_name: string; param: string | null };
 
 export type DocumentInfo = DocumentInfoShort & {
   id: string;
-  pipeline: PipelineUnit[];
   column_types: {
     numeric: string[];
     categorical: string[];
@@ -86,6 +85,7 @@ export type DocumentInfoShort = {
   name: string;
   upload_date: string;
   change_date: string;
+  pipeline: PipelineUnit[];
 };
 
 export enum CategoryMark {

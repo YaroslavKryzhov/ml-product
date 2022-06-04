@@ -1,4 +1,4 @@
-import { Box, Button } from "@mui/material";
+import { Box, Button, Skeleton } from "@mui/material";
 import { compareDate, TableFix } from "app/Workplace/common/Table";
 import { pathify, useAppDispatch } from "ducks/hooks";
 import {
@@ -50,7 +50,7 @@ const columns = [
 ];
 
 export const DocumentsList: React.FC = () => {
-  const { data: allDocuments } = useAllDocumentsQuery();
+  const { data: allDocuments, isLoading } = useAllDocumentsQuery();
 
   const dispatch = useAppDispatch();
   const [postDoc] = usePostDocumentMutation();
@@ -118,39 +118,43 @@ export const DocumentsList: React.FC = () => {
         >
           Загрузить CSV
         </Button>
-        <TableFix
-          rowActions={[
-            {
-              name: "Редактировать",
-              icon: <EditIcon sx={ActionIconSx} />,
-              onClick: (row) => {
-                navigate(pathify([row.values.name], { relative: true }));
+        {isLoading ? (
+          <Skeleton variant="rectangular" width="100%" height={700} />
+        ) : (
+          <TableFix
+            rowActions={[
+              {
+                name: "Редактировать",
+                icon: <EditIcon sx={ActionIconSx} />,
+                onClick: (row) => {
+                  navigate(pathify([row.values.name], { relative: true }));
+                },
               },
-            },
-            {
-              name: "Скачать",
-              icon: <DownloadIcon sx={ActionIconSx} />,
-              onClick: (row) => {
-                downloadDoc(row.values[Columns.name]);
+              {
+                name: "Скачать",
+                icon: <DownloadIcon sx={ActionIconSx} />,
+                onClick: (row) => {
+                  downloadDoc(row.values[Columns.name]);
+                },
               },
-            },
-            {
-              name: "Удалить",
-              icon: <DeleteIcon sx={{ ActionIconSx }} />,
-              onClick: (row) => deleteDoc(row.values[Columns.name]),
-            },
-          ]}
-          rowHoverable
-          forceResize
-          resizable
-          data={convertedData}
-          columns={columns}
-          sortBy={[
-            { id: columns[2].accessor, desc: true },
-            { id: columns[0].accessor, desc: true },
-            { id: columns[1].accessor, desc: true },
-          ]}
-        />
+              {
+                name: "Удалить",
+                icon: <DeleteIcon sx={{ ActionIconSx }} />,
+                onClick: (row) => deleteDoc(row.values[Columns.name]),
+              },
+            ]}
+            rowHoverable
+            forceResize
+            resizable
+            data={convertedData}
+            columns={columns}
+            sortBy={[
+              { id: columns[2].accessor, desc: true },
+              { id: columns[0].accessor, desc: true },
+              { id: columns[1].accessor, desc: true },
+            ]}
+          />
+        )}
       </Box>
     </>
   );

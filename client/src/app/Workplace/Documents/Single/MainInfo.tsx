@@ -1,4 +1,4 @@
-import { Box, Divider, Typography } from "@mui/material";
+import { Box, Divider, Skeleton, Typography } from "@mui/material";
 import { TableFix } from "app/Workplace/common/Table";
 import { useDescribeDocumentQuery } from "ducks/reducers/api/documents.api";
 import { theme } from "globalStyle/theme";
@@ -24,7 +24,8 @@ const composeAny = compose as any;
 
 export const MainInfo: React.FC = () => {
   const { docName } = useParams();
-  const { data: describeData } = useDescribeDocumentQuery(docName!);
+  const { data: describeData, isLoading: describeLoading } =
+    useDescribeDocumentQuery(docName!);
 
   const describeColumns = useMemo(
     () =>
@@ -66,12 +67,16 @@ export const MainInfo: React.FC = () => {
         <Typography sx={{ mt: theme.spacing(3) }} variant="body1">
           Pandas Description
         </Typography>
-        <TableFix
-          compact
-          isFirstColumnFixed
-          columns={describeColumns}
-          data={describeDataRows}
-        />
+        {describeLoading ? (
+          <Skeleton variant="rectangular" width="100%" height={300} />
+        ) : (
+          <TableFix
+            compact
+            isFirstColumnFixed
+            columns={describeColumns}
+            data={describeDataRows}
+          />
+        )}
       </Box>
 
       <Divider sx={{ mb: theme.spacing(3), mt: theme.spacing(3) }} />
