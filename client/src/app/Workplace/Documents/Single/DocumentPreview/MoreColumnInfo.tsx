@@ -3,7 +3,7 @@ import { CategoricalData, CategoryMark, DFInfo } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
 import { Box, Tooltip, Typography } from "@mui/material";
 import { StatsGraph } from "./statGraph";
-import { keys } from "ramda";
+import { isNil, keys } from "ramda";
 import { TableFix } from "app/Workplace/common/Table";
 import { useDescribeDocumentQuery } from "ducks/reducers/api/documents.api";
 import { useDocumentNameForce } from "../../hooks";
@@ -43,7 +43,7 @@ export const MoreColumnInfo: React.FC<DFInfo> = ({
             data_type,
             ...Object.fromEntries(
               entries(describeData)
-                .filter(([_, value]) => value[name])
+                .filter(([_, value]) => !isNil(value[name]))
                 .map(([key, value]) => [key, value[name]])
             ),
           }

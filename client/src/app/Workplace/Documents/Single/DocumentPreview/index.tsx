@@ -19,11 +19,11 @@ const convertData = (data: Record<string, string | number>) =>
 export const DocumentPreview: React.FC = () => {
   const { docName } = useParams();
   const [page, setPage] = useState<number>(1);
-  const { data, isLoading: isDocLoading } = useDocumentQuery({
+  const { data, isFetching: isDocLoading } = useDocumentQuery({
     filename: docName!,
     page,
   });
-  const { data: infoData, isLoading: isInfoLoading } =
+  const { data: infoData, isFetching: isInfoLoading } =
     useInfoStatsDocumentQuery(docName!);
 
   const convertedData = useMemo(

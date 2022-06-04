@@ -35,6 +35,7 @@ const TableFixHeader: React.FC<TableFixHeaderProps> = ({
 
             return (
               <StyledHeadCell
+                {...column.getSortByToggleProps()}
                 fixed={(column as CustomColumn).fixed}
                 {...headerProps}
                 key={headerKey}
@@ -42,7 +43,7 @@ const TableFixHeader: React.FC<TableFixHeaderProps> = ({
                 compact={compact}
               >
                 {typeof column.Header === "string" ? (
-                  <HeadCellContent {...column.getSortByToggleProps()}>
+                  <HeadCellContent>
                     {column.render(TABLE_PARTS.Header)}
                   </HeadCellContent>
                 ) : (

@@ -22,7 +22,7 @@ export const DocumentMethods: React.FC = () => {
   const { docName } = useParams();
   const dispatch = useAppDispatch();
 
-  const { data: infoData, isLoading: docInfoLoading } = useInfoDocumentQuery(
+  const { data: infoData, isFetching: docInfoLoading } = useInfoDocumentQuery(
     docName!
   );
   const [applyMethod, { isLoading }] = useApplyDocMethodMutation();

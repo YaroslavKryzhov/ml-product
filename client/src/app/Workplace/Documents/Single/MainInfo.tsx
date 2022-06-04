@@ -24,7 +24,7 @@ const composeAny = compose as any;
 
 export const MainInfo: React.FC = () => {
   const { docName } = useParams();
-  const { data: describeData, isLoading: describeLoading } =
+  const { data: describeData, isFetching: describeLoading } =
     useDescribeDocumentQuery(docName!);
 
   const describeColumns = useMemo(

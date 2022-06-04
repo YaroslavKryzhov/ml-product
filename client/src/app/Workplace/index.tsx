@@ -146,7 +146,7 @@ export const Workplace: React.FC = () => {
             <ListItemIcon>
               <FormatListBulletedIcon color="secondary" fontSize="small" />
             </ListItemIcon>
-            <ListItemText primary="Документы" />
+            <ListItemText primary="Данные" />
           </ListItemButton>
           <ListItemButton
             onClick={() => {

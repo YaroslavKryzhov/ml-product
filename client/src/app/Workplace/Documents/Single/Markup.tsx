@@ -34,10 +34,10 @@ export const Markup: React.FC = () => {
   );
   const [saveMarkup, { isLoading: isSaving }] =
     useSelectDocumentTargetMutation();
-  const { data: columns, isLoading: columnsLoading } = useColumnsDocumentQuery(
+  const { data: columns, isFetching: columnsLoading } = useColumnsDocumentQuery(
     docName!
   );
-  const { data: docInfo, isLoading: docInfoLoading } = useInfoDocumentQuery(
+  const { data: docInfo, isFetching: docInfoLoading } = useInfoDocumentQuery(
     docName!
   );
 

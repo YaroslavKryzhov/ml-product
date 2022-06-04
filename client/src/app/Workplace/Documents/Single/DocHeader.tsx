@@ -51,7 +51,7 @@ export const DocHeader: React.FC<{ initName: string }> = ({ initName }) => {
     [matchName]
   );
 
-  const { data: docData, isLoading: docInfoLoading } =
+  const { data: docData, isFetching: docInfoLoading } =
     useInfoDocumentQuery(customName);
 
   useEffect(() => {

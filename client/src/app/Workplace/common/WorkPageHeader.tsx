@@ -32,7 +32,7 @@ const definePathMap = (
   { docName }: { docName?: string }
 ) => ({
   [AppPage.Workplace]: pathItem(always("Домой"), () => goHome(navigate)),
-  [WorkPage.Documents]: pathItem(always("Документы"), () => goHome(navigate)),
+  [WorkPage.Documents]: pathItem(always("Данные"), () => goHome(navigate)),
   [WorkPage.Compositions]: pathItem(always("Композиции"), () =>
     goCompositions(navigate)
   ),
@@ -71,7 +71,7 @@ export const WorkPageHeader: React.FC = () => {
       <Typography sx={{ mb: theme.spacing(1) }} variant="h5">
         {pathname.match(
           pathify([WorkPage.Documents, DocumentPage.List]) + "$"
-        ) && "Документы"}
+        ) && "Данные"}
         {pathname.match(
           pathify([WorkPage.Compositions, CompositionPage.List]) + "$"
         ) && "Композиции"}

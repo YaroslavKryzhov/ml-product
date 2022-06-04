@@ -19,6 +19,7 @@ export const StyledHeadCell = styled.th<{
   offHeaderPaddings?: boolean;
   compact?: boolean;
 }>`
+  cursor: pointer;
   text-overflow: ellipsis;
   white-space: nowrap;
   user-select: none;

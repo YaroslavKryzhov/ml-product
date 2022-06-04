@@ -69,7 +69,7 @@ const PipelineGroups = {
 
 export const Pipeline: React.FC = () => {
   const { docName } = useParams();
-  const { data: docInfo, isLoading: docInfoLoading } = useInfoDocumentQuery(
+  const { data: docInfo, isFetching: docInfoLoading } = useInfoDocumentQuery(
     docName!
   );
   const { data: allDocuments } = useAllDocumentsQuery();

@@ -108,6 +108,7 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
           background: theme.palette.info.light,
         },
       }}
+      onClick={(e) => e.stopPropagation()}
     >
       <Box
         sx={{

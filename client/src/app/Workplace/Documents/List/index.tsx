@@ -50,7 +50,7 @@ const columns = [
 ];
 
 export const DocumentsList: React.FC = () => {
-  const { data: allDocuments, isLoading } = useAllDocumentsQuery();
+  const { data: allDocuments, isFetching } = useAllDocumentsQuery();
 
   const dispatch = useAppDispatch();
   const [postDoc] = usePostDocumentMutation();
@@ -118,7 +118,7 @@ export const DocumentsList: React.FC = () => {
         >
           Загрузить CSV
         </Button>
-        {isLoading ? (
+        {isFetching ? (
           <Skeleton variant="rectangular" width="100%" height={700} />
         ) : (
           <TableFix
