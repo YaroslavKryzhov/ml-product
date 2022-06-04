@@ -123,6 +123,7 @@ export enum DocumentMethod {
   fsSelectRfe = "fs_select_rfe",
   fsSelectFromModel = "fs_select_from_model",
   fsSelectPca = "fs_select_pca",
+  dropСolumn = "drop_column",
 }
 
 export enum DFInfoColumns {

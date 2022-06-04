@@ -28,7 +28,8 @@ import { UnavailableBlock } from "./common";
 import { useAppDispatch } from "ducks/hooks";
 import { setDialog, setDialogLoading } from "ducks/reducers/dialog";
 import { compose, flatten, map, prop, T, values, zipObj } from "ramda";
-import { ButtonsData } from "./DocumentMethods";
+import { ButtonsData } from "./DocumentMethods/constants";
+import { DocumentMethod } from "ducks/reducers/types";
 
 const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
   [`&.${stepConnectorClasses.alternativeLabel}`]: {
@@ -58,6 +59,11 @@ const ColorlibStepIcon: React.FC<StepIconProps> = () => (
     <SettingsIcon />
   </ColorlibStepIconRoot>
 );
+
+const PipelineGroups = {
+  ...ButtonsData,
+  more: [{ label: "Удаление колонки", value: DocumentMethod.dropСolumn }],
+};
 
 export const Pipeline: React.FC = () => {
   const { docName } = useParams();
@@ -97,7 +103,7 @@ export const Pipeline: React.FC = () => {
         map(prop(key)),
         flatten,
         values
-      )(ButtonsData) as string[],
+      )(PipelineGroups) as string[],
     []
   );
 
@@ -166,7 +172,9 @@ export const Pipeline: React.FC = () => {
             >
               <StepLabel StepIconComponent={ColorlibStepIcon}>
                 <Box sx={{ padding: `0 ${theme.spacing(1)}` }}>
-                  {labels[unit.function_name]}
+                  {`${labels[unit.function_name]} ${
+                    unit.param ? `(${unit.param})` : ""
+                  }`}
                 </Box>
               </StepLabel>
             </Step>
