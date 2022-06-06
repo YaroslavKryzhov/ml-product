@@ -1,9 +1,9 @@
 import * as React from "react";
 import Typography from "@mui/material/Typography";
-import { Box, Paper, Skeleton, Stack } from "@mui/material";
+import { Box, Paper, Skeleton, Stack, Tooltip } from "@mui/material";
 import { theme } from "globalStyle/theme";
 import { LoadingButton } from "@mui/lab";
-import { DocumentMethod } from "ducks/reducers/types";
+import { CategoryMark, DocumentMethod } from "ducks/reducers/types";
 import {
   useApplyDocMethodMutation,
   useInfoDocumentQuery,
@@ -89,46 +89,59 @@ export const DocumentMethods: React.FC = () => {
               }}
               direction="row"
             >
-              {Object.values(BtnGroups).map((groupKey) => (
-                <Paper
-                  sx={{
-                    backgroundColor: theme.palette.secondary.light,
-                    padding: theme.spacing(3),
-                    flexGrow: 1,
-                    maxWidth: "33%",
-                  }}
-                  key={groupKey}
-                  elevation={3}
-                >
-                  <Typography
-                    variant="h6"
-                    sx={{ textAlign: "center", mb: theme.spacing(2) }}
-                  >
-                    {ButtonsGroupsLabels[groupKey]}
-                  </Typography>
+              {Object.values(BtnGroups).map((groupKey) => {
+                const isColumnsSelectForbidden =
+                  groupKey === BtnGroups.group4 &&
+                  !!infoData.column_types[CategoryMark.categorical]?.length;
 
-                  <Stack
+                return (
+                  <Paper
                     sx={{
-                      gap: theme.spacing(1),
-                      flexWrap: "wrap",
+                      backgroundColor: theme.palette.secondary.light,
+                      padding: theme.spacing(3),
+                      flexGrow: 1,
+                      maxWidth: "33%",
                     }}
+                    key={groupKey}
+                    elevation={3}
                   >
-                    {ButtonsData[groupKey].map((act) => (
-                      <LoadingButton
-                        loading={isLoading}
-                        variant="contained"
-                        key={act.value}
+                    <Typography
+                      variant="h6"
+                      sx={{ textAlign: "center", mb: theme.spacing(2) }}
+                    >
+                      {ButtonsGroupsLabels[groupKey]}
+                    </Typography>
+
+                    <Tooltip
+                      followCursor
+                      disableHoverListener={!isColumnsSelectForbidden}
+                      title="Запрещено. Есть категориальные признаки."
+                    >
+                      <Stack
                         sx={{
-                          flexGrow: 1,
+                          gap: theme.spacing(1),
+                          flexWrap: "wrap",
                         }}
-                        onClick={() => setDialogApplyMethod(act.value)}
                       >
-                        {act.label}
-                      </LoadingButton>
-                    ))}
-                  </Stack>
-                </Paper>
-              ))}
+                        {ButtonsData[groupKey].map((act) => (
+                          <LoadingButton
+                            disabled={isColumnsSelectForbidden}
+                            loading={isLoading}
+                            variant="contained"
+                            key={act.value}
+                            sx={{
+                              flexGrow: 1,
+                            }}
+                            onClick={() => setDialogApplyMethod(act.value)}
+                          >
+                            {act.label}
+                          </LoadingButton>
+                        ))}
+                      </Stack>
+                    </Tooltip>
+                  </Paper>
+                );
+              })}
             </Stack>
           ) : (
             <UnavailableBlock label="Методы доступны только после разметки" />

@@ -1,13 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import { styled } from "@mui/material/styles";
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
-import SettingsIcon from "@mui/icons-material/Settings";
-import StepConnector, {
-  stepConnectorClasses,
-} from "@mui/material/StepConnector";
-import { StepIconProps } from "@mui/material/StepIcon";
 import { theme } from "globalStyle/theme";
 import {
   Box,
@@ -26,46 +20,18 @@ import {
   useCopyPipelineMutation,
   useInfoDocumentQuery,
 } from "ducks/reducers/api/documents.api";
-import { UnavailableBlock } from "./common";
+import { UnavailableBlock } from "../common";
 import { useAppDispatch } from "ducks/hooks";
 import { setDialog, setDialogLoading } from "ducks/reducers/dialog";
-import { compose, flatten, map, prop, T, values, zipObj } from "ramda";
-import { ButtonsData } from "./DocumentMethods/constants";
-import { DocumentMethod } from "ducks/reducers/types";
-
-const ColorlibConnector = styled(StepConnector)(({ theme }) => ({
-  [`&.${stepConnectorClasses.alternativeLabel}`]: {
-    top: 30,
-  },
-  [`& .${stepConnectorClasses.line}`]: {
-    height: 3,
-    border: 0,
-    backgroundColor: theme.palette.primary.main,
-  },
-}));
-
-const ColorlibStepIconRoot = styled("div")(({ theme }) => ({
-  backgroundColor: theme.palette.primary.main,
-  zIndex: 1,
-  color: theme.palette.primary.contrastText,
-  width: 61,
-  height: 61,
-  display: "flex",
-  borderRadius: "50%",
-  justifyContent: "center",
-  alignItems: "center",
-}));
-
-const ColorlibStepIcon: React.FC<StepIconProps> = () => (
-  <ColorlibStepIconRoot>
-    <SettingsIcon />
-  </ColorlibStepIconRoot>
-);
-
-const PipelineGroups = {
-  ...ButtonsData,
-  more: [{ label: "Удаление колонки", value: DocumentMethod.dropСolumn }],
-};
+import { T } from "ramda";
+import {
+  ColorlibConnector,
+  ColorlibStepIcon,
+  PipelineDialog,
+  PipelinePopper,
+} from "./parts";
+import { BuildLabel } from "./helpers";
+import { DocumentInfoShort } from "ducks/reducers/types";
 
 export const Pipeline: React.FC = () => {
   const { docName } = useParams();
@@ -86,15 +52,21 @@ export const Pipeline: React.FC = () => {
   const [fromDocumentMenuOpened, setDromDocumentMenuOpened] = useState(false);
   const anchorEl = useRef<HTMLButtonElement>(null);
   const applyPipelineConfirm = useCallback(
-    (fromDocName: string) => () => {
+    (fromDoc: DocumentInfoShort) => () => {
       setDromDocumentMenuOpened(false);
       dispatch(
         setDialog({
           title: "Применить пайплайн",
-          text: `Вы действительно хотите применить пайплайн из ${fromDocName} к ${docName}?`,
+          Content: (
+            <PipelineDialog
+              currentDoc={docName!}
+              targetDoc={fromDoc.name}
+              pipeline={fromDoc.pipeline}
+            />
+          ),
           onAccept: async () => {
             dispatch(setDialogLoading(true));
-            await copyPipeline({ from: fromDocName, to: docName! });
+            await copyPipeline({ from: fromDoc.name, to: docName! });
             dispatch(setDialogLoading(false));
           },
           onDismiss: T,
@@ -102,21 +74,6 @@ export const Pipeline: React.FC = () => {
       );
     },
     [docName, copyPipeline, dispatch]
-  );
-
-  const mapPath = useCallback(
-    (key: string) =>
-      (compose as any)(
-        map(prop(key)),
-        flatten,
-        values
-      )(PipelineGroups) as string[],
-    []
-  );
-
-  const labels = useMemo(
-    () => zipObj(mapPath("value"), mapPath("label")),
-    [mapPath]
   );
 
   return (
@@ -151,13 +108,21 @@ export const Pipeline: React.FC = () => {
               open={fromDocumentMenuOpened}
             >
               {filteredDocs?.map((doc) => (
-                <MenuItem
+                <Tooltip
+                  PopperComponent={PipelinePopper as any}
+                  PopperProps={{ pipeline: doc.pipeline } as any}
                   key={doc.name}
-                  onClick={applyPipelineConfirm(doc.name)}
-                  sx={{ padding: `${theme.spacing(0.5)} ${theme.spacing(1)}` }}
+                  title="test"
                 >
-                  {doc.name}
-                </MenuItem>
+                  <MenuItem
+                    onClick={applyPipelineConfirm(doc)}
+                    sx={{
+                      padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
+                    }}
+                  >
+                    {doc.name}
+                  </MenuItem>
+                </Tooltip>
               ))}
             </Menu>
           </>
@@ -190,9 +155,7 @@ export const Pipeline: React.FC = () => {
                 >
                   <StepLabel StepIconComponent={ColorlibStepIcon}>
                     <Box sx={{ padding: `0 ${theme.spacing(1)}` }}>
-                      {`${labels[unit.function_name]} ${
-                        unit.param ? `(${unit.param})` : ""
-                      }`}
+                      {BuildLabel(unit)}
                     </Box>
                   </StepLabel>
                 </Step>
