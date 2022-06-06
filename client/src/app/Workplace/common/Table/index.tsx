@@ -59,7 +59,7 @@ const View: React.FC<TableFixProps> = (props) => {
             props.defaultColumnSizing?.maxWidth || DEFAULT_COLUMN.maxWidth,
         },
         initialState: {
-          pageSize: props.data.length || 50,
+          pageSize: 50,
           pageIndex: 0,
           columnOrder: props.columnOrder || [],
           sortBy: props.sortBy || [],
