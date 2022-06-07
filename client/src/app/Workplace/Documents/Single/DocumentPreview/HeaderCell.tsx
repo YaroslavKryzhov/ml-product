@@ -25,6 +25,7 @@ import Filter1Icon from "@mui/icons-material/Filter1";
 import TextFormatIcon from "@mui/icons-material/TextFormat";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useChangeColumnType } from "./useChangeColumnType";
+import CrisisAlertIcon from "@mui/icons-material/CrisisAlert";
 
 const DataHeaderCaption: React.FC<{
   children: React.ReactNode;
@@ -95,6 +96,7 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
   }, [name, dispatch, deleteColumn, docName]);
 
   const markChange = useChangeColumnType(name);
+  const isTarget = name === infoDocument?.column_types?.target;
 
   return (
     <Box
@@ -115,12 +117,26 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
           display: "flex",
           ...OverflowText,
           justifyContent: right ? "flex-end" : "flex-start",
+          alignItems: "center",
+          color: isTarget ? theme.palette.info.dark : "inherit",
         }}
       >
-        <Tooltip followCursor title={name}>
+        {isTarget && (
+          <CrisisAlertIcon
+            sx={{
+              fontSize: theme.typography.body1.fontSize,
+              mr: theme.spacing(1),
+            }}
+          />
+        )}
+        <Tooltip
+          followCursor
+          title={`${name}${isTarget ? " (Целевой столбец)" : ""}`}
+        >
           <Box sx={{ ...OverflowText }}>{name}</Box>
         </Tooltip>
       </Box>
+
       <Box
         sx={{
           mb: theme.spacing(1),
@@ -140,12 +156,20 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
         </ToggleButton>
 
         <Tooltip
-          disableHoverListener={!!infoDocument?.column_types?.target}
+          disableHoverListener={
+            !!infoDocument?.column_types?.target && !isTarget
+          }
           followCursor
-          title="Доступно только после разметки"
+          title={
+            !infoDocument?.column_types?.target
+              ? "Доступно только после разметки"
+              : isTarget
+              ? "Смена типа целевого столбца запрещена"
+              : ""
+          }
         >
           <ToggleButtonGroup
-            disabled={!infoDocument?.column_types?.target}
+            disabled={!infoDocument?.column_types?.target || isTarget}
             exclusive
             value={type}
             onChange={(_: unknown, val: CategoryMark) => val && markChange(val)}

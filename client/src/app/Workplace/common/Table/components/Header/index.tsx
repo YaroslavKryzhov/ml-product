@@ -41,6 +41,7 @@ const TableFixHeader: React.FC<TableFixHeaderProps> = ({
                 key={headerKey}
                 offHeaderPaddings={offHeaderPaddings}
                 compact={compact}
+                title=""
               >
                 {typeof column.Header === "string" ? (
                   <HeadCellContent>
