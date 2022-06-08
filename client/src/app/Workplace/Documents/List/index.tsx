@@ -82,6 +82,16 @@ export const DocumentsList: React.FC = () => {
               })
             );
           }
+
+          if (res.data.status_code === 409) {
+            dispatch(
+              addNotice({
+                label: "Файл с таким именем уже существует",
+                type: SnackBarType.error,
+                id: Date.now(),
+              })
+            );
+          }
         },
 
         acceptDisabled: true,
