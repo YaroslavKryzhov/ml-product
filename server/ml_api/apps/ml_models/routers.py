@@ -3,7 +3,7 @@ from typing import List
 
 from ml_api.common.database.db_deps import get_db
 from ml_api.apps.users.routers import current_active_user
-from ml_api.apps.users.models import User
+from ml_api.apps.users.model import User
 from ml_api.apps.ml_models.services import ModelService
 from ml_api.apps.ml_models.configs.classification_models_config import AvailableModels
 from ml_api.apps.ml_models.schemas import AvailableParams, AvailableTaskTypes, AvailableCompositions, ModelWithParams

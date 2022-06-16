@@ -25,14 +25,14 @@ class DocumentService:
         self._db = db
         self._user = user
 
-    def check_if_document_name_exists(self, filename) -> bool:
+    def _check_if_document_name_exists(self, filename) -> bool:
         if DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename) is None:
             return False
         else:
             return True
 
     def upload_document_to_db(self, file, filename: str) -> bool:
-        if self.check_if_document_name_exists(filename):
+        if self._check_if_document_name_exists(filename):
             return False
         DocumentFileCRUD(self._user).upload_document(filename, file)
         DocumentPostgreCRUD(self._db, self._user).new_document(filename)
@@ -43,7 +43,7 @@ class DocumentService:
         return file
 
     def rename_document(self, filename: str, new_filename: str) -> bool:
-        if self.check_if_document_name_exists(new_filename):
+        if self._check_if_document_name_exists(new_filename):
             return False
         DocumentFileCRUD(self._user).rename_document(filename, new_filename)
         query = {
@@ -65,7 +65,7 @@ class DocumentService:
         return documents
 
     def read_document_info(self, filename: str) -> DocumentFullInfo:
-        if self.check_if_document_name_exists(filename):
+        if self._check_if_document_name_exists(filename):
             document = DocumentPostgreCRUD(self._db, self._user).read_document_by_name(filename=filename)
             return document
         return None
@@ -76,7 +76,7 @@ class DocumentService:
 
     def read_document_with_pagination(self, filename: str, page: int = 1,
                                       rows_on_page: int = 50) -> ReadDocumentResponse:
-        if self.check_if_document_name_exists(filename):
+        if self._check_if_document_name_exists(filename):
             df = DocumentFileCRUD(self._user).read_document(filename)
             length = len(df)
             pages_count = (length - 1)//rows_on_page + 1
@@ -91,7 +91,7 @@ class DocumentService:
         return None
 
     @staticmethod
-    def create_hist_data(df: pd.DataFrame, column_name: str, bins: int) -> ColumnDescription:
+    def _create_hist_data(df: pd.DataFrame, column_name: str, bins: int) -> ColumnDescription:
         ints = df[column_name].value_counts(bins=bins).sort_index().reset_index()
         ints['start'] = ints['index'].apply(lambda x: x.left)
         ints['end'] = ints['index'].apply(lambda x: x.right)
@@ -105,7 +105,7 @@ class DocumentService:
                                  data_type=data_type, data=data)
 
     @staticmethod
-    def create_counts_data(df: pd.DataFrame, column_name: str) -> ColumnDescription:
+    def _create_counts_data(df: pd.DataFrame, column_name: str) -> ColumnDescription:
         ints = df[column_name].value_counts(normalize=True).reset_index()
         ints.columns = ['name', 'value']
         data = list(ints.to_dict('index').values())
@@ -118,16 +118,16 @@ class DocumentService:
     def create_column_stats(self, df: pd.DataFrame, column_types: ColumnTypes, bins: int) -> List[ColumnDescription]:
         result = []
         for column_name in column_types.numeric:
-            result.append(self.create_hist_data(df=df, column_name=column_name, bins=bins))
+            result.append(self._create_hist_data(df=df, column_name=column_name, bins=bins))
         for column_name in column_types.categorical:
-            result.append(self.create_counts_data(df=df, column_name=column_name))
+            result.append(self._create_counts_data(df=df, column_name=column_name))
         target_name = column_types.target
         if target_name:
             task_type = column_types.task_type.value
             if task_type == 'regression':
-                result.append(self.create_hist_data(df=df, column_name=target_name, bins=bins))
+                result.append(self._create_hist_data(df=df, column_name=target_name, bins=bins))
             elif task_type == 'classification':
-                result.append(self.create_counts_data(df=df, column_name=target_name))
+                result.append(self._create_counts_data(df=df, column_name=target_name))
         return result
 
     def get_document_columns_info(self, filename: str, bins: int = 10) -> List[ColumnDescription]:
@@ -137,14 +137,14 @@ class DocumentService:
             if column_types:
                 return self.create_column_stats(df, column_types, bins)
             else:
-                numeric_columns, categorical_columns = self.split_numeric_categorical_columns(df)
+                numeric_columns, categorical_columns = self._split_numeric_categorical_columns(df)
                 column_types = ColumnTypes(numeric=numeric_columns,
                                            categorical=categorical_columns)
                 return self.create_column_stats(df, column_types, bins)
         return None
 
     def get_document_stat_description(self, filename: str) -> DocumentDescription:
-        if self.check_if_document_name_exists(filename):
+        if self._check_if_document_name_exists(filename):
             df = DocumentFileCRUD(self._user).read_document(filename)
             result = df.describe()
             result.index = ["count", "mean", "std", "min", "first_percentile", "second_percentile",  "third_percentile",
@@ -153,15 +153,15 @@ class DocumentService:
         return None
 
     @staticmethod
-    def split_numeric_categorical_columns(df) -> (List[str], List[str]):
+    def _split_numeric_categorical_columns(df) -> (List[str], List[str]):
         numeric_columns = df.select_dtypes('number').columns.to_list()
         categorical_columns = df.select_dtypes(include=['object', 'category']).columns.to_list()
         return numeric_columns, categorical_columns
 
-    def validate_column_types(self, filename: str, target_column: str, task_type: TaskType) -> ColumnTypes:
+    def _validate_column_types(self, filename: str, target_column: str, task_type: TaskType) -> ColumnTypes:
         df = DocumentFileCRUD(self._user).read_document(filename).drop(target_column, axis=1)
         df.info()
-        numeric_columns, categorical_columns = self.split_numeric_categorical_columns(df)
+        numeric_columns, categorical_columns = self._split_numeric_categorical_columns(df)
         return ColumnTypes(
             numeric=numeric_columns,
             categorical=categorical_columns,
@@ -170,7 +170,7 @@ class DocumentService:
         )
 
     def set_column_types(self, filename: str, target_column: str, task_type: str):
-        column_types = self.validate_column_types(filename, target_column, task_type)
+        column_types = self._validate_column_types(filename, target_column, task_type)
         self.update_column_types(filename, column_types)
 
     def read_column_types(self, filename: str) -> ColumnTypes:
@@ -188,7 +188,7 @@ class DocumentService:
         column_types.numeric.remove(column_name)
         column_types.categorical.append(column_name)
         self.update_column_types(filename, column_types)
-        self.update_change_date_in_db(filename)
+        self._update_change_date_in_db(filename)
         return True
 
     def set_column_as_numeric(self, filename: str, column_name: str):
@@ -198,14 +198,14 @@ class DocumentService:
             DocumentFileCRUD(self._user).update_document(filename, df)
         except ValueError:
             return False
-        self.update_change_date_in_db(filename)
+        self._update_change_date_in_db(filename)
         column_types = self.read_column_types(filename)
         column_types.categorical.remove(column_name)
         column_types.numeric.append(column_name)
         self.update_column_types(filename, column_types)
         return True
 
-    def update_change_date_in_db(self, filename: str):
+    def _update_change_date_in_db(self, filename: str):
         query = {
             'change_date': str(datetime.now())
         }
@@ -253,7 +253,7 @@ class DocumentService:
             self.update_pipeline(filename, function_name=function_name, param=param)
         self.update_column_types(filename, column_types=document_operator.get_column_types())
         DocumentFileCRUD(self._user).update_document(filename, document_operator.get_df())
-        self.update_change_date_in_db(filename)
+        self._update_change_date_in_db(filename)
         return True
 
 

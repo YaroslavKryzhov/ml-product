@@ -2,7 +2,7 @@ import uuid
 from fastapi_users import FastAPIUsers
 from fastapi import APIRouter
 from ml_api.apps.users.schemas import UserCreate, UserRead
-from ml_api.apps.users.models import User
+from ml_api.apps.users.model import User
 from ml_api.apps.users.services import get_user_manager, auth_backend
 
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
