@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, status
 
 from ml_api.common.database.db_deps import get_db
 from ml_api.apps.users.routers import current_active_user
-from ml_api.apps.users.model import User
+from ml_api.apps.users.models import User
 from ml_api.apps.documents.services import DocumentService
 from ml_api.apps.documents.schemas import DocumentFullInfo, DocumentShortInfo, AvailableFunctions, \
     ServiceResponse, ReadDocumentResponse, TaskType, ColumnDescription, DocumentDescription
