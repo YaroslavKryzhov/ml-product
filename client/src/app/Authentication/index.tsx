@@ -124,7 +124,10 @@ export const Authentication: React.FC = () => {
         </Toolbar>
       </AppBar>
       <CenteredContainer sx={{ flexGrow: 1 }}>
-        <Paper sx={{ width: 657, p: theme.spacing(4) }} elevation={3}>
+        <Paper
+          sx={{ maxWidth: 657, width: "100%", p: theme.spacing(4) }}
+          elevation={3}
+        >
           <Stack direction="column">
             <TextField
               size="small"

@@ -139,6 +139,10 @@ export const Pipeline: React.FC = () => {
                 border: `${theme.additional.borderWidth}px solid ${theme.palette.primary.main}`,
                 p: theme.spacing(1),
                 borderRadius: `${theme.shape.borderRadiusRound}px`,
+                flexWrap: "wrap",
+                maxWidth: "100%",
+                overflow: "hidden",
+                gap: `${theme.spacing(2)} 0`,
               }}
               alternativeLabel
               connector={<ColorlibConnector />}
@@ -148,6 +152,8 @@ export const Pipeline: React.FC = () => {
                   key={inx}
                   sx={{
                     p: 0,
+                    minWidth: "120px",
+                    maxWidth: "200px",
                     "& .MuiStepLabel-label": {
                       lineHeight: theme.typography.body1.fontSize,
                     },
