@@ -32,6 +32,14 @@ services:
     networks:
       - ml-net
 
+  front-prod:
+    container_name: front-prod
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "3036:80"
+
 networks:
   ml-net:
     driver: bridge
