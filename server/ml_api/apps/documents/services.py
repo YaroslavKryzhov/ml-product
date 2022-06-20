@@ -100,7 +100,6 @@ class DocumentService:
         data = list(ints.to_dict('index').values())
         not_null_count = df[column_name].notna().sum()
         data_type = str(df[column_name].dtype)
-        print(not_null_count, data_type)
         return ColumnDescription(name=column_name, type='numeric', not_null_count=not_null_count,
                                  data_type=data_type, data=data)
 
@@ -111,7 +110,6 @@ class DocumentService:
         data = list(ints.to_dict('index').values())
         not_null_count = df[column_name].notna().sum()
         data_type = str(df[column_name].dtype)
-        print(not_null_count, data_type)
         return ColumnDescription(name=column_name, type='categorical', not_null_count=not_null_count,
                                  data_type=data_type, data=data)
 

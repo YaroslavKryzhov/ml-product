@@ -11,7 +11,8 @@ class Document(Base):
     __tablename__ = 'document'
     __table_args__ = {'extend_existing': True}
 
-    id = Column(UUID(as_uuid=True), index=True, primary_key=True, default=uuid.uuid4, unique=True)
+    id = Column(UUID(as_uuid=True), index=True, primary_key=True,
+                default=uuid.uuid4, unique=True)
     name = Column(String)
     filepath = Column(String, unique=True)
     user_id = Column(UUID, ForeignKey("user.id"))

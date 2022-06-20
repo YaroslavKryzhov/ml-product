@@ -32,8 +32,8 @@ services:
     networks:
       - ml-net
 
-  front-prod:
-    container_name: front-prod
+  client:
+    container_name: "ml-product-client"
     build:
       context: ./client
       dockerfile: Dockerfile

@@ -52,26 +52,33 @@ class DocumentPostgreCRUD(BaseCRUD):
                                       Document.change_date,
                                       Document.pipeline,
                                       Document.column_types
-                                      ).filter(Document.filepath == filepath).first()
+                                      ).filter(Document.filepath == filepath
+                                               ).first()
         return document  # can return None
 
     def read_all_documents_by_user(self) -> List[DocumentShortInfo]:
-        return self.session.query(Document.name, Document.upload_date, Document.change_date, Document.pipeline
-                                  ).filter(Document.user_id == self.user_id).all()
+        return self.session.query(Document.name,
+                                  Document.upload_date,
+                                  Document.change_date,
+                                  Document.pipeline
+                                  ).filter(Document.user_id == self.user_id
+                                           ).all()
 
     # UPDATE
     def update_document(self, filename: str, query: Dict):
         filepath = self.file_path(filename)
         if query.get('name', None):
             query['filepath'] = self.file_path(query['name'])
-        self.session.query(Document).filter(Document.filepath == filepath).update(query)
+        self.session.query(Document).filter(
+            Document.filepath == filepath).update(query)
         self.session.commit()
 
     # DELETE
     def delete_document(self, filename: str):
         # sqlalchemy.exc.IntegrityError:
         filepath = self.file_path(filename)
-        self.session.query(Document).filter(Document.filepath == filepath).delete()
+        self.session.query(Document).filter(
+            Document.filepath == filepath).delete()
         self.session.commit()
 
 
@@ -92,7 +99,9 @@ class DocumentFileCRUD(BaseCRUD):
 
     def download_document(self, filename: str):
         csv_path = self.file_path(filename)
-        return FileResponse(path=csv_path, filename=filename, media_type='text/csv')
+        return FileResponse(path=csv_path,
+                            filename=filename,
+                            media_type='text/csv')
 
     # UPDATE
     def update_document(self, filename: str, data: pd.DataFrame):
