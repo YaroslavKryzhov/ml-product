@@ -24,15 +24,13 @@ def upload_document(filename: str,
                     db: get_db = Depends(),
                     user: User = Depends(current_active_user)):
     result = DocumentService(db, user).upload_document_to_db(file=file.file,
-                                                             filename=filename)
+        filename=filename)
     if result:
         return ServiceResponse(status_code=status.HTTP_200_OK,
-                               content=f"The document '{filename}' "
-                                       f"successfully added")
+            content=f"The document '{filename}' successfully added")
     else:
         return ServiceResponse(status_code=status.HTTP_409_CONFLICT,
-                               content=f"The document name '{filename}' "
-                                       f"is already taken")
+            content=f"The document name '{filename}' is already taken")
 
 
 @documents_file_router.get("/download")
@@ -51,12 +49,11 @@ def rename_document(filename: str,
     result = DocumentService(db, user).rename_document(filename, new_filename)
     if result:
         return ServiceResponse(status_code=status.HTTP_200_OK,
-                               content=f"The document '{filename}' successfully"
-                                       f" renamed to '{new_filename}'")
+            content=f"The document '{filename}' successfully renamed to "
+                    f"'{new_filename}'")
     else:
         return ServiceResponse(status_code=status.HTTP_409_CONFLICT,
-                               content=f"The document name '{new_filename}' "
-                                       f"is already taken")
+            content=f"The document name '{new_filename}' is already taken")
 
 
 @documents_file_router.delete("", response_model=ServiceResponse)
@@ -66,11 +63,10 @@ def delete_document(filename: str,
     result = DocumentService(db, user).delete_document_from_db(filename)
     if result:
         return ServiceResponse(status_code=status.HTTP_200_OK,
-                               content=f"The document '{filename}' "
-                                       f"successfully deleted")
+            content=f"The document '{filename}' successfully deleted")
     else:
         return ServiceResponse(status_code=status.HTTP_409_CONFLICT,
-                               content="Error with deletion")
+            content="Error with deletion")
 # f"The document '{filename}' is is used in some model!"
 
 
@@ -147,8 +143,8 @@ def set_target_feature(filename: str,
                                                target_column=target_column,
                                                task_type=task_type)
     return ServiceResponse(status_code=status.HTTP_200_OK,
-                           content=f"The column '{target_column}' is set as "
-                                   f"target for '{filename}'")
+        content=f"The column '{target_column}' is set as target for "
+                f"'{filename}'")
 
 
 @documents_method_router.post("/to_categorical", response_model=ServiceResponse)
@@ -160,12 +156,12 @@ def set_column_as_categorical(filename: str,
                                                                  column_name)
     if result:
         return ServiceResponse(status_code=status.HTTP_200_OK,
-                               content=f"The column '{column_name}' is set as "
-                                       f"categorical for '{filename}'")
+            content=f"The column '{column_name}' is set as categorical for "
+                    f"'{filename}'")
     else:
         return ServiceResponse(status_code=status.HTTP_409_CONFLICT,
-                               content=f"The column '{column_name}' can't be "
-                                       f"set as categorical for '{filename}'")
+            content=f"The column '{column_name}' can't be set as categorical "
+                    f"for '{filename}'")
 
 
 @documents_method_router.post("/to_numeric", response_model=ServiceResponse)
@@ -177,12 +173,12 @@ def set_column_as_numeric(filename: str,
                                                              column_name)
     if result:
         return ServiceResponse(status_code=status.HTTP_200_OK,
-                               content=f"The column '{column_name}' is set as "
-                                       f"numeric for '{filename}'")
+            content=f"The column '{column_name}' is set as numeric for "
+                    f"'{filename}'")
     else:
         return ServiceResponse(status_code=status.HTTP_409_CONFLICT,
-                               content=f"The column '{column_name}' can't be "
-                                       f"set as numeric for '{filename}'")
+            content=f"The column '{column_name}' can't be set as numeric for "
+                    f"'{filename}'")
 
 
 @documents_method_router.delete("/column", response_model=ServiceResponse)
@@ -195,11 +191,10 @@ def delete_column(filename: str,
                                                       column_name)
     if result:
         return ServiceResponse(status_code=status.HTTP_200_OK,
-                               content=f"The column '{column_name}' "
-                                       f"successfully deleted")
+            content=f"The column '{column_name}' successfully deleted")
     else:
         return ServiceResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                               content=f"Error with deletion")
+            content=f"Error with deletion")
 
 
 @documents_method_router.put("/apply_method", response_model=ServiceResponse)
@@ -213,11 +208,10 @@ def apply_method(filename: str,
                                                       param)
     if result:
         return ServiceResponse(status_code=status.HTTP_200_OK,
-                               content=f"The method '{function_name.value}' "
-                                       f"successfully applied")
+            content=f"The method '{function_name.value}' successfully applied")
     else:
         return ServiceResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                               content=f"Error with applying")
+            content=f"Error with applying")
 
 
 @documents_method_router.put("/copy_pipeline", response_model=ServiceResponse)
@@ -225,9 +219,6 @@ def copy_pipeline(from_document: str,
                   to_document: str,
                   db: get_db = Depends(),
                   user: User = Depends(current_active_user)):
-    DocumentService(db, user
-        ).copy_and_apply_pipeline_to_another_document(from_document,
-                                                      to_document)
+    DocumentService(db, user).copy_pipeline(from_document, to_document)
     return ServiceResponse(status_code=status.HTTP_200_OK,
-                           content=f"Pipeline from '{from_document}' applied "
-                                   f"to '{to_document}'")
+        content=f"Pipeline from '{from_document}' applied to '{to_document}'")
