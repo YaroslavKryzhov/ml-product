@@ -2,6 +2,7 @@ import os
 import shutil
 from typing import Dict, List
 from datetime import datetime
+from uuid import UUID
 
 import pandas as pd
 from sqlalchemy.orm import Session
@@ -45,17 +46,28 @@ class DocumentPostgreCRUD(BaseCRUD):
         self.session.commit()
 
     # READ
+    def read_by_uuid(self, uuid: UUID) -> str:
+        name = self.session.query(Document.name).filter(
+            Document.id == uuid).first()[0]
+        return name
+
     def read_by_name(self, filename: str) -> DocumentFullInfo:
         filepath = self._file_path(filename)
         document = self.session.query(Document.id, Document.name,
-            Document.upload_date, Document.change_date, Document.pipeline,
-            Document.column_types).filter(Document.filepath == filepath).first()
-        return document  # can return None
+            Document.upload_date, Document.change_date, Document.column_types,
+            Document.pipeline).filter(Document.filepath == filepath).first()
+        if document:
+            return DocumentFullInfo.from_orm(document)
+        return None
 
     def read_all(self) -> List[DocumentShortInfo]:
-        return self.session.query(Document.name, Document.upload_date,
+        documents = self.session.query(Document.name, Document.upload_date,
             Document.change_date, Document.pipeline).filter(
             Document.user_id == self.user_id).all()
+        result = []
+        for document in documents:
+            result.append(DocumentShortInfo.from_orm(document))
+        return result
 
     # UPDATE
     def update(self, filename: str, query: Dict):

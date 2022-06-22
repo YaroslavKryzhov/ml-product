@@ -133,7 +133,7 @@ documents_method_router = APIRouter(
 )
 
 
-@documents_method_router.post("/target", response_model=ServiceResponse)
+@documents_method_router.put("/target", response_model=ServiceResponse)
 def set_target_feature(filename: str,
                        target_column: str,
                        task_type: TaskType,
@@ -147,7 +147,7 @@ def set_target_feature(filename: str,
                 f"'{filename}'")
 
 
-@documents_method_router.post("/to_categorical", response_model=ServiceResponse)
+@documents_method_router.put("/to_categorical", response_model=ServiceResponse)
 def set_column_as_categorical(filename: str,
                               column_name: str,
                               db: get_db = Depends(),
@@ -164,7 +164,7 @@ def set_column_as_categorical(filename: str,
                     f"for '{filename}'")
 
 
-@documents_method_router.post("/to_numeric", response_model=ServiceResponse)
+@documents_method_router.put("/to_numeric", response_model=ServiceResponse)
 def set_column_as_numeric(filename: str,
                           column_name: str,
                           db: get_db = Depends(),
@@ -197,7 +197,7 @@ def delete_column(filename: str,
             content=f"Error with deletion")
 
 
-@documents_method_router.put("/apply_method", response_model=ServiceResponse)
+@documents_method_router.post("/apply_method", response_model=ServiceResponse)
 def apply_method(filename: str,
                  function_name: AvailableFunctions,
                  param: Optional[float] = None,
@@ -214,7 +214,7 @@ def apply_method(filename: str,
             content=f"Error with applying")
 
 
-@documents_method_router.put("/copy_pipeline", response_model=ServiceResponse)
+@documents_method_router.post("/copy_pipeline", response_model=ServiceResponse)
 def copy_pipeline(from_document: str,
                   to_document: str,
                   db: get_db = Depends(),

@@ -405,15 +405,16 @@ class DocumentOperator:
 
     def drop_column(self, param: str):
         column = param
-        self.df.drop(column, axis=1)
+        self.df.drop(column, axis=1, inplace=True)
         self.update_pipeline = True
-        try:
-            self.column_types.numeric.remove(column)
-        except ValueError:
+        if self.column_types:
             try:
-                self.column_types.categorical.remove(column)
+                self.column_types.numeric.remove(column)
             except ValueError:
-                pass
+                try:
+                    self.column_types.categorical.remove(column)
+                except ValueError:
+                    pass
 
     def miss_insert_mean_mode(self):
         numeric_columns = self.column_types.numeric
