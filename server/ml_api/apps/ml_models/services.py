@@ -2,7 +2,7 @@ from typing import Dict, Optional, Any, List
 from functools import partial
 
 from sklearn.tree import DecisionTreeClassifier
-from catboost import CatBoostClassifier
+# from catboost import CatBoostClassifier
 from sklearn.model_selection import train_test_split
 from fastapi.responses import JSONResponse
 from fastapi import status, BackgroundTasks
