@@ -9,12 +9,25 @@ import documentsApi, {
 import main from "./reducers/main";
 import dialog from "./reducers/dialog";
 import notices from "./reducers/notices";
+import compositionsApi, {
+  compositionsApi as compositionsApiSlice,
+} from "./reducers/api/compositions.api";
 
 export const store = configureStore({
-  reducer: { authApi, main, auth, documents, documentsApi, dialog, notices },
+  reducer: {
+    authApi,
+    main,
+    auth,
+    documents,
+    documentsApi,
+    compositionsApi,
+    dialog,
+    notices,
+  },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }).concat([
       authApiSlice.middleware,
+      compositionsApiSlice.middleware,
       documentsApiSlice.middleware,
       sideEffectsMiddleware,
     ]),

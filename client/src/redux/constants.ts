@@ -27,4 +27,13 @@ export const ROUTES = {
     COPY_PIPELINE: "/edit/copy_pipeline",
     DELETE_COLUMN: "/edit/column",
   },
+  COMPOSITIONS: {
+    BASE: BASE_API + "/composition",
+    TRAIN: "/train",
+    PREDICT: "/predict",
+    DOWNLOAD: "/download",
+    RENAME: "/rename",
+    ALL: "/all",
+    INFO: "/info",
+  },
 };

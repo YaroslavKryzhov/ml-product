@@ -159,7 +159,7 @@ export const documentsApi = createApi({
       query: ({ targetColumn, filename, taskType }) => ({
         url: ROUTES.DOCUMENTS.SELECT_TARGET,
         params: { filename, target_column: targetColumn, task_type: taskType },
-        method: "POST",
+        method: "PUT",
       }),
       invalidatesTags: [Tags.singleDocument],
     }),
@@ -167,7 +167,7 @@ export const documentsApi = createApi({
       query: ({ from, to }) => ({
         url: ROUTES.DOCUMENTS.COPY_PIPELINE,
         params: { from_document: from, to_document: to },
-        method: "PUT",
+        method: "POST",
       }),
       invalidatesTags: [Tags.singleDocument],
     }),
@@ -178,7 +178,7 @@ export const documentsApi = createApi({
       query: ({ columnName, filename }) => ({
         url: ROUTES.DOCUMENTS.MARK_CATEGORICAL,
         params: { filename, column_name: columnName },
-        method: "POST",
+        method: "PUT",
       }),
       invalidatesTags: [Tags.singleDocument],
     }),
@@ -189,7 +189,7 @@ export const documentsApi = createApi({
       query: ({ columnName, filename }) => ({
         url: ROUTES.DOCUMENTS.MARK_NUMERIC,
         params: { filename, column_name: columnName },
-        method: "POST",
+        method: "PUT",
       }),
       invalidatesTags: [Tags.singleDocument],
     }),

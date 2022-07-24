@@ -12,7 +12,7 @@ import {
 import { theme } from "globalStyle/theme";
 import { always } from "ramda";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { DocHeader } from "../Documents/Single/DocHeader";
+import { EntityHeader } from "./EntityHeader";
 
 const goHome = (navigate: ReturnType<typeof useNavigate>) => {
   navigate(pathify([AppPage.Workplace, WorkPage.Documents, DocumentPage.List]));
@@ -29,7 +29,7 @@ const pathItem = (label: () => string, action: () => void) => ({
 
 const definePathMap = (
   navigate: ReturnType<typeof useNavigate>,
-  { docName }: { docName?: string }
+  { docName, compositionName }: { docName?: string; compositionName?: string }
 ) => ({
   [AppPage.Workplace]: pathItem(always("Домой"), () => goHome(navigate)),
   [WorkPage.Documents]: pathItem(always("Данные"), () => goHome(navigate)),
@@ -38,6 +38,31 @@ const definePathMap = (
   ),
   [CompositionPage.List]: pathItem(always("Все"), () =>
     goCompositions(navigate)
+  ),
+  [CompositionPage.Single]: pathItem(
+    () => compositionName || "",
+    () => {
+      navigate(
+        pathify([
+          AppPage.Workplace,
+          WorkPage.Compositions,
+          CompositionPage.Single,
+          compositionName || "",
+        ])
+      );
+    }
+  ),
+  [CompositionPage.Single]: pathItem(
+    () => "New",
+    () => {
+      navigate(
+        pathify([
+          AppPage.Workplace,
+          WorkPage.Compositions,
+          CompositionPage.Create,
+        ])
+      );
+    }
   ),
   [DocumentPage.List]: pathItem(always("Все"), () => goHome(navigate)),
   [DocumentPage.Single]: pathItem(
@@ -58,24 +83,23 @@ const definePathMap = (
 export const WorkPageHeader: React.FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { docName } = useParams();
-  const PathMap = definePathMap(navigate, { docName });
+  const { docName, compositionName } = useParams();
+  const PathMap = definePathMap(navigate, { docName, compositionName });
 
   const path: (keyof typeof PathMap)[] = pathname
     .split("/")
     .filter((x) => Object.keys(PathMap).includes(x))
-    .concat(docName ? DocumentPage.Single : []) as any[];
+    .concat(docName ? DocumentPage.Single : [])
+    .concat(compositionName ? CompositionPage.Single : []) as any[];
 
   return (
     <>
       <Typography sx={{ mb: theme.spacing(1) }} variant="h5">
-        {pathname.match(
-          pathify([WorkPage.Documents, DocumentPage.List]) + "$"
-        ) && "Данные"}
-        {pathname.match(
-          pathify([WorkPage.Compositions, CompositionPage.List]) + "$"
-        ) && "Композиции"}
-        {docName && <DocHeader initName={docName} />}
+        {docName && "Данные"}
+        {compositionName && "Композиции"}
+        {(docName || compositionName) && (
+          <EntityHeader initName={docName || compositionName} />
+        )}
       </Typography>
       <Breadcrumbs sx={{ mb: theme.spacing(2) }}>
         {path.map((x) => (

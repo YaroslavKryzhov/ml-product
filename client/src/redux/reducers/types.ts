@@ -19,8 +19,9 @@ export enum DocumentPage {
 }
 
 export enum CompositionPage {
-  List = "CompositionList",
-  Single = "CompositionSingle",
+  List = "list",
+  Single = "single",
+  Create = "create",
 }
 
 export type AuthSlice = {
@@ -139,6 +140,74 @@ export enum TaskType {
   classification = "classification",
 }
 
+export enum CompositionType {
+  none = "none",
+  simpleVoting = "simple_voting",
+  weightedVoting = "weighted_voting",
+  stacking = "stacking",
+}
+
+export enum CompositionStatus {
+  training = "Training",
+  trained = "Trained",
+}
+
+export enum ParamsCompositionType {
+  auto = "auto",
+  custom = "custom",
+  default = "default",
+}
+
+export enum ModelTypes {
+  DecisionTreeClassifier = "DecisionTreeClassifier",
+  CatBoostClassifier = "CatBoostClassifier",
+  AdaBoostClassifier = "AdaBoostClassifier",
+  GradientBoostingClassifier = "GradientBoostingClassifier",
+  BaggingClassifier = "BaggingClassifier",
+  ExtraTreesClassifier = "ExtraTreesClassifier",
+  SGDClassifier = "SGDClassifier",
+  LinearSVC = "LinearSVC",
+  SVC = "SVC",
+  LogisticRegression = "LogisticRegression",
+  Perceptron = "Perceptron",
+  XGBoost = "XGBoost",
+  LightGBM = "LightGBM",
+}
+
+export enum DesicionCriterion {
+  gini = "gini",
+  entropy = "entropy",
+}
+
+export enum DescicionSplitter {
+  best = "best",
+  random = "random",
+}
+
+export enum DesicionMaxFeatures {
+  auto = "auto",
+  sqrt = "sqrt",
+  log2 = "log2",
+}
+
+export enum DesicionClassWeight {
+  balanced = "balanced",
+}
+
+export type DecisionTreeClassifierParameters = {
+  criterion: DesicionCriterion;
+  splitter: DescicionSplitter;
+  max_depth?: number;
+  min_samples_split: number;
+  min_samples_leaf: number;
+  max_features?: DesicionMaxFeatures | number;
+  random_state?: number;
+  max_leaf_nodes?: number;
+  min_impurity_decrease: number;
+  class_weight?: DesicionClassWeight | Record<string, string>;
+  ccp_alpha: number;
+};
+
 export type StandardResponse = {
   status_code: number;
   content: string;
@@ -146,4 +215,17 @@ export type StandardResponse = {
 
 export type StandardResponseData = {
   data: StandardResponse;
+};
+
+export type CompositionInfo = {};
+
+export type CompositionInfoShort = {
+  name: string;
+  csv_id: string;
+  features: string[];
+  target: string;
+  create_date: string;
+  task_type: TaskType;
+  composition_type: CompositionType;
+  stage: CompositionStatus;
 };

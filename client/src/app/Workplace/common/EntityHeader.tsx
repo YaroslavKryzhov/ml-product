@@ -10,12 +10,12 @@ import {
 } from "ducks/reducers/api/documents.api";
 import { pathify } from "ducks/hooks";
 import DownloadIcon from "@mui/icons-material/Download";
-import { useDeleteFile } from "../hooks";
+import { useDeleteFile } from "../Documents/hooks";
 import DeleteIcon from "@mui/icons-material/Delete";
 import moment from "moment";
 import { InfoChip } from "components/infoChip";
 import { Size } from "app/types";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { DocumentPage } from "ducks/reducers/types";
 
 const EditableLabel = styled.label<{ editMode?: boolean }>`
@@ -27,15 +27,16 @@ const EditableLabel = styled.label<{ editMode?: boolean }>`
     `border-bottom: ${theme.additional.borderWidth}px solid ${theme.palette.primary.main};`}
 `;
 
-export const DocHeader: React.FC<{ initName: string }> = ({ initName }) => {
+export const EntityHeader: React.FC<{ initName?: string }> = ({ initName }) => {
   const [editMode, setEditMode] = useState(false);
-  const [customName, setCustomName] = useState(initName);
+  const [customName, setCustomName] = useState(initName || "");
   const inputRef = useRef<HTMLLabelElement | null>(null);
   const [rename] = useRenameDocumentMutation();
   const [downloadDoc] = useDownloadDocumentMutation();
   const deleteDoc = useDeleteFile({ redirectAfter: true });
   const matchName = customName.match(/(.*)(\.csv)/);
   const navigate = useNavigate();
+  const { docName } = useParams();
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLLabelElement>) => {
       if (e.code === "Enter") {
@@ -142,13 +143,15 @@ export const DocHeader: React.FC<{ initName: string }> = ({ initName }) => {
           direction="row"
           sx={{ gap: theme.spacing(1), height: "min-content" }}
         >
-          <Button
-            onClick={() => downloadDoc(customName)}
-            variant="outlined"
-            startIcon={<DownloadIcon />}
-          >
-            Скачать
-          </Button>
+          {docName && (
+            <Button
+              onClick={() => downloadDoc(customName)}
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+            >
+              Скачать
+            </Button>
+          )}
           <Button
             onClick={() => deleteDoc(customName)}
             variant="outlined"
