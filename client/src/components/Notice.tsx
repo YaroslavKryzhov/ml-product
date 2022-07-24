@@ -3,7 +3,7 @@ import { theme } from "globalStyle/theme";
 import { useEffect, useState } from "react";
 import ErrorIcon from "@mui/icons-material/Error";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { SlideTr } from "./styled";
+import { SlideTr } from "../app/Workplace/common/styled";
 import { removeNotice, SnackBarType } from "ducks/reducers/notices";
 import { useAppDispatch, useSESelector } from "ducks/hooks";
 

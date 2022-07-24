@@ -14,7 +14,7 @@ import { useAppDispatch } from "ducks/hooks";
 import { T } from "ramda";
 import { setDialog, setDialogLoading } from "ducks/reducers/dialog";
 import { SIMPLE_HEIGHT } from "./contants";
-import { OverflowText } from "app/Workplace/common/styles";
+import { OverflowText } from "components/styles";
 import { MoreColumnInfo } from "./MoreColumnInfo";
 import {
   useDeleteColumnMutation,

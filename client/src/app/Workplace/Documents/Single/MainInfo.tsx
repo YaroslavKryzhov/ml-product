@@ -1,5 +1,5 @@
 import { Box, Divider, Skeleton, Typography } from "@mui/material";
-import { TableFix } from "app/Workplace/common/Table";
+import { TableFix } from "components/Table";
 import { useDescribeDocumentQuery } from "ducks/reducers/api/documents.api";
 import { theme } from "globalStyle/theme";
 import { entries, first, zip } from "lodash";

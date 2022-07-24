@@ -1,4 +1,4 @@
-import { TableFix } from "app/Workplace/common/Table";
+import { TableFix } from "components/Table";
 import {
   useDocumentQuery,
   useInfoStatsDocumentQuery,
@@ -7,7 +7,7 @@ import React, { useMemo, useState } from "react";
 import { zipObject, unzip, values, keys } from "lodash";
 import { theme } from "globalStyle/theme";
 import { Box, Pagination, Skeleton } from "@mui/material";
-import { Fixed } from "app/Workplace/common/Table/types";
+import { Fixed } from "components/Table/types";
 import { HeaderCell } from "./HeaderCell";
 import { useParams } from "react-router-dom";
 

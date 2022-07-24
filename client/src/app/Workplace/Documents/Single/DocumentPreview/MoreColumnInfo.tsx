@@ -4,12 +4,12 @@ import { theme } from "globalStyle/theme";
 import { Box, Tooltip, Typography } from "@mui/material";
 import { StatsGraph } from "./statGraph";
 import { isNil, keys } from "ramda";
-import { TableFix } from "app/Workplace/common/Table";
+import { TableFix } from "components/Table";
 import { useDescribeDocumentQuery } from "ducks/reducers/api/documents.api";
 import { useDocumentNameForce } from "../../hooks";
 import { INFO_WIDTH } from "./contants";
 import { CellProps } from "react-table";
-import { OverflowText } from "app/Workplace/common/styles";
+import { OverflowText } from "components/styles";
 import { entries } from "lodash";
 
 const CellUnit: React.FC<{ value: string }> = ({ value }) => (

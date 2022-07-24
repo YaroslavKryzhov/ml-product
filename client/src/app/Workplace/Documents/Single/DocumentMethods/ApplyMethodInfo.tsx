@@ -6,8 +6,8 @@ import { CategoryMark, DocumentMethod } from "ducks/reducers/types";
 import { useInfoDocumentQuery } from "ducks/reducers/api/documents.api";
 import { always, cond, equals, T } from "ramda";
 import { useDocumentNameForce } from "../../hooks";
-import { OverflowText } from "app/Workplace/common/styles";
-import { ElementWithTooltip } from "app/Workplace/common/ElementWithTooltip";
+import { OverflowText } from "components/styles";
+import { ElementWithTooltip } from "components/ElementWithTooltip";
 
 const ColumnsTransformInfo: React.FC<{
   type: CategoryMark;

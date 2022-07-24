@@ -11,7 +11,7 @@ import { Workplace } from "./app/Workplace";
 import { DialogCustom } from "components/Dialog";
 import { Route, Routes } from "react-router";
 import { BrowserRouter } from "react-router-dom";
-import { Notices } from "app/Workplace/common/Notice";
+import { Notices } from "components/Notice";
 
 const App: React.FC = () => {
   const { isBlockingLoader } = useSESelector((state) => state.main);

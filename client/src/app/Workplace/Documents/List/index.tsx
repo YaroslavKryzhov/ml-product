@@ -1,5 +1,5 @@
 import { Box, Button, Skeleton } from "@mui/material";
-import { compareDate, TableFix } from "app/Workplace/common/Table";
+import { compareDate, TableFix } from "components/Table";
 import { pathify, useAppDispatch } from "ducks/hooks";
 import {
   useAllDocumentsQuery,
@@ -18,7 +18,7 @@ import { DocumentDrop } from "./DropFileDialog";
 import moment from "moment";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import { ActionIconSx } from "app/Workplace/common/Table/components/Body";
+import { ActionIconSx } from "components/Table/components/Body";
 import { useNavigate } from "react-router-dom";
 import { WorkPageHeader } from "app/Workplace/common/WorkPageHeader";
 import DownloadIcon from "@mui/icons-material/Download";
