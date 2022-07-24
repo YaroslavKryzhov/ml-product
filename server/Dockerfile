@@ -5,13 +5,13 @@ ENV PYTHONUNBUFFERED 1
 
 WORKDIR /server
 
-RUN apt-get update \
-  && apt-get -y install netcat gcc python-dev postgresql libpq-dev \
-  && apt-get clean
+#RUN apt-get update \
+#  && apt-get -y install netcat gcc python-dev postgresql libpq-dev \
+#  && apt-get clean
 
 RUN pip install --upgrade pip
-RUN pip install --upgrade setuptools
-RUN pip install catboost
+#RUN pip install --upgrade setuptools
+#RUN pip install catboost
 
 COPY ./requirements.txt .
 

@@ -16,7 +16,7 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
         yield db
 
 # standard connection
-engine = create_engine(DATABASE_URL, pool_pre_ping=True, echo=True)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 Session = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 

@@ -50,12 +50,18 @@ class DocumentFullInfo(BaseModel):
     pipeline: List[PipelineElement]
     column_types: Optional[ColumnTypes]
 
+    class Config:
+        orm_mode = True
+
 
 class DocumentShortInfo(BaseModel):
     name: str
     upload_date: datetime
     change_date: datetime
     pipeline: List[PipelineElement]
+
+    class Config:
+        orm_mode = True
 
 
 class ReadDocumentResponse(BaseModel):
