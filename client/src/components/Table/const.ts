@@ -1,7 +1,7 @@
 export const DEFAULT_COLUMN = {
   minWidth: 30,
   width: 150,
-  maxWidth: 700,
+  maxWidth: 2400,
 };
 
 export const TABLE_PARTS = {

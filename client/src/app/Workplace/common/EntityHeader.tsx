@@ -2,41 +2,43 @@ import { Box, Button, Skeleton, Stack } from "@mui/material";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import { theme } from "globalStyle/theme";
-import styled from "@emotion/styled";
 import {
   useDownloadDocumentMutation,
   useInfoDocumentQuery,
   useRenameDocumentMutation,
 } from "ducks/reducers/api/documents.api";
-import { pathify } from "ducks/hooks";
+import { pathify, useAppDispatch } from "ducks/hooks";
 import DownloadIcon from "@mui/icons-material/Download";
 import { useDeleteFile } from "../Documents/hooks";
 import DeleteIcon from "@mui/icons-material/Delete";
 import moment from "moment";
 import { InfoChip } from "components/infoChip";
 import { Size } from "app/types";
-import { useNavigate, useParams } from "react-router-dom";
-import { DocumentPage } from "ducks/reducers/types";
+import { useNavigate } from "react-router-dom";
+import { CompositionPage, DocumentPage, WorkPage } from "ducks/reducers/types";
+import { EditableLabel } from "./styled";
+import { useRenameCompositionMutation } from "ducks/reducers/api/compositions.api";
+import { changeCustomCompositionName } from "ducks/reducers/compositions";
 
-const EditableLabel = styled.label<{ editMode?: boolean }>`
-  &:focus-visible {
-    outline: none;
-  }
-  ${({ editMode }) =>
-    editMode &&
-    `border-bottom: ${theme.additional.borderWidth}px solid ${theme.palette.primary.main};`}
-`;
-
-export const EntityHeader: React.FC<{ initName?: string }> = ({ initName }) => {
+export const EntityHeader: React.FC<{
+  initName?: string;
+  worplacePage?: string;
+  compositionPage?: string;
+}> = ({ initName, worplacePage, compositionPage }) => {
+  const dispatch = useAppDispatch();
   const [editMode, setEditMode] = useState(false);
   const [customName, setCustomName] = useState(initName || "");
   const inputRef = useRef<HTMLLabelElement | null>(null);
-  const [rename] = useRenameDocumentMutation();
+  const [renameDoc] = useRenameDocumentMutation();
+  const [renameComposition] = useRenameCompositionMutation();
+
   const [downloadDoc] = useDownloadDocumentMutation();
   const deleteDoc = useDeleteFile({ redirectAfter: true });
-  const matchName = customName.match(/(.*)(\.csv)/);
+  const matchName =
+    worplacePage === WorkPage.Documents
+      ? customName.match(/(.*)(\.csv)/)
+      : null;
   const navigate = useNavigate();
-  const { docName } = useParams();
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLLabelElement>) => {
       if (e.code === "Enter") {
@@ -59,40 +61,94 @@ export const EntityHeader: React.FC<{ initName?: string }> = ({ initName }) => {
     editMode && inputRef.current?.focus();
   }, [editMode]);
 
-  if (!matchName) return <>{customName}</>;
+  const onRename = useCallback(
+    (e: React.FocusEvent<HTMLLabelElement>) => {
+      const newName = e.target.innerText + (matchName && matchName[2]);
+      setEditMode(false);
+
+      if (worplacePage === WorkPage.Documents) {
+        renameDoc({
+          filename: customName,
+          new_filename: newName,
+        }).then(() => {
+          setCustomName(newName);
+          navigate(
+            pathify([DocumentPage.List, newName], {
+              changeLast: true,
+            })
+          );
+        });
+      }
+
+      if (compositionPage === CompositionPage.Single) {
+        renameComposition({
+          model_name: customName,
+          new_model_name: newName,
+        }).then(() => {
+          setCustomName(newName);
+          navigate(
+            pathify([CompositionPage.List, newName], {
+              changeLast: true,
+            })
+          );
+        });
+      }
+
+      if (compositionPage === CompositionPage.Create) {
+        dispatch(changeCustomCompositionName(newName));
+      }
+    },
+    [
+      compositionPage,
+      customName,
+      dispatch,
+      matchName,
+      navigate,
+      renameComposition,
+      renameDoc,
+      worplacePage,
+    ]
+  );
+
+  const isEdit =
+    worplacePage === WorkPage.Documents ||
+    compositionPage === CompositionPage.Single;
 
   return (
     <Box>
-      <Stack direction="row" sx={{ gap: theme.spacing(2) }}>
-        {docInfoLoading ? (
-          <>
-            <Skeleton variant="rectangular" width={215} height={22} />
-            <Skeleton variant="rectangular" width={215} height={22} />
-          </>
-        ) : (
-          <>
-            <InfoChip
-              size={Size.small}
-              label="Загружено"
-              info={
-                (docData &&
+      {isEdit && (
+        <Stack direction="row" sx={{ gap: theme.spacing(2) }}>
+          {docInfoLoading ? (
+            <>
+              <Skeleton variant="rectangular" width={215} height={22} />
+              <Skeleton variant="rectangular" width={215} height={22} />
+            </>
+          ) : (
+            <>
+              <InfoChip
+                size={Size.small}
+                label="Загружено"
+                info={
+                  docData &&
                   moment(docData.upload_date).format(
                     theme.additional.timeFormat
-                  )) ||
-                "***"
-              }
-            />
-            <InfoChip
-              size={Size.small}
-              label="Изменено"
-              info={
-                docData &&
-                moment(docData.change_date).format(theme.additional.timeFormat)
-              }
-            />
-          </>
-        )}
-      </Stack>
+                  )
+                }
+              />
+              <InfoChip
+                size={Size.small}
+                label="Изменено"
+                info={
+                  docData &&
+                  moment(docData.change_date).format(
+                    theme.additional.timeFormat
+                  )
+                }
+              />
+            </>
+          )}
+        </Stack>
+      )}
 
       <Box
         sx={{
@@ -108,26 +164,15 @@ export const EntityHeader: React.FC<{ initName?: string }> = ({ initName }) => {
             <EditableLabel
               ref={inputRef}
               editMode={editMode}
-              onBlur={(e) => {
-                const newName = e.target.innerText + matchName[2];
-                setEditMode(false);
-                rename({ filename: customName, new_filename: newName }).then(
-                  () => {
-                    setCustomName(newName);
-                    navigate(
-                      pathify([DocumentPage.List, newName], {
-                        changeLast: true,
-                      })
-                    );
-                  }
-                );
-              }}
+              onBlur={onRename}
               onKeyDown={onKeyDown}
               contentEditable={editMode}
             >
-              {matchName[1]}
+              {matchName ? matchName[1] : customName}
             </EditableLabel>
-            <EditableLabel editMode={editMode}>{matchName[2]}</EditableLabel>
+            {matchName && (
+              <EditableLabel editMode={editMode}>{matchName[2]}</EditableLabel>
+            )}
             <EditIcon
               onClick={() => setEditMode(!editMode)}
               sx={{
@@ -138,12 +183,11 @@ export const EntityHeader: React.FC<{ initName?: string }> = ({ initName }) => {
             />
           </Box>
         </Box>
-
-        <Stack
-          direction="row"
-          sx={{ gap: theme.spacing(1), height: "min-content" }}
-        >
-          {docName && (
+        {isEdit && (
+          <Stack
+            direction="row"
+            sx={{ gap: theme.spacing(1), height: "min-content" }}
+          >
             <Button
               onClick={() => downloadDoc(customName)}
               variant="outlined"
@@ -151,15 +195,15 @@ export const EntityHeader: React.FC<{ initName?: string }> = ({ initName }) => {
             >
               Скачать
             </Button>
-          )}
-          <Button
-            onClick={() => deleteDoc(customName)}
-            variant="outlined"
-            startIcon={<DeleteIcon />}
-          >
-            Удалить
-          </Button>
-        </Stack>
+            <Button
+              onClick={() => deleteDoc(customName)}
+              variant="outlined"
+              startIcon={<DeleteIcon />}
+            >
+              Удалить
+            </Button>
+          </Stack>
+        )}
       </Box>
     </Box>
   );

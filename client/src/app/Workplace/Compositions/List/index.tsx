@@ -15,8 +15,7 @@ import {
   useDeleteCompositionMutation,
   useDownloadCompositionMutation,
 } from "ducks/reducers/api/compositions.api";
-import { T } from "ramda";
-import { CompositionPage } from "ducks/reducers/types";
+import { AppPage, CompositionPage, WorkPage } from "ducks/reducers/types";
 
 enum Columns {
   create = "create_date",
@@ -58,7 +57,13 @@ export const CompositionsList: React.FC = () => {
       <Box>
         <Button
           onClick={() =>
-            navigate(pathify([CompositionPage.Create], { relative: true }))
+            navigate(
+              pathify([
+                AppPage.Workplace,
+                WorkPage.Compositions,
+                CompositionPage.Create,
+              ])
+            )
           }
           variant="contained"
           fullWidth

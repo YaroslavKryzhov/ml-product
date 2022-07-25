@@ -17,5 +17,9 @@ export const Compositions: React.FC = () => (
       path={pathify([CompositionPage.List, ":compositionName"])}
       element={<CompositionSingle />}
     />
+    <Route
+      path={pathify([CompositionPage.Create])}
+      element={<CompositionSingle createMode />}
+    />
   </Routes>
 );

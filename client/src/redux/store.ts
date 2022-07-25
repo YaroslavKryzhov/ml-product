@@ -12,6 +12,7 @@ import notices from "./reducers/notices";
 import compositionsApi, {
   compositionsApi as compositionsApiSlice,
 } from "./reducers/api/compositions.api";
+import compositions from "./reducers/compositions";
 
 export const store = configureStore({
   reducer: {
@@ -19,6 +20,7 @@ export const store = configureStore({
     main,
     auth,
     documents,
+    compositions,
     documentsApi,
     compositionsApi,
     dialog,
