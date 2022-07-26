@@ -20,7 +20,6 @@ import {
   useCopyPipelineMutation,
   useInfoDocumentQuery,
 } from "ducks/reducers/api/documents.api";
-import { UnavailableBlock } from "../common";
 import { useAppDispatch } from "ducks/hooks";
 import { setDialog, setDialogLoading } from "ducks/reducers/dialog";
 import { T } from "ramda";
@@ -32,6 +31,7 @@ import {
 } from "./parts";
 import { BuildLabel } from "./helpers";
 import { DocumentInfoShort } from "ducks/reducers/types";
+import { UnavailableBlock } from "app/Workplace/common/UnavailableBlock";
 
 export const Pipeline: React.FC = () => {
   const { docName } = useParams();

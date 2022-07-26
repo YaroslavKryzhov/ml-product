@@ -9,7 +9,6 @@ import {
   useInfoDocumentQuery,
 } from "ducks/reducers/api/documents.api";
 import { useParams } from "react-router-dom";
-import { UnavailableBlock } from "../common";
 import { useCallback } from "react";
 import { setDialog, setDialogLoading } from "ducks/reducers/dialog";
 import { useAppDispatch } from "ducks/hooks";
@@ -17,6 +16,7 @@ import { T } from "ramda";
 import { ApplyMethodInfo } from "./ApplyMethodInfo";
 import { ButtonsData, ButtonsGroupsLabels } from "./constants";
 import { BtnGroups } from "./types";
+import { UnavailableBlock } from "app/Workplace/common/UnavailableBlock";
 
 export const DocumentMethods: React.FC = () => {
   const { docName } = useParams();

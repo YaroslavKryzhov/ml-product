@@ -152,7 +152,7 @@ export const EntityHeader: React.FC<{
 
       <Box
         sx={{
-          mt: theme.spacing(3),
+          mt: isEdit ? theme.spacing(3) : 0,
           display: "flex",
           justifyContent: "space-between",
           cursor: "pointer",

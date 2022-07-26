@@ -104,7 +104,7 @@ export const DocumentsList: React.FC = () => {
         dismissText: "Отменить",
       })
     );
-  }, []);
+  }, [dispatch, postDoc]);
 
   const convertedData = useMemo(
     () =>

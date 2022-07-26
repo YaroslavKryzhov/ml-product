@@ -158,6 +158,11 @@ export enum ParamsCompositionType {
   default = "default",
 }
 
+export type Model = {
+  type: ModelTypes;
+  params: DecisionTreeClassifierParameters;
+};
+
 export enum ModelTypes {
   DecisionTreeClassifier = "DecisionTreeClassifier",
   CatBoostClassifier = "CatBoostClassifier",

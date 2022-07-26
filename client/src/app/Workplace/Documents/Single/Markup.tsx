@@ -10,6 +10,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { UnavailableBlock } from "app/Workplace/common/UnavailableBlock";
 import { useAppDispatch, useSESelector } from "ducks/hooks";
 import {
   useColumnsDocumentQuery,
@@ -25,7 +26,6 @@ import { theme } from "globalStyle/theme";
 import React, { useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { TASK_TYPE_LABEL } from "../List/constants";
-import { UnavailableBlock } from "./common";
 
 export const Markup: React.FC = () => {
   const { docName } = useParams();
