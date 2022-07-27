@@ -159,8 +159,8 @@ export enum ParamsCompositionType {
 }
 
 export type Model = {
-  type: ModelTypes;
-  params: DecisionTreeClassifierParameters;
+  type: ModelTypes | null;
+  params: DecisionTreeClassifierParameters | null;
 };
 
 export enum ModelTypes {
@@ -200,17 +200,17 @@ export enum DesicionClassWeight {
 }
 
 export type DecisionTreeClassifierParameters = {
-  criterion: DesicionCriterion;
-  splitter: DescicionSplitter;
+  criterion?: DesicionCriterion;
+  splitter?: DescicionSplitter;
   max_depth?: number;
-  min_samples_split: number;
-  min_samples_leaf: number;
+  min_samples_split?: number;
+  min_samples_leaf?: number;
   max_features?: DesicionMaxFeatures | number;
   random_state?: number;
   max_leaf_nodes?: number;
-  min_impurity_decrease: number;
+  min_impurity_decrease?: number;
   class_weight?: DesicionClassWeight | Record<string, string>;
-  ccp_alpha: number;
+  ccp_alpha?: number;
 };
 
 export type StandardResponse = {

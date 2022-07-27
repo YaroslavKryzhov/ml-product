@@ -19,8 +19,10 @@ import { AppPage, CompositionPage, WorkPage } from "ducks/reducers/types";
 
 enum Columns {
   create = "create_date",
-  change = "change_date",
+  stage = "stage",
   name = "name",
+  taskType = "task_type",
+  compositionType = "composition_type",
 }
 
 const columns = [
@@ -32,6 +34,18 @@ const columns = [
     Header: "Загружено",
     accessor: Columns.create,
     sortType: compareDate(Columns.create),
+  },
+  {
+    Header: "Статус",
+    accessor: Columns.stage,
+  },
+  {
+    Header: "Задача",
+    accessor: Columns.taskType,
+  },
+  {
+    Header: "Тип",
+    accessor: Columns.compositionType,
   },
 ];
 
@@ -75,6 +89,8 @@ export const CompositionsList: React.FC = () => {
           <Skeleton variant="rectangular" width="100%" height={700} />
         ) : (
           <TableFix
+            compactFromPx={600}
+            offHeaderPaddingsFrom={600}
             rowActions={[
               {
                 name: "Редактировать",

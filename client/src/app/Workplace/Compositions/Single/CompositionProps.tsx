@@ -26,6 +26,7 @@ import {
 import { theme } from "globalStyle/theme";
 import { values } from "lodash";
 import React from "react";
+import { SELECTORS_WIDTH } from "./constants";
 
 export const CompositionProps: React.FC<{ createMode?: boolean }> = ({
   createMode,
@@ -48,7 +49,7 @@ export const CompositionProps: React.FC<{ createMode?: boolean }> = ({
           flexWrap: "wrap",
         }}
       >
-        <FormControl sx={{ width: "190px" }}>
+        <FormControl sx={{ width: SELECTORS_WIDTH }}>
           <InputLabel>Task Type</InputLabel>
           <Select
             disabled={!createMode}
@@ -65,7 +66,7 @@ export const CompositionProps: React.FC<{ createMode?: boolean }> = ({
             ))}
           </Select>
         </FormControl>
-        <FormControl sx={{ width: "190px" }}>
+        <FormControl sx={{ width: SELECTORS_WIDTH }}>
           <InputLabel>Composition Type</InputLabel>
           <Select
             disabled={!createMode}
@@ -84,7 +85,7 @@ export const CompositionProps: React.FC<{ createMode?: boolean }> = ({
             ))}
           </Select>
         </FormControl>
-        <FormControl sx={{ width: "190px" }}>
+        <FormControl sx={{ width: SELECTORS_WIDTH }}>
           <InputLabel>Params Type</InputLabel>
           <Select
             disabled={!createMode}
@@ -103,7 +104,7 @@ export const CompositionProps: React.FC<{ createMode?: boolean }> = ({
             ))}
           </Select>
         </FormControl>
-        <FormControl sx={{ width: "190px" }}>
+        <FormControl sx={{ width: SELECTORS_WIDTH }}>
           <InputLabel>Document</InputLabel>
           <Select
             disabled={!createMode && isFetching}
@@ -120,7 +121,7 @@ export const CompositionProps: React.FC<{ createMode?: boolean }> = ({
             ))}
           </Select>
         </FormControl>
-        <Box sx={{ width: "190px", ml: theme.spacing(3) }}>
+        <Box sx={{ width: SELECTORS_WIDTH, ml: theme.spacing(3) }}>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography variant="body2">Test Size</Typography>
             <Typography variant="body2">{testSize}</Typography>
@@ -136,7 +137,7 @@ export const CompositionProps: React.FC<{ createMode?: boolean }> = ({
         </Box>
       </Box>
 
-      <Divider sx={{ mb: theme.spacing(3), mt: theme.spacing(3) }} />
+      <Divider sx={{ mb: theme.spacing(3), mt: theme.spacing(2) }} />
     </Box>
   );
 };

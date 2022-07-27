@@ -17,7 +17,9 @@ export type RowAction = {
 
 export type TableFixProps = {
   compact?: boolean;
+  compactFromPx?: number;
   offHeaderPaddings?: boolean;
+  offHeaderPaddingsFrom?: number;
   offCellsPaddings?: boolean;
   rowHoverable?: boolean;
   forceResize?: boolean;

@@ -140,12 +140,22 @@ const View: React.FC<TableFixProps> = (props) => {
             // TODO
             // resizable={props.resizable}
             headerGroups={headerGroups}
-            offHeaderPaddings={props.offHeaderPaddings}
-            compact={props.compact}
+            offHeaderPaddings={
+              props.offHeaderPaddings ||
+              (!!props.offHeaderPaddingsFrom &&
+                window.innerWidth < props.offHeaderPaddingsFrom)
+            }
+            compact={
+              props.compact ||
+              (!!props.compactFromPx && window.innerWidth < props.compactFromPx)
+            }
           />
           <TableFixBody
             offCellsPaddings={props.offCellsPaddings}
-            compact={props.compact}
+            compact={
+              props.compact ||
+              (!!props.compactFromPx && window.innerWidth < props.compactFromPx)
+            }
             rowActions={props.rowActions}
             rowHoverable={props.rowHoverable}
             page={page}

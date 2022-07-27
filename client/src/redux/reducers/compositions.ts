@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, nanoid, PayloadAction } from "@reduxjs/toolkit";
 import {
   CompositionType,
   Model,
@@ -8,7 +8,7 @@ import {
 
 export type CompositionsSlice = {
   customCompositionName: string;
-  models: Model[];
+  models: Record<string, Model>;
   taskType?: TaskType;
   compositionType?: CompositionType;
   paramsType?: ParamsCompositionType;
@@ -18,7 +18,7 @@ export type CompositionsSlice = {
 
 const initialState: CompositionsSlice = {
   customCompositionName: "",
-  models: [],
+  models: {},
   documentName: "",
   testSize: 0.2,
 };
@@ -39,6 +39,10 @@ const compositionsSlice = createSlice({
       void (state.documentName = action.payload),
     changeTestSize: (state, action: PayloadAction<number>) =>
       void (state.testSize = action.payload),
+    addModel: (state) =>
+      void (state.models[nanoid()] = { type: null, params: null }),
+    changeModel: (state, action: PayloadAction<{ id: string; model: Model }>) =>
+      void (state.models[action.payload.id] = action.payload.model),
   },
 });
 
@@ -49,6 +53,8 @@ export const {
   changeParamsType,
   changeDocumentName,
   changeTestSize,
+  addModel,
+  changeModel,
 } = compositionsSlice.actions;
 
 export default compositionsSlice.reducer;
