@@ -121,7 +121,7 @@ export const CompositionProps: React.FC<{ createMode?: boolean }> = ({
             ))}
           </Select>
         </FormControl>
-        <Box sx={{ width: SELECTORS_WIDTH, ml: theme.spacing(3) }}>
+        <Box sx={{ width: SELECTORS_WIDTH }}>
           <Box sx={{ display: "flex", justifyContent: "space-between" }}>
             <Typography variant="body2">Test Size</Typography>
             <Typography variant="body2">{testSize}</Typography>

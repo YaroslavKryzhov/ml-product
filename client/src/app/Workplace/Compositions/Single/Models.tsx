@@ -16,7 +16,7 @@ export const Models: React.FC<{ createMode?: boolean }> = ({ createMode }) => {
         Модели
       </Typography>
       {keys(models).map((id) => (
-        <ModelProps createMode={createMode} id={id} />
+        <ModelProps key={id} createMode={createMode} id={id} />
       ))}
       {createMode && (
         <>

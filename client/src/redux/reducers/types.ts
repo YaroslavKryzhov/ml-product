@@ -158,9 +158,11 @@ export enum ParamsCompositionType {
   default = "default",
 }
 
+export type ModelParams = DecisionTreeClassifierParameters | null;
+
 export type Model = {
   type: ModelTypes | null;
-  params: DecisionTreeClassifierParameters | null;
+  params: ModelParams;
 };
 
 export enum ModelTypes {

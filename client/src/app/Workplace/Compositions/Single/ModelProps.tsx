@@ -3,12 +3,14 @@ import { useAppDispatch, useSESelector } from "ducks/hooks";
 import { changeModel } from "ducks/reducers/compositions";
 import {
   DecisionTreeClassifierParameters,
+  ModelParams,
   ModelTypes,
 } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
 import { cond, values } from "lodash";
 import { always, equals } from "ramda";
 import { useCallback } from "react";
+import { DefaultParamsModels } from "./constants";
 import { DecisionTreeClassifier } from "./ModelPropsParts/DTC";
 
 export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
@@ -17,7 +19,19 @@ export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
 }) => {
   const dispatch = useAppDispatch();
   const model = useSESelector((state) => state.compositions.models[id]);
-  const onParamsChange = useCallback(() => {}, []);
+  const onParamsChange = useCallback(
+    (type: ModelTypes, id: string) => (params: ModelParams) =>
+      dispatch(
+        changeModel({
+          id,
+          model: {
+            type,
+            params,
+          },
+        })
+      ),
+    [dispatch]
+  );
 
   return (
     <Box sx={{ mb: theme.spacing(2) }}>
@@ -33,7 +47,8 @@ export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
                 id,
                 model: {
                   type: event.target.value as ModelTypes,
-                  params: {},
+                  params:
+                    DefaultParamsModels[event.target.value as ModelTypes]!,
                 },
               })
             )
@@ -47,29 +62,19 @@ export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
         </Select>
       </FormControl>
 
-      {model.type && (
-        <Box
-          sx={{
-            mt: theme.spacing(2),
-            display: "flex",
-            gap: theme.spacing(1),
-            flexWrap: "wrap",
-          }}
-        >
-          {cond<ModelTypes, JSX.Element | null>([
-            [
-              equals<ModelTypes>(ModelTypes.DecisionTreeClassifier),
-              always(
-                <DecisionTreeClassifier
-                  onParamsChange={onParamsChange}
-                  params={model.params as DecisionTreeClassifierParameters}
-                  disabled={!createMode}
-                />
-              ),
-            ],
-          ])(model.type)}
-        </Box>
-      )}
+      {model.type &&
+        cond<ModelTypes, JSX.Element | null>([
+          [
+            equals<ModelTypes>(ModelTypes.DecisionTreeClassifier),
+            always(
+              <DecisionTreeClassifier
+                onParamsChange={onParamsChange(model.type, id)}
+                params={model.params as DecisionTreeClassifierParameters}
+                disabled={!createMode}
+              />
+            ),
+          ],
+        ])(model.type)}
     </Box>
   );
 };
