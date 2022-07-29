@@ -6,7 +6,6 @@ import {
   MenuItem,
   Select,
   Slider,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { useAppDispatch, useSESelector } from "ducks/hooks";
@@ -38,12 +37,11 @@ export const CompositionProps: React.FC<{ createMode?: boolean }> = ({
 
   return (
     <Box>
-      <Typography sx={{ mb: theme.spacing(2) }} variant="h5">
+      <Typography sx={{ mb: theme.spacing(3) }} variant="h5">
         Основное
       </Typography>
       <Box
         sx={{
-          mt: theme.spacing(3),
           display: "flex",
           gap: theme.spacing(1),
           flexWrap: "wrap",

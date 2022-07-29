@@ -34,12 +34,18 @@ export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
   );
 
   return (
-    <Box sx={{ mb: theme.spacing(2) }}>
+    <Box
+      sx={{
+        mb: theme.spacing(5),
+        pl: theme.spacing(2),
+        borderLeft: `2px solid ${theme.palette.info.main}`,
+      }}
+    >
       <FormControl sx={{ width: "388px" }}>
         <InputLabel>Model Type</InputLabel>
         <Select
           disabled={!createMode}
-          value={model.type}
+          value={model.type || ""}
           label="Model type"
           onChange={(event) =>
             dispatch(

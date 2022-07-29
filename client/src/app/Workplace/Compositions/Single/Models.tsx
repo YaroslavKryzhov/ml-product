@@ -12,7 +12,7 @@ export const Models: React.FC<{ createMode?: boolean }> = ({ createMode }) => {
 
   return (
     <Box>
-      <Typography sx={{ mb: theme.spacing(2) }} variant="h5">
+      <Typography sx={{ mb: theme.spacing(3) }} variant="h5">
         Модели
       </Typography>
       {keys(models).map((id) => (
@@ -21,7 +21,7 @@ export const Models: React.FC<{ createMode?: boolean }> = ({ createMode }) => {
       {createMode && (
         <>
           {isEmpty(models) && (
-            <Box sx={{ mb: theme.spacing(1) }}>
+            <Box sx={{ mb: theme.spacing(4) }}>
               <UnavailableBlock label="Добавьте хотя бы одну модель" />
             </Box>
           )}

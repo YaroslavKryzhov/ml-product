@@ -47,7 +47,7 @@ export const DocumentMethods: React.FC = () => {
 
   return (
     <Box>
-      <Typography sx={{ mb: theme.spacing(2) }} variant="h5">
+      <Typography sx={{ mb: theme.spacing(3) }} variant="h5">
         Методы
       </Typography>
 

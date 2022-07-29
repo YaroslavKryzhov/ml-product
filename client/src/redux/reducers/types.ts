@@ -204,14 +204,14 @@ export enum DesicionClassWeight {
 export type DecisionTreeClassifierParameters = {
   criterion?: DesicionCriterion;
   splitter?: DescicionSplitter;
-  max_depth?: number;
+  max_depth?: number | null;
   min_samples_split?: number;
   min_samples_leaf?: number;
-  max_features?: DesicionMaxFeatures | number;
-  random_state?: number;
-  max_leaf_nodes?: number;
+  max_features?: DesicionMaxFeatures | string | null;
+  random_state?: number | null;
+  max_leaf_nodes?: number | null;
   min_impurity_decrease?: number;
-  class_weight?: DesicionClassWeight | Record<string, string>;
+  class_weight?: DesicionClassWeight | Record<string, string> | null;
   ccp_alpha?: number;
 };
 
