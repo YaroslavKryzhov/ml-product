@@ -268,7 +268,7 @@ export const DecisionTreeClassifier: React.FC<{
               <Checkbox
                 value={isClassWeightCustom}
                 onChange={(_, checked) => {
-                  setIsMaxFeaturesFloat(checked);
+                  setIsClassWeightCustom(checked);
                   !checked &&
                     onParamsChange({
                       ...params,
@@ -331,29 +331,6 @@ export const DecisionTreeClassifier: React.FC<{
           </FormControl>
         )}
 
-        {isClassWeightCustom ? null : (
-          <FormControl sx={{ width: SELECTORS_WIDTH }}>
-            <InputLabel>Class Weight</InputLabel>
-            <Select
-              disabled={disabled || !isClassWeightEnabled}
-              value={params.class_weight || ""}
-              label="Class Weight"
-              onChange={(event) =>
-                onParamsChange({
-                  ...params,
-                  class_weight: event.target.value as DesicionClassWeight,
-                })
-              }
-            >
-              {values(DesicionClassWeight)?.map((x) => (
-                <MenuItem key={x} value={x}>
-                  {x}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
-
         <TextField
           sx={{ width: SELECTORS_WIDTH }}
           disabled={disabled || !isRandomStateEnabled}
@@ -396,6 +373,38 @@ export const DecisionTreeClassifier: React.FC<{
           type="number"
         />
       </Box>
+      {isClassWeightCustom ? (
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, max-content)",
+          }}
+        >
+          <Box></Box>
+          <Box></Box>
+        </Box>
+      ) : (
+        <FormControl sx={{ width: SELECTORS_WIDTH, mt: theme.spacing(2) }}>
+          <InputLabel>Class Weight</InputLabel>
+          <Select
+            disabled={disabled || !isClassWeightEnabled}
+            value={params.class_weight || ""}
+            label="Class Weight"
+            onChange={(event) =>
+              onParamsChange({
+                ...params,
+                class_weight: event.target.value as DesicionClassWeight,
+              })
+            }
+          >
+            {values(DesicionClassWeight)?.map((x) => (
+              <MenuItem key={x} value={x}>
+                {x}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      )}
     </Box>
   );
 };
