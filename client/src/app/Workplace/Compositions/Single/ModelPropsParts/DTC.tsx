@@ -1,13 +1,17 @@
+import { Delete } from "@mui/icons-material";
 import {
   Box,
+  Button,
   Checkbox,
   FormControl,
   FormControlLabel,
+  IconButton,
   InputLabel,
   MenuItem,
   Select,
   TextField,
 } from "@mui/material";
+import { nanoid } from "@reduxjs/toolkit";
 import {
   DecisionTreeClassifierParameters,
   DescicionSplitter,
@@ -16,8 +20,8 @@ import {
   DesicionMaxFeatures,
 } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
-import { values } from "lodash";
-import { useState } from "react";
+import { entries, isObject, omit, values, zipObject } from "lodash";
+import { useCallback, useState } from "react";
 import { FloatRegexp, SELECTORS_WIDTH } from "../constants";
 import { CorrectFloat } from "../helpers";
 
@@ -39,6 +43,29 @@ export const DecisionTreeClassifier: React.FC<{
   const [isMaxFeaturesFloat, setIsMaxFeaturesFloat] = useState<boolean>(false);
   const [isClassWeightCustom, setIsClassWeightCustom] =
     useState<boolean>(false);
+
+  const [customClassWeights, setCustomClassWeights] = useState<
+    Record<string, { label: string; value: string }>
+  >(
+    isObject(params.class_weight)
+      ? zipObject(
+          values(params.class_weight).map(() => nanoid()),
+          entries(params.class_weight).map(([label, value]) => ({
+            label,
+            value,
+          }))
+        )
+      : {}
+  );
+
+  const updateWeights = useCallback(() => {
+    onParamsChange({
+      ...params,
+      class_weight: Object.fromEntries(
+        values(customClassWeights).map((x) => [x.label, x.value])
+      ),
+    });
+  }, [customClassWeights, onParamsChange, params]);
 
   return (
     <Box sx={{ mt: theme.spacing(5) }}>
@@ -233,6 +260,8 @@ export const DecisionTreeClassifier: React.FC<{
                         ...params,
                         class_weight: null,
                       });
+
+                    checked && updateWeights();
                   }}
                 />
               }
@@ -269,11 +298,10 @@ export const DecisionTreeClassifier: React.FC<{
                 value={isClassWeightCustom}
                 onChange={(_, checked) => {
                   setIsClassWeightCustom(checked);
-                  !checked &&
-                    onParamsChange({
-                      ...params,
-                      class_weight: null,
-                    });
+                  onParamsChange({
+                    ...params,
+                    class_weight: checked ? {} : null,
+                  });
                 }}
               />
             }
@@ -373,15 +401,92 @@ export const DecisionTreeClassifier: React.FC<{
           type="number"
         />
       </Box>
-      {isClassWeightCustom ? (
+      {isClassWeightCustom && isClassWeightEnabled ? (
         <Box
           sx={{
+            mt: theme.spacing(4),
+            gap: theme.spacing(2),
             display: "grid",
-            gridTemplateColumns: "repeat(2, max-content)",
+            width: "max-content",
+            paddingRight: theme.spacing(4),
+            borderRight: `2px solid ${theme.palette.info.main}`,
           }}
         >
-          <Box></Box>
-          <Box></Box>
+          {entries(customClassWeights).map(([key, item]) => (
+            <Box
+              key={key}
+              sx={{
+                display: "grid",
+                gap: theme.spacing(1),
+                gridTemplateColumns: `repeat(2, ${SELECTORS_WIDTH}) 30px`,
+              }}
+            >
+              <TextField
+                sx={{ width: SELECTORS_WIDTH }}
+                disabled={disabled}
+                label="Label"
+                value={item.label}
+                onChange={(event) => {
+                  setCustomClassWeights({
+                    ...customClassWeights,
+                    [key]: {
+                      ...customClassWeights[key],
+                      label: event.target.value,
+                    },
+                  });
+                  updateWeights();
+                }}
+              />
+              <TextField
+                sx={{ width: SELECTORS_WIDTH }}
+                disabled={disabled}
+                label="Weight"
+                value={item.value || ""}
+                onChange={(event) => {
+                  event.target.value.match(FloatRegexp) &&
+                    setCustomClassWeights({
+                      ...customClassWeights,
+                      [key]: {
+                        ...customClassWeights[key],
+                        value: event.target.value,
+                      },
+                    });
+                  updateWeights();
+                }}
+                onBlur={(event) => {
+                  setCustomClassWeights({
+                    ...customClassWeights,
+                    [key]: {
+                      ...customClassWeights[key],
+                      value: event.target.value,
+                    },
+                  });
+                  updateWeights();
+                }}
+              />
+              <IconButton
+                sx={{ width: "60px" }}
+                onClick={() => {
+                  setCustomClassWeights(omit(customClassWeights, [key]));
+                  updateWeights();
+                }}
+              >
+                <Delete />
+              </IconButton>
+            </Box>
+          ))}
+          <Button
+            sx={{ mt: theme.spacing(1), width: "388px" }}
+            variant="contained"
+            onClick={() => {
+              setCustomClassWeights({
+                ...customClassWeights,
+                [nanoid()]: { label: "", value: "0" },
+              });
+            }}
+          >
+            Добавить вес
+          </Button>
         </Box>
       ) : (
         <FormControl sx={{ width: SELECTORS_WIDTH, mt: theme.spacing(2) }}>
