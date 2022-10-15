@@ -148,7 +148,7 @@ export const documentsApi = createApi({
       query: ({ filename, function_name }) => ({
         url: ROUTES.DOCUMENTS.APPLY_METHOD,
         params: { filename, function_name },
-        method: "PUT",
+        method: "POST",
       }),
       invalidatesTags: [Tags.pipeline, Tags.singleDocument],
     }),
