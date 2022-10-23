@@ -2,7 +2,15 @@ from typing import Dict, Optional, Any, List
 from functools import partial
 
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import BaggingClassifier, ExtraTreesClassifier, \
+    RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier
+from sklearn.linear_model import SGDClassifier, LogisticRegression
+from sklearn.neural_network import MLPClassifier
+from sklearn.svm import SVC, LinearSVC
 # from catboost import CatBoostClassifier
+# from xgboost import XGBClassifier
+# from lightgbm import LGBMClassifier
+
 from sklearn.model_selection import train_test_split
 from fastapi.responses import JSONResponse
 from fastapi import status, BackgroundTasks
@@ -16,9 +24,7 @@ from sklearn.preprocessing import label_binarize
 import numpy as np
 
 from ml_api.apps.ml_models.repository import ModelPostgreCRUD, ModelPickleCRUD
-from ml_api.apps.ml_models.configs.classification_models import \
-    DecisionTreeClassifierParameters, \
-    CatBoostClassifierParameters, AvailableModels
+import ml_api.apps.ml_models.configs.classification_models as models_config
 from ml_api.apps.documents.services import DocumentService
 from ml_api.apps.documents.repository import DocumentPostgreCRUD
 from ml_api.apps.ml_models.configs.classification_searchers import \
@@ -220,7 +226,7 @@ class AutoParamsSearch:
         return self.composition_params
 
     def _validate_params(self,
-                         model_type: AvailableModels
+                         model_type: models_config.AvailableModels
                          ) -> Dict[str, Any]:
         # to bo: add regression
         if self.task_type == 'classification':
@@ -248,7 +254,8 @@ class AutoParamsSearch:
                 return space_eval(search_space, best)
         return {}
 
-    def _objective_binary(self, params, model_type: AvailableModels):
+    def _objective_binary(self, params,
+                          model_type: models_config.AvailableModels):
         """
             Auxiliary function for scoring of checking iterating parameters.
             Binary classification task type.
@@ -265,7 +272,8 @@ class AutoParamsSearch:
             error_score="raise")
         return {'loss': -score.mean(), 'params': params, 'status': STATUS_OK}
 
-    def _objective_multiclass(self, params, model_type: AvailableModels):
+    def _objective_multiclass(self, params,
+                              model_type: models_config.AvailableModels):
         """
             Auxiliary function for scoring of checking iterating parameters.
             Multiclass classification task type.
@@ -301,7 +309,7 @@ class ModelConstructor:
 
     def __init__(self,
                  task_type: str,
-                 model_type: AvailableModels,
+                 model_type: models_config.AvailableModels,
                  params=Dict[str, Any]):
         self.model_type = model_type
         self.params = params
@@ -310,12 +318,55 @@ class ModelConstructor:
         # elif task_type == 'regression':
         #     self.model = self._construct_regression_model()
 
+        decision_tree = 'DecisionTreeClassifier'
+        random_forest = 'RandomForestClassifier'
+        # catboost = 'CatBoostClassifier'
+        adaboost = 'AdaBoostClassifier'
+        gradient_boosting = 'GradientBoostingClassifier'
+        bagging = "BaggingClassifier"
+        extra_trees = "ExtraTreesClassifier"
+        SGD = "SGDClassifier"
+        linear_SVC = "LinearSVC"
+        SVC = "SVC"
+        logistic_regression = 'LogisticRegression'
+        perceptron = 'MLPClassifier'
+
     def _construct_classification_model(self):
         if self.model_type.value == 'DecisionTreeClassifier':
             model = self._get_tree_classifier()
             return model
-        if self.model_type.value == 'CatBoostClassifier':
-            model = self._get_catboost_classifier()
+        # if self.model_type.value == 'CatBoostClassifier':
+        #     model = self._get_catboost_classifier()
+        #     return model
+        if self.model_type.value == 'RandomForestClassifier':
+            model = self._get_forest_classifier()
+            return model
+        if self.model_type.value == 'AdaBoostClassifier':
+            model = self._get_adaboost_classifier()
+            return model
+        if self.model_type.value == 'GradientBoostingClassifier':
+            model = self._get_gradient_boosting_classifier()
+            return model
+        if self.model_type.value == 'BaggingClassifier':
+            model = self._get_bagging_classifier()
+            return model
+        if self.model_type.value == 'ExtraTreesClassifier':
+            model = self._get_extra_trees_classifier()
+            return model
+        if self.model_type.value == 'SGDClassifier':
+            model = self._get_sgd_classifier()
+            return model
+        if self.model_type.value == 'LinearSVC':
+            model = self._get_linear_svc_classifier()
+            return model
+        if self.model_type.value == 'SVC':
+            model = self._get_sgd_classifier()
+            return model
+        if self.model_type.value == 'LogisticRegression':
+            model = self._get_log_reg_classifier()
+            return model
+        if self.model_type.value == 'MLPClassifier':
+            model = self._get_mlp_classifier()
             return model
         return None
 
@@ -323,16 +374,74 @@ class ModelConstructor:
     #     return None
 
     def _get_tree_classifier(self):
-        params = DecisionTreeClassifierParameters(**self.params)
-        # print(params.dict())
+        params = models_config.DecisionTreeClassifierParameters(**self.params)
         model = DecisionTreeClassifier(**params.dict())
         return model
 
-    def _get_catboost_classifier(self):
-        params = CatBoostClassifierParameters(**self.params)
-        # print(params.dict())
-        model = CatBoostClassifier(**params.dict(), verbose=100)
+    # def _get_catboost_classifier(self):
+    #     params = models_config.CatBoostClassifierParameters(**self.params)
+    #     model = CatBoostClassifier(**params.dict())
+    #     return model
+
+    def _get_forest_classifier(self):
+        params = models_config.RandomForestClassifierParameters(**self.params)
+        model = RandomForestClassifier(**params.dict())
         return model
+
+    def _get_adaboost_classifier(self):
+        params = models_config.AdaBoostClassifierParameters(**self.params)
+        model = AdaBoostClassifier(**params.dict())
+        return model
+
+    def _get_gradient_boosting_classifier(self):
+        params = models_config.GradientBoostingClassifierParameters(**self.params)
+        model = GradientBoostingClassifier(**params.dict())
+        return model
+
+    def _get_bagging_classifier(self):
+        params = models_config.BaggingClassifierParameters(**self.params)
+        model = BaggingClassifier(**params.dict())
+        return model
+
+    def _get_extra_trees_classifier(self):
+        params = models_config.ExtraTreesClassifierParameters(**self.params)
+        model = ExtraTreesClassifier(**params.dict())
+        return model
+
+    def _get_sgd_classifier(self):
+        params = models_config.SGDClassifierParameters(**self.params)
+        model = SGDClassifier(**params.dict())
+        return model
+
+    def _get_linear_svc_classifier(self):
+        params = models_config.LinearSVCParameters(**self.params)
+        model = LinearSVC(**params.dict())
+        return model
+
+    def _get_svc_classifier(self):
+        params = models_config.SVCParameters(**self.params)
+        model = SVC(**params.dict())
+        return model
+
+    def _get_log_reg_classifier(self):
+        params = models_config.LogisticRegressionParameters(**self.params)
+        model = LogisticRegression(**params.dict())
+        return model
+
+    def _get_mlp_classifier(self):
+        params = models_config.MLPClassifierParameters(**self.params)
+        model = MLPClassifier(**params.dict())
+        return model
+
+    # def _get_xgb_classifier(self):
+    #     params = models_config.XGBClassifierParameters(**self.params)
+    #     model = XGBClassifier(**params.dict())
+    #     return model
+    #
+    # def _get_lgbm_classifier(self):
+    #     params = models_config.LGBMClassifierParameters(**self.params)
+    #     model = LGBMClassifier(**params.dict())
+    #     return model
 
 
 class CompositionConstructor:
@@ -422,16 +531,24 @@ class CompositionValidator:
             probabilities = self.composition.predict_proba(
                 features_valid)[:, 1]
         except AttributeError:
-            probabilities = self.composition.decision_function(features_valid)
+            try:
+                probabilities = self.composition.decision_function(features_valid)
+            except AttributeError:
+                probabilities = False
+                
+        roc_auc = None
+        fpr = None
+        tpr = None
 
         accuracy = accuracy_score(target_valid, predictions)
         recall = recall_score(target_valid, predictions)
         precision = precision_score(target_valid, predictions)
         f1 = f1_score(target_valid, predictions)
-        roc_auc = roc_auc_score(target_valid, probabilities)
-        fpr, tpr, _ = roc_curve(target_valid, probabilities)
-        fpr = list(fpr)
-        tpr = list(tpr)
+        if probabilities:
+            roc_auc = roc_auc_score(target_valid, probabilities)
+            fpr, tpr, _ = roc_curve(target_valid, probabilities)
+            fpr = list(fpr)
+            tpr = list(tpr)
         report = BinaryClassificationMetrics(accuracy=accuracy, recall=recall,
             precision=precision, f1=f1, roc_auc=roc_auc, fpr=fpr, tpr=tpr)
         return self.composition, report
@@ -445,7 +562,10 @@ class CompositionValidator:
         try:
             probabilities = self.composition.predict_proba(features_valid)
         except AttributeError:
-            probabilities = self.composition.decision_function(features_valid)
+            try:
+                probabilities = self.composition.decision_function(features_valid)
+            except AttributeError:
+                probabilities = False
 
         accuracy = accuracy_score(target_valid, predictions)
         recall = recall_score(target_valid, predictions,
@@ -454,48 +574,57 @@ class CompositionValidator:
             average='weighted')
         f1 = f1_score(target_valid, predictions, average='weighted')
 
-        classes = list(self.target.unique())
-        target_valid = label_binarize(target_valid, classes=classes)
-        n_classes = len(classes)
+        roc_auc_weighted = None
+        roc_auc_micro = None
+        roc_auc_macro = None
+        fpr_micro = None
+        fpr_macro = None
+        tpr_micro = None
+        tpr_macro = None
 
-        roc_auc_weighted = roc_auc_score(target_valid,
-            probabilities, average='weighted', multi_class='ovr')
+        if probabilities:
+            classes = list(self.target.unique())
+            target_valid = label_binarize(target_valid, classes=classes)
+            n_classes = len(classes)
 
-        fpr = dict()
-        tpr = dict()
-        roc_auc = dict()
+            roc_auc_weighted = roc_auc_score(target_valid,
+                probabilities, average='weighted', multi_class='ovr')
 
-        for i in range(n_classes):
-            fpr[i], tpr[i], _ = roc_curve(target_valid[:, i],
-                probabilities[:, i])
-            roc_auc[i] = auc(fpr[i], tpr[i])
+            fpr = dict()
+            tpr = dict()
+            roc_auc = dict()
 
-        fpr["micro"], tpr["micro"], _ = roc_curve(target_valid.ravel(),
-            probabilities.ravel())
-        roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
+            for i in range(n_classes):
+                fpr[i], tpr[i], _ = roc_curve(target_valid[:, i],
+                    probabilities[:, i])
+                roc_auc[i] = auc(fpr[i], tpr[i])
 
-        # First aggregate all false positive rates
-        all_fpr = np.unique(np.concatenate([fpr[i] for i in
-            range(n_classes)]))
+            fpr["micro"], tpr["micro"], _ = roc_curve(target_valid.ravel(),
+                probabilities.ravel())
+            roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
-        # Then interpolate all ROC curves at this points
-        mean_tpr = np.zeros_like(all_fpr)
-        for i in range(n_classes):
-            mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
+            # First aggregate all false positive rates
+            all_fpr = np.unique(np.concatenate([fpr[i] for i in
+                range(n_classes)]))
 
-        # Finally average it and compute AUC
-        mean_tpr /= n_classes
+            # Then interpolate all ROC curves at this points
+            mean_tpr = np.zeros_like(all_fpr)
+            for i in range(n_classes):
+                mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
 
-        fpr["macro"] = all_fpr
-        tpr["macro"] = mean_tpr
-        roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+            # Finally average it and compute AUC
+            mean_tpr /= n_classes
 
-        fpr_micro = list(fpr["micro"])
-        tpr_micro = list(tpr["micro"])
-        fpr_macro = list(fpr["macro"])
-        tpr_macro = list(tpr["macro"])
-        roc_auc_micro = roc_auc["micro"]
-        roc_auc_macro = roc_auc["macro"]
+            fpr["macro"] = all_fpr
+            tpr["macro"] = mean_tpr
+            roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+
+            fpr_micro = list(fpr["micro"])
+            tpr_micro = list(tpr["micro"])
+            fpr_macro = list(fpr["macro"])
+            tpr_macro = list(tpr["macro"])
+            roc_auc_micro = roc_auc["micro"]
+            roc_auc_macro = roc_auc["macro"]
 
         report = MulticlassClassificationMetrics(accuracy=accuracy,
             recall=recall, precision=precision, f1=f1,

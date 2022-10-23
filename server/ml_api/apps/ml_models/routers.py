@@ -17,23 +17,23 @@ models_router = APIRouter(
 
 
 @models_router.post("/train")
-def train_composition(task_type: AvailableTaskTypes,
-                      composition_type: AvailableCompositions,
-                      composition_params: List[CompositionParams],
-                      params_type: AvailableParams,
-                      document_name: str,
-                      model_name: str,
-                      background_tasks: BackgroundTasks,
-                      test_size: float = 0.2,
-                      db: get_db = Depends(),
-                      user: User = Depends(current_active_user)):
-    result = ModelService(db, user).train_model(task_type=task_type.value,
-                                    composition_type=composition_type.value,
-                                    composition_params=composition_params,
+def train_composition(  # task_type: AvailableTaskTypes,
+        composition_type: AvailableCompositions,
+        composition_params: List[CompositionParams],
+        params_type: AvailableParams,
+        document_name: str,
+        model_name: str,
+        background_tasks: BackgroundTasks,
+        test_size: float = 0.2,
+        db: get_db = Depends(),
+        user: User = Depends(current_active_user)):
+    result = ModelService(db, user).train_model(task_type=AvailableTaskTypes.CLASSIFICATION.value,
+                                                composition_type=composition_type.value,
+                                                composition_params=composition_params,
                                                 params_type=params_type.value,
                                                 document_name=document_name,
                                                 model_name=model_name,
-                                    background_tasks=background_tasks,
+                                                background_tasks=background_tasks,
                                                 test_size=test_size)
     return result
 

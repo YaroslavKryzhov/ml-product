@@ -136,12 +136,13 @@ documents_method_router = APIRouter(
 @documents_method_router.put("/target", response_model=ServiceResponse)
 def set_target_feature(filename: str,
                        target_column: str,
-                       task_type: TaskType,
+                       # task_type: TaskType,
                        db: get_db = Depends(),
                        user: User = Depends(current_active_user)):
     DocumentService(db, user).set_column_types(filename=filename,
                                                target_column=target_column,
-                                               task_type=task_type)
+                                               # task_type=task_type
+    )
     return ServiceResponse(status_code=status.HTTP_200_OK,
         content=f"The column '{target_column}' is set as target for "
                 f"'{filename}'")
