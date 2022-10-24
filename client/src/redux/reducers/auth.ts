@@ -21,16 +21,11 @@ const authSlice = createSlice({
       void (state.emailInput = action.payload),
   },
   extraReducers: (builder) => {
-    builder
-      .addMatcher(authApi.endpoints.auth.matchFulfilled, (state) => {
-        state.emailInput = "";
-        state.passwordInput = "";
-      })
-      .addMatcher(authApi.endpoints.register.matchFulfilled, (state) => {
-        state.emailInput = "";
-        state.passwordInput = "";
-        state.secondPasswordInput = "";
-      });
+    builder.addMatcher(authApi.endpoints.auth.matchFulfilled, (state) => {
+      state.emailInput = "";
+      state.passwordInput = "";
+      state.secondPasswordInput = "";
+    });
   },
 });
 

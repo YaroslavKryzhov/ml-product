@@ -34,9 +34,10 @@ import {
   useRegisterMutation,
 } from "ducks/reducers/api/auth.api";
 import { theme } from "globalStyle/theme";
-import { PASSWORD_ERROR } from "./const";
+import { PASSWORD_ERROR, ALREADY_EXIST, BAD_LOGIN } from "./const";
 import { passwordValidate } from "./helpers";
 import { useNavigate, useLocation } from "react-router-dom";
+import { addNotice, SnackBarType } from "ducks/reducers/notices";
 
 export const Authentication: React.FC = () => {
   const { passwordInput, emailInput, secondPasswordInput } = useSESelector(
@@ -66,22 +67,35 @@ export const Authentication: React.FC = () => {
       !passwordValidate(secondPasswordInput) ||
       secondPasswordInput !== passwordInput);
 
-  const authCallback = useCallback(() => {
+  const authCallback = () => {
     setIsFirstTry(false);
     if (isEmailError || isPasswordError || isSecondPasswordError) return;
 
-    if (!isReg) auth({ username: emailInput, password: passwordInput });
-    else register({ email: emailInput, password: passwordInput });
-  }, [
-    auth,
-    register,
-    pathname,
-    isEmailError,
-    isPasswordError,
-    isSecondPasswordError,
-    emailInput,
-    passwordInput,
-  ]);
+    if (!isReg)
+      auth({ username: emailInput, password: passwordInput }).then(
+        (res: any) =>
+          (res as any).error.data.detail === BAD_LOGIN &&
+          dispatch(
+            addNotice({
+              label: "Ошибка. Попробуйте еще раз.",
+              type: SnackBarType.error,
+              id: Date.now(),
+            })
+          )
+      );
+    else
+      register({ email: emailInput, password: passwordInput }).then(
+        (res) =>
+          (res as any).error.data.detail === ALREADY_EXIST &&
+          dispatch(
+            addNotice({
+              label: "Такой пользователь уже существует",
+              type: SnackBarType.error,
+              id: Date.now(),
+            })
+          )
+      );
+  };
 
   useEffect(() => setIsFirstTry(true), [isReg]);
 
@@ -97,7 +111,7 @@ export const Authentication: React.FC = () => {
 
   useLayoutEffect(() => {
     if (isRegSuccess) {
-      navigate(pathify([AuthPage.auth], { relative: true }));
+      auth({ username: emailInput, password: passwordInput });
     }
   }, [isRegSuccess]);
 
@@ -138,7 +152,7 @@ export const Authentication: React.FC = () => {
               helperText={!isFirstTry && isEmailError ? "Неверная почта" : " "}
               onChange={(e) => dispatch(changeEmail(e.target.value))}
               FormHelperTextProps={helperTextProps}
-              sx={{ mb: theme.spacing(3) }}
+              sx={{ mb: theme.spacing(4) }}
             />
             <TextField
               size="small"
@@ -149,7 +163,7 @@ export const Authentication: React.FC = () => {
               helperText={!isFirstTry && isPasswordError ? PASSWORD_ERROR : " "}
               error={!isFirstTry && isPasswordError}
               FormHelperTextProps={helperTextProps}
-              sx={{ mb: theme.spacing(3) }}
+              sx={{ mb: theme.spacing(4) }}
             />
             {isReg && (
               <TextField

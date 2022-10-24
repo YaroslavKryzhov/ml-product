@@ -23,7 +23,7 @@ const CustomTooltip: React.FC<any> = ({ active, payload, ...rest }) => {
           }}
         >
           <Typography sx={{ color: data.fill }}>
-            {data.payload.longName}: {data.value}
+            {data.payload.longName}: {data.payload.displayValue || data.value}
           </Typography>
         </Paper>
       </Box>
@@ -44,6 +44,7 @@ const convertDataForBarCategoric = (data: CategoricalData[]) =>
   data.map((x) => ({
     ...x,
     longName: x.name,
+    displayValue: (x.value * 100).toFixed(2) + "%",
   }));
 
 export const StatsGraph: React.FC<{
