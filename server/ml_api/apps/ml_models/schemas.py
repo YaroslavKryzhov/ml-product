@@ -1,4 +1,4 @@
-from typing import Dict, Any, List, Union
+from typing import Dict, Any, List, Union, Optional
 from enum import Enum
 from uuid import UUID
 from datetime import datetime
@@ -10,7 +10,7 @@ from ml_api.apps.ml_models.configs.classification_models import AvailableModels
 
 class AvailableTaskTypes(Enum):
     CLASSIFICATION = 'classification'
-    REGRESSION = 'regression'
+    # REGRESSION = 'regression'
 
 
 class AvailableParams(Enum):
@@ -36,9 +36,9 @@ class BinaryClassificationMetrics(BaseModel):
     recall: float
     precision: float
     f1: float
-    roc_auc: float
-    fpr: List[float]
-    tpr: List[float]
+    roc_auc: Optional[float]
+    fpr: Optional[List[float]]
+    tpr: Optional[List[float]]
 
 
 class MulticlassClassificationMetrics(BaseModel):
@@ -46,13 +46,13 @@ class MulticlassClassificationMetrics(BaseModel):
     recall: float
     precision: float
     f1: float
-    roc_auc_weighted: float
-    roc_auc_micro: float
-    roc_auc_macro: float
-    fpr_micro: List[float]
-    tpr_micro: List[float]
-    fpr_macro: List[float]
-    tpr_macro: List[float]
+    roc_auc_weighted: Optional[float]
+    roc_auc_micro: Optional[float]
+    roc_auc_macro: Optional[float]
+    fpr_micro: Optional[List[float]]
+    tpr_micro: Optional[List[float]]
+    fpr_macro: Optional[List[float]]
+    tpr_macro: Optional[List[float]]
 
 
 class CompositionReport(BaseModel):

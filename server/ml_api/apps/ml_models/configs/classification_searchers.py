@@ -1,8 +1,6 @@
 from hyperopt import hp
 import numpy as np
 
-
-
 CLASSIFICATION_SEARCHERS_CONFIG = {
     'DecisionTreeClassifier': {
         'criterion': hp.choice(label='criterion', options=['gini', 'entropy']),

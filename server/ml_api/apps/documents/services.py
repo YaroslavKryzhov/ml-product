@@ -226,7 +226,7 @@ class DocumentService:
     def set_column_types(self,
                          filename: str,
                          target_column: str,
-                         task_type: str):
+                         task_type: str = TaskType.classification):
         column_types = self._validate_column_types(filename,
                                                    target_column,
                                                    task_type)
