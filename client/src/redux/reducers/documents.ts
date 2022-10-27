@@ -12,7 +12,7 @@ const initialState: DocumentsSlice = {
   customFileName: "",
   selectedFile: null,
   selectedTargetColumn: null,
-  selectedTaskType: null,
+  selectedTaskType: TaskType.classification,
 };
 
 const documentsSlice = createSlice({

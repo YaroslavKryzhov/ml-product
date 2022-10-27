@@ -97,10 +97,10 @@ export const Markup: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
-            <FormControl sx={{ width: "400px" }}>
+            <FormControl disabled sx={{ width: "400px" }}>
               <InputLabel>Task Type</InputLabel>
               <Select
-                disabled={!!docInfo?.column_types}
+                disabled={true || !!docInfo?.column_types}
                 value={
                   docInfo?.column_types?.task_type || selectedTaskType || ""
                 }
