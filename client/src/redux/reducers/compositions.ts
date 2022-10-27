@@ -21,6 +21,7 @@ const initialState: CompositionsSlice = {
   models: {},
   documentName: "",
   testSize: 0.2,
+  taskType: TaskType.classification,
 };
 
 const compositionsSlice = createSlice({
@@ -41,6 +42,10 @@ const compositionsSlice = createSlice({
       void (state.testSize = action.payload),
     addModel: (state) =>
       void (state.models[nanoid()] = { type: null, params: null }),
+    deleteModel: (state, { payload }: PayloadAction<string>) =>
+      void (state.models = Object.fromEntries(
+        Object.entries(state.models).filter(([id]) => id !== payload)
+      )),
     changeModel: (state, action: PayloadAction<{ id: string; model: Model }>) =>
       void (state.models[action.payload.id] = action.payload.model),
   },
@@ -54,6 +59,7 @@ export const {
   changeDocumentName,
   changeTestSize,
   addModel,
+  deleteModel,
   changeModel,
 } = compositionsSlice.actions;
 

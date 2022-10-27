@@ -47,10 +47,10 @@ export const CompositionProps: React.FC<{ createMode?: boolean }> = ({
           flexWrap: "wrap",
         }}
       >
-        <FormControl sx={{ width: SELECTORS_WIDTH }}>
+        <FormControl disabled sx={{ width: SELECTORS_WIDTH }}>
           <InputLabel>Task Type</InputLabel>
           <Select
-            disabled={!createMode}
+            disabled={true || !createMode}
             value={taskType}
             label="Task Type"
             onChange={(event) =>
