@@ -7,7 +7,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import Slide from "@mui/material/Slide";
 import { TransitionProps } from "@mui/material/transitions";
 import { useAppDispatch, useSESelector } from "ducks/hooks";
-import { useEffect, useState } from "react";
+import { createContext, useEffect, useRef, useState } from "react";
 import { setDialog } from "ducks/reducers/dialog";
 import { theme } from "globalStyle/theme";
 import { LoadingButton } from "@mui/lab";
@@ -33,7 +33,10 @@ export type DialogProps = {
   acceptDisabled?: boolean;
   loading?: boolean;
   fullWidth?: boolean;
+  fullHeight?: boolean;
 };
+
+export const HeightContext = createContext(0);
 
 export const DialogCustom: React.FC = () => {
   const {
@@ -48,12 +51,19 @@ export const DialogCustom: React.FC = () => {
     acceptDisabled,
     loading,
     fullWidth,
+    fullHeight,
   } = useSESelector((state) => state.dialog);
   const [open, setIsOpen] = useState(false);
   const dispatch = useAppDispatch();
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const [contentHeight, setContentHeight] = useState<number>(0);
 
   useEffect(() => {
     if (title) setIsOpen(true);
+
+    if (dialogRef.current) {
+      setContentHeight(dialogRef.current.getBoundingClientRect().height);
+    }
   }, [title]);
 
   const close = () => {
@@ -73,18 +83,21 @@ export const DialogCustom: React.FC = () => {
           p: theme.spacing(1),
           maxWidth: "100vw",
           width: fullWidth ? "100%" : "auto",
+          height: fullHeight ? "100%" : "auto",
         },
       }}
     >
       <DialogTitle sx={{ textAlign: "center" }} variant="h5">
         {title}
       </DialogTitle>
-      <DialogContent>
-        {Content || (
-          <DialogContentText sx={{ textAlign: "center" }}>
-            {text}
-          </DialogContentText>
-        )}
+      <DialogContent ref={dialogRef}>
+        <HeightContext.Provider value={contentHeight}>
+          {Content || (
+            <DialogContentText sx={{ textAlign: "center" }}>
+              {text}
+            </DialogContentText>
+          )}
+        </HeightContext.Provider>
       </DialogContent>
       {(onDismiss || onAccept) && (
         <DialogActions

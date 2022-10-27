@@ -59,27 +59,26 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
   const { data: infoDocument } = useInfoDocumentQuery(docName!);
   const [deleteColumn] = useDeleteColumnMutation();
 
-  const setDialogProps = useCallback(() => {
+  const setDialogProps = () =>
     data &&
-      dispatch(
-        setDialog({
-          title: `Подробности о ${name}`,
-          Content: (
-            <MoreColumnInfo
-              type={type}
-              data={data}
-              name={name}
-              not_null_count={not_null_count}
-              data_type={data_type}
-            />
-          ),
-          onDismiss: T,
-          dismissText: "Закрыть",
-        })
-      );
-  }, [data, name, data_type, not_null_count, type, dispatch]);
+    dispatch(
+      setDialog({
+        title: `Подробности о ${name}`,
+        Content: (
+          <MoreColumnInfo
+            type={type}
+            data={data}
+            name={name}
+            not_null_count={not_null_count}
+            data_type={data_type}
+          />
+        ),
+        onDismiss: T,
+        dismissText: "Закрыть",
+      })
+    );
 
-  const setDialogDeleteProps = useCallback(() => {
+  const setDialogDeleteProps = () =>
     dispatch(
       setDialog({
         title: `Удаление ${name}`,
@@ -93,7 +92,6 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
         onDismiss: T,
       })
     );
-  }, [name, dispatch, deleteColumn, docName]);
 
   const markChange = useChangeColumnType(name);
   const isTarget = name === infoDocument?.column_types?.target;

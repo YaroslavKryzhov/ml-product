@@ -63,7 +63,7 @@ export const MainInfo: React.FC = () => {
         Основное
       </Typography>
       <Box>
-        <DocumentPreview />
+        <DocumentPreview docName={docName!} />
         <Typography sx={{ mt: theme.spacing(3) }} variant="body1">
           Pandas Description
         </Typography>

@@ -3,61 +3,100 @@ import {
   useDocumentQuery,
   useInfoStatsDocumentQuery,
 } from "ducks/reducers/api/documents.api";
-import React, { useMemo, useState } from "react";
+import React, { useContext, useState } from "react";
 import { zipObject, unzip, values, keys } from "lodash";
 import { theme } from "globalStyle/theme";
-import { Box, Pagination, Skeleton } from "@mui/material";
+import { Box, IconButton, Pagination, Skeleton } from "@mui/material";
 import { Fixed } from "components/Table/types";
 import { HeaderCell } from "./HeaderCell";
-import { useParams } from "react-router-dom";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import { useDispatch } from "react-redux";
+import { setDialog } from "ducks/reducers/dialog";
+import { T } from "ramda";
+import { HeightContext } from "components/Dialog";
 
 const convertData = (data: Record<string, string | number>) =>
   unzip(values(data).map((x) => values(x as any))).map((zipArr) =>
     zipObject(keys(data), zipArr)
   );
 
-export const DocumentPreview: React.FC = () => {
-  const { docName } = useParams();
+export const DocumentPreview: React.FC<{
+  docName: string;
+  isInnerOpened?: boolean;
+}> = ({ docName, isInnerOpened }) => {
+  const dispatch = useDispatch();
   const [page, setPage] = useState<number>(1);
   const { data, isFetching: isDocLoading } = useDocumentQuery({
-    filename: docName!,
+    filename: docName,
     page,
   });
   const { data: infoData, isFetching: isInfoLoading } =
-    useInfoStatsDocumentQuery(docName!);
+    useInfoStatsDocumentQuery(docName);
 
-  const convertedData = useMemo(
-    () => (data?.records ? convertData(data.records) : []),
-    [data]
-  );
+  const convertedData = data?.records ? convertData(data.records) : [];
 
-  const columns = useMemo(
-    () =>
-      infoData
-        ? infoData.map((df, inx, arr) => ({
-            accessor: df.name,
-            fixed: inx === arr.length - 1 ? Fixed.right : Fixed.left,
-            Header: <HeaderCell {...df} right={inx === arr.length - 1} />,
-          }))
-        : [],
-    [infoData]
-  );
+  const columns = infoData
+    ? infoData.map((df, inx, arr) => ({
+        accessor: df.name,
+        fixed: inx === arr.length - 1 ? Fixed.right : Fixed.left,
+        Header: <HeaderCell {...df} right={inx === arr.length - 1} />,
+      }))
+    : [];
+
+  const openFulScreen = () =>
+    dispatch(
+      setDialog({
+        title: `Данные`,
+        Content: <DocumentPreview docName={docName} isInnerOpened />,
+        onDismiss: T,
+        dismissText: "Закрыть",
+        fullWidth: true,
+        fullHeight: true,
+      })
+    );
+
+  const fullScreenTableHeight = useContext(HeightContext);
 
   return (
     <Box>
       {isDocLoading || isInfoLoading ? (
         <Skeleton variant="rectangular" width="100%" height={500} />
       ) : (
-        <TableFix
-          compact
-          offHeaderPaddings
-          defaultColumnSizing={{ minWidth: 135 }}
-          forceResize
-          resizable
-          data={convertedData}
-          columns={columns}
-          tableMaxHeight="500px"
-        />
+        <Box sx={{ position: "relative", width: "100%" }}>
+          <TableFix
+            compact
+            offHeaderPaddings
+            defaultColumnSizing={{ minWidth: 135 }}
+            forceResize
+            resizable
+            data={convertedData}
+            columns={columns}
+            tableMaxHeight={`${
+              isInnerOpened ? fullScreenTableHeight - 50 : 500
+            }px`}
+          />
+          {!isInnerOpened && (
+            <Box sx={{ position: "absolute", right: 5, bottom: 5 }}>
+              <IconButton
+                sx={{
+                  backgroundColor: theme.palette.info.light,
+                  color: theme.palette.info.main,
+                  fontSize: "30px",
+                  borderRadius: theme.shape.borderRadius,
+                  opacity: "0.6",
+                  "&:hover": {
+                    backgroundColor: theme.palette.info.dark,
+                    color: theme.palette.info.light,
+                    opacity: "1",
+                  },
+                }}
+                onClick={openFulScreen}
+              >
+                <OpenInNewIcon fontSize="inherit" />
+              </IconButton>
+            </Box>
+          )}
+        </Box>
       )}
       {isInfoLoading ? (
         <Skeleton
