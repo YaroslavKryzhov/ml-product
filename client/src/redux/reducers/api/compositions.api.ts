@@ -1,7 +1,12 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { ROUTES } from "../../constants";
 import { addAuthHeader } from "./helpers";
-import { CompositionInfo, CompositionInfoShort } from "../types";
+import {
+  CompositionInfo,
+  CompositionInfoShort,
+  Model,
+  TrainParamsPayload,
+} from "../types";
 
 enum Tags {
   compositions = "compositions",
@@ -64,11 +69,15 @@ export const compositionsApi = createApi({
         params,
       }),
     }),
-    trainComposition: builder.mutation<string, {}>({
-      query: (params) => ({
+    trainComposition: builder.mutation<
+      string,
+      { body: Model[]; params: TrainParamsPayload }
+    >({
+      query: (payload) => ({
         url: ROUTES.COMPOSITIONS.TRAIN,
-        params,
+        params: payload.params,
         method: "POST",
+        body: payload.body,
       }),
       invalidatesTags: [Tags.compositions],
     }),

@@ -236,3 +236,11 @@ export type CompositionInfoShort = {
   composition_type: CompositionType;
   stage: CompositionStatus;
 };
+
+export type TrainParamsPayload = {
+  composition_type: CompositionType;
+  params_type: ParamsCompositionType;
+  document_name: string;
+  model_name: string;
+  test_size: number;
+};
