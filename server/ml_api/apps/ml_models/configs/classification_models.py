@@ -21,18 +21,18 @@ class AvailableModels(Enum):
     # lightgbm = 'LGBMClassifier'
 
 
-class DecisionTreeClassifierParameters(BaseModel):
+class DecisionTreeClassifierParameters(BaseModel):  # ready
     criterion: Literal['gini', 'entropy'] = 'gini'
     splitter: Literal['best', 'random'] = 'best'
     max_depth: int = None
-    min_samples_split: int = 2
+    min_samples_split: float = 2
     min_samples_leaf: int = 1
-    max_features: Union[Literal['auto', 'sqrt', 'log2'], float] = None
-    random_state: int = None
-    max_leaf_nodes: int = None
-    min_impurity_decrease: float = 0
-    class_weight: Union[Literal['balanced'], Dict] = None
-    ccp_alpha: float = 0
+    # max_features: Union[Literal['auto', 'sqrt', 'log2'], float] = None
+    # random_state: int = None
+    # max_leaf_nodes: int = None
+    # min_impurity_decrease: float = 0
+    # class_weight: Union[Literal['balanced'], Dict] = None
+    # ccp_alpha: float = 0
 
     @validator("max_depth")
     def validate_max_depth(cls, value):
@@ -40,26 +40,44 @@ class DecisionTreeClassifierParameters(BaseModel):
             raise ValueError('max_depth must be greater than zero.')
         return value
 
-    @validator("ccp_alpha")
-    def validate_ccp_alpha(cls, value):
-        if value < 0:
-            raise ValueError('ccp_alpha must be non-negative.')
+    @validator("min_samples_split")
+    def validate_min_samples_split(cls, value):
+        if value < 2:
+            raise ValueError('min_samples_split must be 2 or greater.')
         return value
 
+    @validator("min_samples_leaf")
+    def validate_min_samples_leaf(cls, value):
+        if value < 1:
+            raise ValueError('min_samples_leaf must be 1 or greater.')
+        return value
 
-class RandomForestClassifierParameters(BaseModel):
+    # @validator("ccp_alpha")
+    # def validate_ccp_alpha(cls, value):
+    #     if value < 0:
+    #         raise ValueError('ccp_alpha must be non-negative.')
+    #     return value
+
+
+class RandomForestClassifierParameters(BaseModel): # ready
     n_estimators: int = 100
     criterion: Literal['gini', 'entropy'] = 'gini'
     max_depth: int = None
     min_samples_split: int = 2
     min_samples_leaf: int = 1
-    max_features: Union[Literal['auto', 'sqrt', 'log2'], float] = None
-    max_leaf_nodes: int = None
-    min_impurity_decrease: float = 0
+    # max_features: Union[Literal['auto', 'sqrt', 'log2'], float] = None
+    # max_leaf_nodes: int = None
+    # min_impurity_decrease: float = 0
     bootstrap: bool = True
-    oob_score: bool = False
-    class_weight: Union[Literal['balanced'], Dict] = None
-    ccp_alpha: float = 0
+    # oob_score: bool = False
+    # class_weight: Union[Literal['balanced'], Dict] = None
+    # ccp_alpha: float = 0
+
+    @validator("n_estimators")
+    def validate_n_estimators(cls, value):
+        if value < 2:
+            raise ValueError('n_estimators must be 2 or greater.')
+        return value
 
     @validator("max_depth")
     def validate_max_depth(cls, value):
@@ -67,11 +85,23 @@ class RandomForestClassifierParameters(BaseModel):
             raise ValueError('max_depth must be greater than zero.')
         return value
 
-    @validator("ccp_alpha")
-    def validate_ccp_alpha(cls, value):
-        if value < 0:
-            raise ValueError('ccp_alpha must be non-negative.')
+    @validator("min_samples_split")
+    def validate_min_samples_split(cls, value):
+        if value < 2:
+            raise ValueError('min_samples_split must be 2 or greater.')
         return value
+
+    @validator("min_samples_leaf")
+    def validate_min_samples_leaf(cls, value):
+        if value < 1:
+            raise ValueError('min_samples_leaf must be 1 or greater.')
+        return value
+
+    # @validator("ccp_alpha")
+    # def validate_ccp_alpha(cls, value):
+    #     if value < 0:
+    #         raise ValueError('ccp_alpha must be non-negative.')
+    #     return value
 
 
 class CatBoostClassifierParameters(BaseModel):
