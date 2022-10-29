@@ -1,4 +1,9 @@
-from ml_api.common.postgre_config import DATABASE_USER, DATABASE_PASSWORD, DATABASE_PORT, DATABASE_HOST
+from ml_api.common.postgre_config import (
+    DATABASE_USER,
+    DATABASE_PASSWORD,
+    DATABASE_PORT,
+    DATABASE_HOST,
+)
 
 PROJECT_NAME = 'ML Project'
 VERSION = '0.0.1'

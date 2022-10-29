@@ -57,8 +57,9 @@ class MulticlassClassificationMetrics(BaseModel):
 
 class CompositionReport(BaseModel):
     csv_name: str
-    metrics: Union[BinaryClassificationMetrics,
-                   MulticlassClassificationMetrics]
+    metrics: Union[
+        BinaryClassificationMetrics, MulticlassClassificationMetrics
+    ]
 
 
 class CompositionFullInfo(BaseModel):
