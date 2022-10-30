@@ -2,13 +2,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from ml_api.common import config
-from ml_api.apps.documents.routers import documents_file_router, documents_df_router, documents_method_router
+from ml_api.apps.documents.routers import (
+    documents_file_router,
+    documents_df_router,
+    documents_method_router,
+)
 from ml_api.apps.users.routers import users_router
 from ml_api.apps.ml_models.routers import models_router
 
 
-app = FastAPI(title=config.PROJECT_NAME,
-              version=config.VERSION)
+app = FastAPI(title=config.PROJECT_NAME, version=config.VERSION)
 
 app.add_middleware(
     CORSMiddleware,

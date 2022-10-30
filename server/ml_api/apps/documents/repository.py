@@ -14,7 +14,6 @@ from ml_api.apps.documents.schemas import DocumentShortInfo, DocumentFullInfo
 
 
 class BaseCRUD:
-
     def __init__(self, user):
         self.user_id = str(user.id)
         self.user_path = os.path.join(ROOT_DIR, self.user_id, 'documents')
@@ -26,7 +25,6 @@ class BaseCRUD:
 
 
 class DocumentPostgreCRUD(BaseCRUD):
-
     def __init__(self, session: Session, user):
         super().__init__(user)
         self.session = session
@@ -40,30 +38,49 @@ class DocumentPostgreCRUD(BaseCRUD):
             upload_date=str(datetime.now()),
             change_date=str(datetime.now()),
             pipeline=[],
-            column_types=None
+            column_types=None,
         )
         self.session.add(new_obj)
         self.session.commit()
 
     # READ
     def read_by_uuid(self, uuid: UUID) -> str:
-        name = self.session.query(Document.name).filter(
-            Document.id == uuid).first()[0]
+        name = (
+            self.session.query(Document.name)
+            .filter(Document.id == uuid)
+            .first()[0]
+        )
         return name
 
     def read_by_name(self, filename: str) -> DocumentFullInfo:
         filepath = self._file_path(filename)
-        document = self.session.query(Document.id, Document.name,
-            Document.upload_date, Document.change_date, Document.column_types,
-            Document.pipeline).filter(Document.filepath == filepath).first()
+        document = (
+            self.session.query(
+                Document.id,
+                Document.name,
+                Document.upload_date,
+                Document.change_date,
+                Document.column_types,
+                Document.pipeline,
+            )
+            .filter(Document.filepath == filepath)
+            .first()
+        )
         if document:
             return DocumentFullInfo.from_orm(document)
         return None
 
     def read_all(self) -> List[DocumentShortInfo]:
-        documents = self.session.query(Document.name, Document.upload_date,
-            Document.change_date, Document.pipeline).filter(
-            Document.user_id == self.user_id).all()
+        documents = (
+            self.session.query(
+                Document.name,
+                Document.upload_date,
+                Document.change_date,
+                Document.pipeline,
+            )
+            .filter(Document.user_id == self.user_id)
+            .all()
+        )
         result = []
         for document in documents:
             result.append(DocumentShortInfo.from_orm(document))
@@ -75,7 +92,8 @@ class DocumentPostgreCRUD(BaseCRUD):
         if query.get('name', None):
             query['filepath'] = self._file_path(query['name'])
         self.session.query(Document).filter(
-            Document.filepath == filepath).update(query)
+            Document.filepath == filepath
+        ).update(query)
         self.session.commit()
 
     # DELETE
@@ -83,7 +101,8 @@ class DocumentPostgreCRUD(BaseCRUD):
         # sqlalchemy.exc.IntegrityError:
         filepath = self._file_path(filename)
         self.session.query(Document).filter(
-            Document.filepath == filepath).delete()
+            Document.filepath == filepath
+        ).delete()
         self.session.commit()
 
 
@@ -97,20 +116,20 @@ class DocumentFileCRUD(BaseCRUD):
 
     # READ
     def read_df(self, filename: str) -> pd.DataFrame:
-        """ DEV USE: Read CSV and return DataFrame object"""
+        """DEV USE: Read CSV and return DataFrame object"""
         csv_path = self._file_path(filename)
         data = pd.read_csv(csv_path)
         return data
 
     def download(self, filename: str) -> FileResponse:
         csv_path = self._file_path(filename)
-        return FileResponse(path=csv_path,
-                            filename=filename,
-                            media_type='text/csv')
+        return FileResponse(
+            path=csv_path, filename=filename, media_type='text/csv'
+        )
 
     # UPDATE
     def update(self, filename: str, data: pd.DataFrame):
-        """ DEV USE: Save DataFrame object in CSV format"""
+        """DEV USE: Save DataFrame object in CSV format"""
         data.to_csv(os.path.join(self.user_path, filename), index=False)
 
     def rename(self, filename: str, new_filename: str):

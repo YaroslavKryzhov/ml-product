@@ -31,7 +31,7 @@ class CompositionParams(BaseModel):
     params: Dict[str, Any]
 
 
-class BinaryClassificationMetrics(BaseModel):
+class ClassificationMetrics(BaseModel):
     accuracy: float
     recall: float
     precision: float
@@ -39,13 +39,6 @@ class BinaryClassificationMetrics(BaseModel):
     roc_auc: Optional[float]
     fpr: Optional[List[float]]
     tpr: Optional[List[float]]
-
-
-class MulticlassClassificationMetrics(BaseModel):
-    accuracy: float
-    recall: float
-    precision: float
-    f1: float
     roc_auc_weighted: Optional[float]
     roc_auc_micro: Optional[float]
     roc_auc_macro: Optional[float]
@@ -54,11 +47,27 @@ class MulticlassClassificationMetrics(BaseModel):
     fpr_macro: Optional[List[float]]
     tpr_macro: Optional[List[float]]
 
+#
+# class MulticlassClassificationMetrics(BaseModel):
+#     accuracy: float
+#     recall: float
+#     precision: float
+#     f1: float
+#     roc_auc_weighted: Optional[float]
+#     roc_auc_micro: Optional[float]
+#     roc_auc_macro: Optional[float]
+#     fpr_micro: Optional[List[float]]
+#     tpr_micro: Optional[List[float]]
+#     fpr_macro: Optional[List[float]]
+#     tpr_macro: Optional[List[float]]
+
+
 
 class CompositionReport(BaseModel):
     csv_name: str
-    metrics: Union[BinaryClassificationMetrics,
-                   MulticlassClassificationMetrics]
+    metrics: Union[
+        ClassificationMetrics
+    ]
 
 
 class CompositionFullInfo(BaseModel):

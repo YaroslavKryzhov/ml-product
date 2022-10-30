@@ -9,10 +9,13 @@ fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 current_active_user = fastapi_users.current_user(active=True)
 
 users_router = APIRouter(
-    tags=["Users"],
-    responses={404: {"description": "Not found"}}
+    tags=["Users"], responses={404: {"description": "Not found"}}
 )
 
-users_router.include_router(fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt")
+users_router.include_router(
+    fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt"
+)
 
-users_router.include_router(fastapi_users.get_register_router(UserRead, UserCreate), prefix="/auth")
+users_router.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate), prefix="/auth"
+)
