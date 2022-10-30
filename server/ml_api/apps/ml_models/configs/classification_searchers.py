@@ -132,7 +132,7 @@ CLASSIFICATION_SEARCHERS_CONFIG = {
                 'l2',
                 'manhattan',
                 'nan_euclidean',
-                'minkovski',
+                'minkowski',
                 'mahalanobis',
             ],
         ),

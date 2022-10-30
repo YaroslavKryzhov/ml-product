@@ -143,7 +143,7 @@ class GradientBoostingClassifierParameters(BaseModel):  # ready
     criterion: Literal[
         'friedman_mse', 'squared_error', 'mse', 'mae'
     ] = 'friedman_mse'
-    min_samples_split: Union[int, float] = 1
+    min_samples_split: Union[int, float] = 2
     # min_weight_fraction_leaf: float = 0
     max_depth: int = 3
     # min_impurity_decrease: float = 0
@@ -655,9 +655,9 @@ class KNeighborsClassifierParameters(BaseModel):
         'l2',
         'manhattan',
         'nan_euclidean',
-        'minkovski',
+        'minkowski',
         'mahalanobis',
-    ] = 'minkovski'
+    ] = 'minkowski'
     n_jobs = N_JOBS  # ignore!!
 
     @validator("n_neighbors")

@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Any, List
+from typing import Dict, Optional, Any, List, Union
 from functools import partial
 
 from fastapi.responses import JSONResponse
@@ -47,8 +47,7 @@ from ml_api.apps.ml_models.configs.classification_searchers import (
 )
 from ml_api.apps.ml_models.schemas import (
     CompositionParams,
-    MulticlassClassificationMetrics,
-    BinaryClassificationMetrics,
+    ClassificationMetrics,
     CompositionReport,
     CompositionFullInfoResponse,
     CompositionShortInfoResponse,
@@ -222,6 +221,7 @@ class ModelService:
         model_name: str,
         test_size: Optional[float] = 0.2,
     ):
+        print(composition_params)
         if params_type == 'auto':
             composition_params = AutoParamsSearch(
                 task_type=task_type,
@@ -278,8 +278,6 @@ class ModelService:
         model_info = ModelPostgreCRUD(self._db, self._user).read_by_name(
             model_name=model_name
         )
-        print(features.columns.to_list())
-        print(model_info.features)
         if features.columns.to_list() != model_info.features:
             return JSONResponse(
                 status_code=status.HTTP_406_NOT_ACCEPTABLE,
@@ -625,7 +623,7 @@ class CompositionValidator:
         self.target = target
         self.test_size = test_size
 
-    def validate_model(self):
+    def validate_model(self) -> Union[ClassificationMetrics]:
         if self.task_type == 'classification':
             if self.target.nunique() == 2:
                 return self._process_binary_classification()
@@ -656,7 +654,7 @@ class CompositionValidator:
                     features_valid
                 )
             except AttributeError:
-                probabilities = False
+                probabilities = None
 
         roc_auc = None
         fpr = None
@@ -666,12 +664,12 @@ class CompositionValidator:
         recall = recall_score(target_valid, predictions)
         precision = precision_score(target_valid, predictions)
         f1 = f1_score(target_valid, predictions)
-        if probabilities:
+        if probabilities is not None:
             roc_auc = roc_auc_score(target_valid, probabilities)
             fpr, tpr, _ = roc_curve(target_valid, probabilities)
             fpr = list(fpr)
             tpr = list(tpr)
-        report = BinaryClassificationMetrics(
+        report = ClassificationMetrics(
             accuracy=accuracy,
             recall=recall,
             precision=precision,
@@ -704,7 +702,7 @@ class CompositionValidator:
                     features_valid
                 )
             except AttributeError:
-                probabilities = False
+                probabilities = None
 
         accuracy = accuracy_score(target_valid, predictions)
         recall = recall_score(target_valid, predictions, average='weighted')
@@ -721,7 +719,7 @@ class CompositionValidator:
         tpr_micro = None
         tpr_macro = None
 
-        if probabilities:
+        if probabilities is not None:
             classes = list(self.target.unique())
             target_valid = label_binarize(target_valid, classes=classes)
             n_classes = len(classes)
@@ -772,7 +770,7 @@ class CompositionValidator:
             roc_auc_micro = roc_auc["micro"]
             roc_auc_macro = roc_auc["macro"]
 
-        report = MulticlassClassificationMetrics(
+        report = ClassificationMetrics(
             accuracy=accuracy,
             recall=recall,
             precision=precision,
