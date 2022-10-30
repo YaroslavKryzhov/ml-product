@@ -1,14 +1,31 @@
 import { Box, Button, Divider, Typography } from "@mui/material";
 import { UnavailableBlock } from "app/Workplace/common/UnavailableBlock";
 import { useAppDispatch, useSESelector } from "ducks/hooks";
-import { addModel } from "ducks/reducers/compositions";
+import { useCompositionInfoQuery } from "ducks/reducers/api/compositions.api";
+import { addModel, setModels } from "ducks/reducers/compositions";
 import { theme } from "globalStyle/theme";
 import { isEmpty, keys } from "lodash";
+import { useEffect } from "react";
 import { ModelProps } from "./ModelProps";
 
 export const Models: React.FC<{ createMode?: boolean }> = ({ createMode }) => {
-  const { models } = useSESelector((state) => state.compositions);
+  const { models, customCompositionName } = useSESelector(
+    (state) => state.compositions
+  );
+
   const dispatch = useAppDispatch();
+
+  const { data: modelData } = useCompositionInfoQuery(
+    {
+      model_name: customCompositionName,
+    },
+    { skip: createMode }
+  );
+
+  useEffect(() => {
+    modelData?.composition_params &&
+      dispatch(setModels(modelData.composition_params));
+  }, [modelData]);
 
   return (
     <Box>

@@ -53,12 +53,32 @@ export const compositionsApi = createApi({
       }),
       providesTags: [Tags.compositions],
     }),
-    downloadComposition: builder.mutation<string, { model_name: string }>({
-      query: (params) => ({
-        url: ROUTES.COMPOSITIONS.DOWNLOAD,
-        params,
-        method: "GET",
-      }),
+
+    downloadComposition: builder.mutation<null, { model_name: string }>({
+      async queryFn({ model_name }) {
+        const res = await fetch(
+          `${ROUTES.COMPOSITIONS.BASE}${ROUTES.COMPOSITIONS.DOWNLOAD}?model_name=${model_name}`,
+          {
+            headers: { Authorization: `Bearer ${localStorage.authToken}` },
+          }
+        );
+
+        const blob = await res.blob();
+
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = url;
+        a.download = model_name;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+
+        return {
+          data: null,
+          meta: null,
+        };
+      },
     }),
     predictComposition: builder.query<
       string,

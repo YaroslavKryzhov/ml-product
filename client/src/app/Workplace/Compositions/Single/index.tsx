@@ -1,10 +1,12 @@
 import { Box, Button, Stack, Tooltip } from "@mui/material";
-import { nanoid } from "@reduxjs/toolkit";
 import { WorkPageHeader } from "app/Workplace/common/WorkPageHeader";
-import { useSESelector } from "ducks/hooks";
+import { pathify, useAppDispatch, useSESelector } from "ducks/hooks";
 import { useTrainCompositionMutation } from "ducks/reducers/api/compositions.api";
+import { resetComposition } from "ducks/reducers/compositions";
+import { AppPage, WorkPage, DocumentPage } from "ducks/reducers/types";
 import { entries, isEmpty } from "lodash";
 import React from "react";
+import { useNavigate } from "react-router";
 import { CompositionProps } from "./CompositionProps";
 import { Models } from "./Models";
 
@@ -18,9 +20,12 @@ export const CompositionSingle: React.FC<{ createMode?: boolean }> = ({
     paramsType,
     documentName,
     models,
+    customCompositionName,
   } = useSESelector((state) => state.compositions);
 
+  const dispatch = useAppDispatch();
   const [train] = useTrainCompositionMutation();
+  const navigate = useNavigate();
 
   const saveEnabled =
     taskType &&
@@ -38,10 +43,16 @@ export const CompositionSingle: React.FC<{ createMode?: boolean }> = ({
         composition_type: compositionType!,
         params_type: paramsType!,
         document_name: documentName,
-        model_name: nanoid(),
+        model_name: customCompositionName,
         test_size: testSize,
       },
     });
+
+    navigate(
+      pathify([AppPage.Workplace, WorkPage.Compositions, DocumentPage.List])
+    );
+
+    dispatch(resetComposition());
   };
 
   return (

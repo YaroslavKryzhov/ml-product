@@ -46,8 +46,13 @@ const compositionsSlice = createSlice({
       void (state.models = Object.fromEntries(
         Object.entries(state.models).filter(([id]) => id !== payload)
       )),
+    setModels: (state, { payload }: PayloadAction<Model[]>) =>
+      void (state.models = Object.fromEntries(
+        payload.map((x) => [nanoid(), x])
+      )),
     changeModel: (state, action: PayloadAction<{ id: string; model: Model }>) =>
       void (state.models[action.payload.id] = action.payload.model),
+    resetComposition: () => initialState,
   },
 });
 
@@ -61,6 +66,8 @@ export const {
   addModel,
   deleteModel,
   changeModel,
+  resetComposition,
+  setModels,
 } = compositionsSlice.actions;
 
 export default compositionsSlice.reducer;

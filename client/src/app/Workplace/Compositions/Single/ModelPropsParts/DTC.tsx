@@ -1,29 +1,22 @@
-import { Delete } from "@mui/icons-material";
 import {
   Box,
-  Button,
   Checkbox,
   FormControl,
   FormControlLabel,
-  IconButton,
   InputLabel,
   MenuItem,
   Select,
   TextField,
 } from "@mui/material";
-import { nanoid } from "@reduxjs/toolkit";
 import {
   DecisionTreeClassifierParameters,
   DescicionSplitter,
-  DesicionClassWeight,
   DesicionCriterion,
-  DesicionMaxFeatures,
 } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
-import { entries, isObject, omit, values, zipObject } from "lodash";
-import { useCallback, useState } from "react";
-import { FloatRegexp, SELECTORS_WIDTH } from "../constants";
-import { CorrectFloat } from "../helpers";
+import { values } from "lodash";
+import { useState } from "react";
+import { SELECTORS_WIDTH } from "../constants";
 
 export const DecisionTreeClassifier: React.FC<{
   onParamsChange: (params: DecisionTreeClassifierParameters) => void;
@@ -31,41 +24,41 @@ export const DecisionTreeClassifier: React.FC<{
   disabled?: boolean;
 }> = ({ onParamsChange, params, disabled }) => {
   const [isMaxDepthEnabled, setIsMaxDepthEnabled] = useState<boolean>(false);
-  const [isMaxFeaturesEnabled, setIsMaxFeaturesEnabled] =
-    useState<boolean>(false);
-  const [isRandomStateEnabled, setIsRandomStateEnabled] =
-    useState<boolean>(false);
-  const [isMaxLeafNodesEnabled, setIsMaxLeafNodesEnabled] =
-    useState<boolean>(false);
-  const [isClassWeightEnabled, setIsClassWeightEnabled] =
-    useState<boolean>(false);
+  // const [isMaxFeaturesEnabled, setIsMaxFeaturesEnabled] =
+  //   useState<boolean>(false);
+  // const [isRandomStateEnabled, setIsRandomStateEnabled] =
+  //   useState<boolean>(false);
+  // const [isMaxLeafNodesEnabled, setIsMaxLeafNodesEnabled] =
+  //   useState<boolean>(false);
+  // const [isClassWeightEnabled, setIsClassWeightEnabled] =
+  //   useState<boolean>(false);
 
-  const [isMaxFeaturesFloat, setIsMaxFeaturesFloat] = useState<boolean>(false);
-  const [isClassWeightCustom, setIsClassWeightCustom] =
-    useState<boolean>(false);
+  // const [isMaxFeaturesFloat, setIsMaxFeaturesFloat] = useState<boolean>(false);
+  // const [isClassWeightCustom, setIsClassWeightCustom] =
+  //   useState<boolean>(false);
 
-  const [customClassWeights, setCustomClassWeights] = useState<
-    Record<string, { label: string; value: string }>
-  >(
-    isObject(params.class_weight)
-      ? zipObject(
-          values(params.class_weight).map(() => nanoid()),
-          entries(params.class_weight).map(([label, value]) => ({
-            label,
-            value,
-          }))
-        )
-      : {}
-  );
+  // const [customClassWeights, setCustomClassWeights] = useState<
+  //   Record<string, { label: string; value: string }>
+  // >(
+  //   isObject(params.class_weight)
+  //     ? zipObject(
+  //         values(params.class_weight).map(() => nanoid()),
+  //         entries(params.class_weight).map(([label, value]) => ({
+  //           label,
+  //           value,
+  //         }))
+  //       )
+  //     : {}
+  // );
 
-  const updateWeights = useCallback(() => {
-    onParamsChange({
-      ...params,
-      class_weight: Object.fromEntries(
-        values(customClassWeights).map((x) => [x.label, x.value])
-      ),
-    });
-  }, [customClassWeights, onParamsChange, params]);
+  // const updateWeights = useCallback(() => {
+  //   onParamsChange({
+  //     ...params,
+  //     class_weight: Object.fromEntries(
+  //       values(customClassWeights).map((x) => [x.label, x.value])
+  //     ),
+  //   });
+  // }, [customClassWeights, onParamsChange, params]);
 
   return (
     <Box sx={{ mt: theme.spacing(5) }}>
@@ -143,7 +136,7 @@ export const DecisionTreeClassifier: React.FC<{
           }
           type="number"
         />
-        <TextField
+        {/* <TextField
           sx={{ width: SELECTORS_WIDTH }}
           disabled={disabled}
           label="Min Impurity Decrease"
@@ -154,8 +147,8 @@ export const DecisionTreeClassifier: React.FC<{
               min_impurity_decrease: Number(event.target.value),
             })
           }
-        />
-        <TextField
+        /> */}
+        {/* <TextField
           sx={{ width: SELECTORS_WIDTH }}
           disabled={disabled}
           label="CCP Alpha"
@@ -167,7 +160,7 @@ export const DecisionTreeClassifier: React.FC<{
               ccp_alpha: Number(event.target.value),
             })
           }
-        />
+        /> */}
       </Box>
       <Box
         sx={{
@@ -186,6 +179,7 @@ export const DecisionTreeClassifier: React.FC<{
         >
           <Box sx={{ display: "grid" }}>
             <FormControlLabel
+              disabled={disabled}
               control={
                 <Checkbox
                   value={isMaxDepthEnabled}
@@ -201,7 +195,7 @@ export const DecisionTreeClassifier: React.FC<{
               }
               label="Max Depth Enabled"
             />
-            <FormControlLabel
+            {/* <FormControlLabel
               control={
                 <Checkbox
                   value={isMaxFeaturesEnabled}
@@ -216,8 +210,8 @@ export const DecisionTreeClassifier: React.FC<{
                 />
               }
               label="Max Features Enabled"
-            />
-            <FormControlLabel
+            /> */}
+            {/* <FormControlLabel
               control={
                 <Checkbox
                   value={isRandomStateEnabled}
@@ -232,8 +226,8 @@ export const DecisionTreeClassifier: React.FC<{
                 />
               }
               label="Random State Enabled"
-            />
-            <FormControlLabel
+            /> */}
+            {/* <FormControlLabel
               control={
                 <Checkbox
                   value={isMaxLeafNodesEnabled}
@@ -248,8 +242,8 @@ export const DecisionTreeClassifier: React.FC<{
                 />
               }
               label="Max Leaf Nodes Enabled"
-            />
-            <FormControlLabel
+            /> */}
+            {/* <FormControlLabel
               control={
                 <Checkbox
                   value={isClassWeightEnabled}
@@ -266,16 +260,16 @@ export const DecisionTreeClassifier: React.FC<{
                 />
               }
               label="Class Weight Enabled"
-            />
+            /> */}
           </Box>
         </Box>
-        <Box
+        {/* <Box
           sx={{
             display: "grid",
             gridTemplateRows: "repeat(2, max-content)",
           }}
-        >
-          <FormControlLabel
+        > */}
+        {/* <FormControlLabel
             control={
               <Checkbox
                 value={isMaxFeaturesFloat}
@@ -290,9 +284,9 @@ export const DecisionTreeClassifier: React.FC<{
               />
             }
             label="Is Max Features Numeric"
-          />
+          /> */}
 
-          <FormControlLabel
+        {/* <FormControlLabel
             control={
               <Checkbox
                 value={isClassWeightCustom}
@@ -306,8 +300,8 @@ export const DecisionTreeClassifier: React.FC<{
               />
             }
             label="Is Class Weight Custom"
-          />
-        </Box>
+          /> */}
+        {/* </Box> */}
       </Box>
       <Box
         sx={{
@@ -316,7 +310,7 @@ export const DecisionTreeClassifier: React.FC<{
           flexWrap: "wrap",
         }}
       >
-        {isMaxFeaturesFloat ? (
+        {/* {isMaxFeaturesFloat ? (
           <TextField
             sx={{ width: SELECTORS_WIDTH }}
             disabled={disabled || !isMaxFeaturesEnabled}
@@ -357,9 +351,9 @@ export const DecisionTreeClassifier: React.FC<{
               ))}
             </Select>
           </FormControl>
-        )}
+        )} */}
 
-        <TextField
+        {/* <TextField
           sx={{ width: SELECTORS_WIDTH }}
           disabled={disabled || !isRandomStateEnabled}
           label="Random State"
@@ -384,7 +378,7 @@ export const DecisionTreeClassifier: React.FC<{
             })
           }
           type="number"
-        />
+        /> */}
 
         <TextField
           sx={{ width: SELECTORS_WIDTH }}
@@ -401,7 +395,7 @@ export const DecisionTreeClassifier: React.FC<{
           type="number"
         />
       </Box>
-      {isClassWeightCustom && isClassWeightEnabled ? (
+      {/* {isClassWeightCustom && isClassWeightEnabled ? (
         <Box
           sx={{
             mt: theme.spacing(4),
@@ -509,7 +503,7 @@ export const DecisionTreeClassifier: React.FC<{
             ))}
           </Select>
         </FormControl>
-      )}
+      )} */}
     </Box>
   );
 };

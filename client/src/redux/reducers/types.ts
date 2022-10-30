@@ -167,7 +167,8 @@ export type Model = {
 
 export enum ModelTypes {
   DecisionTreeClassifier = "DecisionTreeClassifier",
-  CatBoostClassifier = "CatBoostClassifier",
+  RandomForestClassifier = "RandomForestClassifier",
+  // CatBoostClassifier = "CatBoostClassifier",
   AdaBoostClassifier = "AdaBoostClassifier",
   GradientBoostingClassifier = "GradientBoostingClassifier",
   BaggingClassifier = "BaggingClassifier",
@@ -177,8 +178,8 @@ export enum ModelTypes {
   SVC = "SVC",
   LogisticRegression = "LogisticRegression",
   Perceptron = "Perceptron",
-  XGBoost = "XGBoost",
-  LightGBM = "LightGBM",
+  // XGBoost = "XGBoost",
+  // LightGBM = "LightGBM",
 }
 
 export enum DesicionCriterion {
@@ -207,12 +208,21 @@ export type DecisionTreeClassifierParameters = {
   max_depth?: number | null;
   min_samples_split?: number;
   min_samples_leaf?: number;
-  max_features?: DesicionMaxFeatures | string | null;
-  random_state?: number | null;
-  max_leaf_nodes?: number | null;
-  min_impurity_decrease?: number;
-  class_weight?: DesicionClassWeight | Record<string, string> | null;
-  ccp_alpha?: number;
+  // max_features?: DesicionMaxFeatures | string | null;
+  // random_state?: number | null;
+  // max_leaf_nodes?: number | null;
+  // min_impurity_decrease?: number;
+  // class_weight?: DesicionClassWeight | Record<string, string> | null;
+  // ccp_alpha?: number;
+};
+
+export type RandomForestClassifierParameters = {
+  criterion?: DesicionCriterion;
+  splitter?: DescicionSplitter;
+  max_depth?: number | null;
+  min_samples_split?: number;
+  min_samples_leaf?: number;
+  bootstrap: boolean;
 };
 
 export type StandardResponse = {
@@ -224,7 +234,41 @@ export type StandardResponseData = {
   data: StandardResponse;
 };
 
-export type CompositionInfo = {};
+export type CompositionInfo = {
+  id: string;
+  name: string;
+  csv_id: string;
+  features: string[];
+  target: string;
+  create_date: string;
+  task_type: TaskType;
+  composition_type: CompositionType;
+  composition_params: {
+    type: ModelTypes;
+    params: DecisionTreeClassifierParameters | RandomForestClassifierParameters;
+  }[];
+  stage: CompositionStatus;
+  report: {
+    csv_name: string;
+    metrics: {
+      accuracy: number;
+      recall: number;
+      precision: number;
+      f1: number;
+      roc_auc: number;
+      fpr: number[];
+      tpr: number[];
+      roc_auc_weighted: null;
+      roc_auc_micro: null;
+      roc_auc_macro: null;
+      fpr_micro: null;
+      tpr_micro: null;
+      fpr_macro: null;
+      tpr_macro: null;
+    };
+  };
+  csv_name: "Iris-binary.csv";
+};
 
 export type CompositionInfoShort = {
   name: string;

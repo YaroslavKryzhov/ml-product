@@ -10,6 +10,7 @@ import { useAppDispatch, useSESelector } from "ducks/hooks";
 import { changeModel, deleteModel } from "ducks/reducers/compositions";
 import {
   DecisionTreeClassifierParameters,
+  RandomForestClassifierParameters,
   ModelParams,
   ModelTypes,
 } from "ducks/reducers/types";
@@ -19,6 +20,7 @@ import { always, equals } from "ramda";
 import ClearIcon from "@mui/icons-material/Clear";
 import { DefaultParamsModels } from "./constants";
 import { DecisionTreeClassifier } from "./ModelPropsParts/DTC";
+import { RandomForestClassifier } from "./ModelPropsParts/RTC";
 
 export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
   id,
@@ -76,7 +78,7 @@ export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
             ))}
           </Select>
         </FormControl>
-        <IconButton>
+        <IconButton disabled={!createMode}>
           <ClearIcon onClick={onModelDelete} />
         </IconButton>
       </Box>
@@ -89,6 +91,16 @@ export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
               <DecisionTreeClassifier
                 onParamsChange={onParamsChange(model.type, id)}
                 params={model.params as DecisionTreeClassifierParameters}
+                disabled={!createMode}
+              />
+            ),
+          ],
+          [
+            equals<ModelTypes>(ModelTypes.RandomForestClassifier),
+            always(
+              <RandomForestClassifier
+                onParamsChange={onParamsChange(model.type, id)}
+                params={model.params as RandomForestClassifierParameters}
                 disabled={!createMode}
               />
             ),

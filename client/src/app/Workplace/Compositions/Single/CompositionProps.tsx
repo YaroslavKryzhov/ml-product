@@ -105,7 +105,7 @@ export const CompositionProps: React.FC<{ createMode?: boolean }> = ({
         <FormControl sx={{ width: SELECTORS_WIDTH }}>
           <InputLabel>Document</InputLabel>
           <Select
-            disabled={!createMode && isFetching}
+            disabled={!createMode || isFetching}
             value={documentName}
             label="Document"
             onChange={(event) =>
@@ -124,8 +124,8 @@ export const CompositionProps: React.FC<{ createMode?: boolean }> = ({
             <Typography variant="body2">Test Size</Typography>
             <Typography variant="body2">{testSize}</Typography>
           </Box>
-
           <Slider
+            disabled={!createMode}
             value={testSize}
             min={0}
             step={0.01}
@@ -134,7 +134,6 @@ export const CompositionProps: React.FC<{ createMode?: boolean }> = ({
           />
         </Box>
       </Box>
-
       <Divider sx={{ mb: theme.spacing(3), mt: theme.spacing(2) }} />
     </Box>
   );

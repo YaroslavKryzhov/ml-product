@@ -1,31 +1,29 @@
 import { pathify, useAppDispatch } from "ducks/hooks";
 import { useDeleteCompositionMutation } from "ducks/reducers/api/compositions.api";
-import { useDeleteDocumentMutation } from "ducks/reducers/api/documents.api";
 import { setDialog, setDialogLoading } from "ducks/reducers/dialog";
 import { AppPage, DocumentPage, WorkPage } from "ducks/reducers/types";
-import { first } from "lodash";
 import { T } from "ramda";
 import { useNavigate } from "react-router-dom";
 
-export const useDeleteFile = (options?: { redirectAfter?: boolean }) => {
+export const useDeleteComposition = (options?: { redirectAfter?: boolean }) => {
   const navigate = useNavigate();
-  const [deleteDoc] = useDeleteDocumentMutation();
+  const [deleteComp] = useDeleteCompositionMutation();
   const dispatch = useAppDispatch();
 
   return (name: string) =>
     dispatch(
       setDialog({
         title: "Удаление",
-        text: `Вы действительно хотите удалить файл ${name}?`,
+        text: `Вы действительно хотите удалить композицию ${name}?`,
         onAccept: async () => {
           dispatch(setDialogLoading(true));
-          await deleteDoc(name);
+          await deleteComp({ model_name: name });
           dispatch(setDialogLoading(false));
           if (options?.redirectAfter) {
             navigate(
               pathify([
                 AppPage.Workplace,
-                WorkPage.Documents,
+                WorkPage.Compositions,
                 DocumentPage.List,
               ])
             );
@@ -35,8 +33,3 @@ export const useDeleteFile = (options?: { redirectAfter?: boolean }) => {
       })
     );
 };
-
-export const useDocumentNameForce = (): string | null =>
-  decodeURI(
-    first(window.location.pathname.match(/(?<=documents\/list\/).*$/g)) || ""
-  ) || null;

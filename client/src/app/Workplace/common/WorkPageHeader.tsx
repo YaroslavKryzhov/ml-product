@@ -12,7 +12,9 @@ import {
 import { theme } from "globalStyle/theme";
 import { always } from "ramda";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { EntityHeader } from "./EntityHeader";
+import { CompositionsEntityHeader } from "../Compositions/CompositionsEntityHeader";
+import { DocsEntityHeader } from "../Documents/DocsEntityHeader";
+
 import { first } from "lodash";
 import { useAllCompositionsQuery } from "ducks/reducers/api/compositions.api";
 
@@ -133,14 +135,14 @@ export const WorkPageHeader: React.FC = () => {
       <Typography sx={{ mb: theme.spacing(1) }} variant="h5">
         {docPage === DocumentPage.Single && "Данные"}
         {compositionPage === CompositionPage.Single && "Композиции"}
-        {(docName ||
-          compositionName ||
-          compositionPage === CompositionPage.Create) && (
-          <EntityHeader
+        {docName && (
+          <DocsEntityHeader worplacePage={workPage} initName={docName} />
+        )}
+
+        {(compositionName || compositionPage === CompositionPage.Create) && (
+          <CompositionsEntityHeader
             worplacePage={workPage}
-            compositionPage={compositionPage}
             initName={
-              docName ||
               compositionName ||
               `Новая композиция (${allCompositions?.length || 0 + 1})`
             }
