@@ -221,7 +221,6 @@ class ModelService:
         model_name: str,
         test_size: Optional[float] = 0.2,
     ):
-        print(composition_params)
         if params_type == 'auto':
             composition_params = AutoParamsSearch(
                 task_type=task_type,

@@ -28,7 +28,7 @@ class DecisionTreeClassifierParameters(BaseModel):  # ready
     criterion: Literal['gini', 'entropy'] = 'gini'
     splitter: Literal['best', 'random'] = 'best'
     max_depth: int = None
-    min_samples_split: float = 2
+    min_samples_split: int = 2
     min_samples_leaf: int = 1
     # max_features: Union[Literal['auto', 'sqrt', 'log2'], float] = None
     # random_state: int = None
@@ -143,7 +143,7 @@ class GradientBoostingClassifierParameters(BaseModel):  # ready
     criterion: Literal[
         'friedman_mse', 'squared_error', 'mse', 'mae'
     ] = 'friedman_mse'
-    min_samples_split: Union[int, float] = 2
+    min_samples_split: int = 2
     # min_weight_fraction_leaf: float = 0
     max_depth: int = 3
     # min_impurity_decrease: float = 0
@@ -285,8 +285,8 @@ class ExtraTreesClassifierParameters(BaseModel):  # ready
     n_estimators: int = 100
     criterion: Literal['gini', 'entropy'] = 'gini'
     max_depth: Optional[int] = None
-    min_samples_split: Union[int, float] = 2
-    min_samples_leaf: Union[int, float] = 1
+    min_samples_split: int = 2
+    min_samples_leaf: int = 1
     # min_weight_fraction_leaf: float = 0
     # max_features: Optional[
     #     Union[Literal['auto', 'sqrt', 'log2'], int, float]
