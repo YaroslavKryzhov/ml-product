@@ -163,6 +163,7 @@ export type ModelParams = DecisionTreeClassifierParameters | null;
 export type Model = {
   type: ModelTypes | null;
   params: ModelParams;
+  isDefaultParams?: boolean;
 };
 
 export enum ModelTypes {

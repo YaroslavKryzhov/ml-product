@@ -97,7 +97,10 @@ export const compositionsApi = createApi({
         url: ROUTES.COMPOSITIONS.TRAIN,
         params: payload.params,
         method: "POST",
-        body: payload.body,
+        body: payload.body.map((model) => ({
+          type: model.type,
+          params: model.isDefaultParams ? {} : model.params,
+        })),
       }),
       invalidatesTags: [Tags.compositions],
     }),

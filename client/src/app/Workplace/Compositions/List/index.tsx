@@ -1,6 +1,6 @@
 import { Box, Button, Skeleton } from "@mui/material";
 import { compareDate, TableFix } from "components/Table";
-import { pathify } from "ducks/hooks";
+import { pathify, useAppDispatch } from "ducks/hooks";
 import { theme } from "globalStyle/theme";
 import React, { useMemo } from "react";
 import moment from "moment";
@@ -16,6 +16,7 @@ import {
   useDownloadCompositionMutation,
 } from "ducks/reducers/api/compositions.api";
 import { AppPage, CompositionPage, WorkPage } from "ducks/reducers/types";
+import { resetComposition } from "ducks/reducers/compositions";
 
 enum Columns {
   create = "create_date",
@@ -55,6 +56,7 @@ export const CompositionsList: React.FC = () => {
   const [downloadCompositions] = useDownloadCompositionMutation();
   const [deleteComp] = useDeleteCompositionMutation();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   const convertedData = useMemo(
     () =>
@@ -70,15 +72,16 @@ export const CompositionsList: React.FC = () => {
       <WorkPageHeader />
       <Box>
         <Button
-          onClick={() =>
+          onClick={() => {
+            dispatch(resetComposition());
             navigate(
               pathify([
                 AppPage.Workplace,
                 WorkPage.Compositions,
                 CompositionPage.Create,
               ])
-            )
-          }
+            );
+          }}
           variant="contained"
           fullWidth
           sx={{ mb: theme.spacing(2) }}
