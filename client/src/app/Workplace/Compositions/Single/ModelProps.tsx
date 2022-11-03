@@ -15,6 +15,7 @@ import {
   RandomForestClassifierParameters,
   ModelParams,
   ModelTypes,
+  AdaBoostClassifierParameters,
 } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
 import { cond, values } from "lodash";
@@ -23,6 +24,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import { DefaultParamsModels } from "./constants";
 import { DecisionTreeClassifier } from "./ModelPropsParts/DTC";
 import { RandomForestClassifier } from "./ModelPropsParts/RTC";
+import { AdaBoostClassifier } from "./ModelPropsParts/ADB";
 
 export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
   id,
@@ -99,6 +101,7 @@ export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
               }
             />
           }
+          disabled={!createMode}
           label="Default params"
         />
         <IconButton disabled={!createMode}>
@@ -125,6 +128,16 @@ export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
               <RandomForestClassifier
                 onParamsChange={onParamsChange(model.type, id)}
                 params={model.params as RandomForestClassifierParameters}
+                disabled={!createMode}
+              />
+            ),
+          ],
+          [
+            equals<ModelTypes>(ModelTypes.AdaBoostClassifier),
+            always(
+              <AdaBoostClassifier
+                onParamsChange={onParamsChange(model.type, id)}
+                params={model.params as AdaBoostClassifierParameters}
                 disabled={!createMode}
               />
             ),

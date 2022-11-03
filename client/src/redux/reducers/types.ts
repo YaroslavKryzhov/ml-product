@@ -158,7 +158,11 @@ export enum ParamsCompositionType {
   default = "default",
 }
 
-export type ModelParams = DecisionTreeClassifierParameters | null;
+export type ModelParams =
+  | AdaBoostClassifierParameters
+  | RandomForestClassifierParameters
+  | DecisionTreeClassifierParameters
+  | null;
 
 export type Model = {
   type: ModelTypes | null;
@@ -203,6 +207,11 @@ export enum DesicionClassWeight {
   balanced = "balanced",
 }
 
+export enum AdaBoostAlgorithm {
+  samme = "SAMME",
+  sammer = "SAMME.R",
+}
+
 export type DecisionTreeClassifierParameters = {
   criterion?: DesicionCriterion;
   splitter?: DescicionSplitter;
@@ -224,6 +233,12 @@ export type RandomForestClassifierParameters = {
   min_samples_split?: number;
   min_samples_leaf?: number;
   bootstrap: boolean;
+};
+
+export type AdaBoostClassifierParameters = {
+  n_estimators: number;
+  learning_rate: number;
+  algorithm: AdaBoostAlgorithm;
 };
 
 export type StandardResponse = {

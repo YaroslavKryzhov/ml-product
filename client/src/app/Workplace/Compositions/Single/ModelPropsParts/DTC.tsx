@@ -16,7 +16,11 @@ import {
 import { theme } from "globalStyle/theme";
 import { values } from "lodash";
 import { useState } from "react";
-import { SELECTORS_WIDTH } from "../constants";
+import {
+  MIN_SAMPLES_LEAF,
+  MIN_SAMPLES_SPLIT,
+  SELECTORS_WIDTH,
+} from "../constants";
 
 export const DecisionTreeClassifier: React.FC<{
   onParamsChange: (params: DecisionTreeClassifierParameters) => void;
@@ -116,6 +120,7 @@ export const DecisionTreeClassifier: React.FC<{
           label="Min Samples Split"
           value={params.min_samples_split}
           onChange={(event) =>
+            Number(event.target.value) >= MIN_SAMPLES_SPLIT &&
             onParamsChange({
               ...params,
               min_samples_split: Number(event.target.value),
@@ -129,6 +134,7 @@ export const DecisionTreeClassifier: React.FC<{
           label="Min Samples Leaf"
           value={params.min_samples_leaf}
           onChange={(event) =>
+            Number(event.target.value) >= MIN_SAMPLES_LEAF &&
             onParamsChange({
               ...params,
               min_samples_leaf: Number(event.target.value),

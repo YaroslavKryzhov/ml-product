@@ -1,4 +1,5 @@
 import {
+  AdaBoostAlgorithm,
   DescicionSplitter,
   DesicionCriterion,
   ModelParams,
@@ -24,9 +25,19 @@ export const RTC_DEFAULT_PARAMS = {
   bootstrap: true,
 };
 
+export const ADB_DEFAULT_PARAMS = {
+  n_estimators: 50,
+  learning_rate: 1,
+  algorithm: AdaBoostAlgorithm.sammer,
+};
+
 export const DefaultParamsModels: Partial<Record<ModelTypes, ModelParams>> = {
   [ModelTypes.DecisionTreeClassifier]: DTC_DEFAULT_PARAMS,
   [ModelTypes.RandomForestClassifier]: RTC_DEFAULT_PARAMS,
+  [ModelTypes.AdaBoostClassifier]: ADB_DEFAULT_PARAMS,
 };
 
 export const FloatRegexp = /^([+-]?([0-9]*[.])?[0-9]+[.]?)?$/g;
+
+export const MIN_SAMPLES_SPLIT = 2;
+export const MIN_SAMPLES_LEAF = 1;
