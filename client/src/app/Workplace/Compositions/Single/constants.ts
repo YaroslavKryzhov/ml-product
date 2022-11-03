@@ -2,6 +2,8 @@ import {
   AdaBoostAlgorithm,
   DescicionSplitter,
   DesicionCriterion,
+  GradientBoostingCriterion,
+  GradientBoostingLoss,
   ModelParams,
   ModelTypes,
 } from "ducks/reducers/types";
@@ -31,10 +33,21 @@ export const ADB_DEFAULT_PARAMS = {
   algorithm: AdaBoostAlgorithm.sammer,
 };
 
+export const GB_DEFAULT_PARAMS = {
+  loss: GradientBoostingLoss.deviance,
+  learning_rate: 0.1,
+  n_estimators: 100,
+  subsample: 1,
+  criterion: GradientBoostingCriterion.friedmanMse,
+  min_samples_split: 2,
+  max_depth: 3,
+};
+
 export const DefaultParamsModels: Partial<Record<ModelTypes, ModelParams>> = {
   [ModelTypes.DecisionTreeClassifier]: DTC_DEFAULT_PARAMS,
   [ModelTypes.RandomForestClassifier]: RTC_DEFAULT_PARAMS,
   [ModelTypes.AdaBoostClassifier]: ADB_DEFAULT_PARAMS,
+  [ModelTypes.GradientBoostingClassifier]: GB_DEFAULT_PARAMS,
 };
 
 export const FloatRegexp = /^([+-]?([0-9]*[.])?[0-9]+[.]?)?$/g;

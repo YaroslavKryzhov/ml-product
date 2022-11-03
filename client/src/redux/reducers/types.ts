@@ -159,6 +159,7 @@ export enum ParamsCompositionType {
 }
 
 export type ModelParams =
+  | GradientBoostingClassifierParameters
   | AdaBoostClassifierParameters
   | RandomForestClassifierParameters
   | DecisionTreeClassifierParameters
@@ -212,6 +213,19 @@ export enum AdaBoostAlgorithm {
   sammer = "SAMME.R",
 }
 
+export enum GradientBoostingCriterion {
+  friedmanMse = "friedman_mse",
+  squaredError = "squared_error",
+  mse = "mse",
+  mae = "mae",
+}
+
+export enum GradientBoostingLoss {
+  logLoss = "log_loss",
+  deviance = "deviance",
+  exponential = "exponential",
+}
+
 export type DecisionTreeClassifierParameters = {
   criterion?: DesicionCriterion;
   splitter?: DescicionSplitter;
@@ -239,6 +253,16 @@ export type AdaBoostClassifierParameters = {
   n_estimators: number;
   learning_rate: number;
   algorithm: AdaBoostAlgorithm;
+};
+
+export type GradientBoostingClassifierParameters = {
+  loss: GradientBoostingLoss;
+  learning_rate: number;
+  n_estimators: number;
+  subsample: number;
+  criterion: GradientBoostingCriterion;
+  min_samples_split: number;
+  max_depth: number;
 };
 
 export type StandardResponse = {
