@@ -159,6 +159,7 @@ export enum ParamsCompositionType {
 }
 
 export type ModelParams =
+  | ExtraTreesClassifierParameters
   | BaggingClassifierParameters
   | GradientBoostingClassifierParameters
   | AdaBoostClassifierParameters
@@ -272,6 +273,15 @@ export type BaggingClassifierParameters = {
   max_features: number;
   bootstrap: boolean;
   bootstrap_features: boolean;
+};
+
+export type ExtraTreesClassifierParameters = {
+  n_estimators: number;
+  criterion?: DesicionCriterion;
+  max_depth?: number | null;
+  min_samples_split?: number;
+  min_samples_leaf?: number;
+  bootstrap: boolean;
 };
 
 export type StandardResponse = {

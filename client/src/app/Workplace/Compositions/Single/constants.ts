@@ -51,12 +51,21 @@ export const BAGGING_DEFAULT_PARAMS = {
   bootstrap_features: false,
 };
 
+export const ETC_DEFAULT_PARAMS = {
+  n_estimators: 100,
+  criterion: DesicionCriterion.gini,
+  min_samples_split: 2,
+  min_samples_leaf: 1,
+  bootstrap: true,
+};
+
 export const DefaultParamsModels: Partial<Record<ModelTypes, ModelParams>> = {
   [ModelTypes.DecisionTreeClassifier]: DTC_DEFAULT_PARAMS,
   [ModelTypes.RandomForestClassifier]: RTC_DEFAULT_PARAMS,
   [ModelTypes.AdaBoostClassifier]: ADB_DEFAULT_PARAMS,
   [ModelTypes.GradientBoostingClassifier]: GB_DEFAULT_PARAMS,
   [ModelTypes.BaggingClassifier]: BAGGING_DEFAULT_PARAMS,
+  [ModelTypes.ExtraTreesClassifier]: ETC_DEFAULT_PARAMS,
 };
 
 export const FloatRegexp = /^([+-]?([0-9]*[.])?[0-9]+[.]?)?$/g;
