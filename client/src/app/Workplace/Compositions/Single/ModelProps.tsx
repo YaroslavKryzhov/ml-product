@@ -17,6 +17,7 @@ import {
   ModelTypes,
   AdaBoostClassifierParameters,
   GradientBoostingClassifierParameters,
+  BaggingClassifierParameters,
 } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
 import { cond, values } from "lodash";
@@ -27,6 +28,7 @@ import { DecisionTreeClassifier } from "./ModelPropsParts/DTC";
 import { RandomForestClassifier } from "./ModelPropsParts/RTC";
 import { AdaBoostClassifier } from "./ModelPropsParts/ADB";
 import { GradientBoostingClassifier } from "./ModelPropsParts/GB";
+import { BaggingClassifier } from "./ModelPropsParts/Bagging";
 
 export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
   id,
@@ -144,13 +146,22 @@ export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
               />
             ),
           ],
-
           [
             equals<ModelTypes>(ModelTypes.GradientBoostingClassifier),
             always(
               <GradientBoostingClassifier
                 onParamsChange={onParamsChange(model.type, id)}
                 params={model.params as GradientBoostingClassifierParameters}
+                disabled={!createMode}
+              />
+            ),
+          ],
+          [
+            equals<ModelTypes>(ModelTypes.BaggingClassifier),
+            always(
+              <BaggingClassifier
+                onParamsChange={onParamsChange(model.type, id)}
+                params={model.params as BaggingClassifierParameters}
                 disabled={!createMode}
               />
             ),

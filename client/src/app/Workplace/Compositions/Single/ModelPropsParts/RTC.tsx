@@ -165,6 +165,27 @@ export const RandomForestClassifier: React.FC<{
           type="number"
         />
       </Box>
+      <Box
+        sx={{
+          mt: theme.spacing(5),
+          gap: theme.spacing(2),
+        }}
+      >
+        <FormControlLabel
+          control={
+            <Checkbox
+              value={params.bootstrap}
+              onChange={(_, checked) => {
+                onParamsChange({
+                  ...params,
+                  bootstrap: checked,
+                });
+              }}
+            />
+          }
+          label="bootstrap"
+        />
+      </Box>
     </Box>
   );
 };

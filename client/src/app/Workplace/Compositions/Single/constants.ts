@@ -43,11 +43,20 @@ export const GB_DEFAULT_PARAMS = {
   max_depth: 3,
 };
 
+export const BAGGING_DEFAULT_PARAMS = {
+  n_estimators: 10,
+  max_samples: 1,
+  max_features: 1,
+  bootstrap: true,
+  bootstrap_features: false,
+};
+
 export const DefaultParamsModels: Partial<Record<ModelTypes, ModelParams>> = {
   [ModelTypes.DecisionTreeClassifier]: DTC_DEFAULT_PARAMS,
   [ModelTypes.RandomForestClassifier]: RTC_DEFAULT_PARAMS,
   [ModelTypes.AdaBoostClassifier]: ADB_DEFAULT_PARAMS,
   [ModelTypes.GradientBoostingClassifier]: GB_DEFAULT_PARAMS,
+  [ModelTypes.BaggingClassifier]: BAGGING_DEFAULT_PARAMS,
 };
 
 export const FloatRegexp = /^([+-]?([0-9]*[.])?[0-9]+[.]?)?$/g;
