@@ -12,6 +12,8 @@ import {
   SGDClassifierLearningRate,
   SGDClassifierLoss,
   SGDClassifierPenalty,
+  SVCGamma,
+  SVCKernel,
 } from "ducks/reducers/types";
 
 export const SELECTORS_WIDTH = "190px";
@@ -87,6 +89,16 @@ export const LSVC_DEFAULT_PARAMS = {
   max_iter: 1000,
 };
 
+export const SVC_DEFAULT_PARAMS = {
+  C: 1.0,
+  kernel: SVCKernel.rbf,
+  degree: 3,
+  gamma: SVCGamma.scale,
+  coef0: 0.0,
+  shrinking: true,
+  max_iter: -1,
+};
+
 export const DefaultParamsModels: Partial<Record<ModelTypes, ModelParams>> = {
   [ModelTypes.DecisionTreeClassifier]: DTC_DEFAULT_PARAMS,
   [ModelTypes.RandomForestClassifier]: RTC_DEFAULT_PARAMS,
@@ -96,6 +108,7 @@ export const DefaultParamsModels: Partial<Record<ModelTypes, ModelParams>> = {
   [ModelTypes.ExtraTreesClassifier]: ETC_DEFAULT_PARAMS,
   [ModelTypes.SGDClassifier]: SDG_DEFAULT_PARAMS,
   [ModelTypes.LinearSVC]: LSVC_DEFAULT_PARAMS,
+  [ModelTypes.SVC]: SVC_DEFAULT_PARAMS,
 };
 
 export const FloatRegexp = /^([+-]?([0-9]*[.])?[0-9]+[.]?)?$/g;

@@ -159,6 +159,7 @@ export enum ParamsCompositionType {
 }
 
 export type ModelParams =
+  | SVCParameters
   | LinearSVCParameters
   | SGDClassifierParameters
   | ExtraTreesClassifierParameters
@@ -270,6 +271,20 @@ export enum LinearSVCMultiClass {
   crammer_singer = "crammer_singer",
 }
 
+export enum SVCKernel {
+  linear = "linear",
+  poly = "poly",
+  rbf = "rbf",
+  sigmoid = "sigmoid",
+
+  precomputed = "precomputed",
+}
+
+export enum SVCGamma {
+  scale = "scale",
+  auto = "auto",
+}
+
 export type DecisionTreeClassifierParameters = {
   criterion?: DesicionCriterion;
   splitter?: DescicionSplitter;
@@ -345,6 +360,16 @@ export type LinearSVCParameters = {
   C: number;
   multi_class: LinearSVCMultiClass;
   fit_intercept: boolean;
+  max_iter: number;
+};
+
+export type SVCParameters = {
+  C: number;
+  kernel: SVCKernel;
+  degree: number;
+  gamma: SVCGamma | number;
+  coef0: number;
+  shrinking: boolean;
   max_iter: number;
 };
 

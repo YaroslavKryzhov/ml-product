@@ -21,6 +21,7 @@ import {
   ExtraTreesClassifierParameters,
   SGDClassifierParameters,
   LinearSVCParameters,
+  SVCParameters,
 } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
 import { cond, values } from "lodash";
@@ -35,6 +36,7 @@ import { BaggingClassifier } from "./ModelPropsParts/Bagging";
 import { ExtraTreesClassifier } from "./ModelPropsParts/ETC";
 import { SGDClassifier } from "./ModelPropsParts/SGD";
 import { LinearSVCClassifier } from "./ModelPropsParts/LSVC";
+import { SVCClassifier } from "./ModelPropsParts/SVC";
 
 export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
   id,
@@ -192,13 +194,22 @@ export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
               />
             ),
           ],
-
           [
             equals<ModelTypes>(ModelTypes.LinearSVC),
             always(
               <LinearSVCClassifier
                 onParamsChange={onParamsChange(model.type, id)}
                 params={model.params as LinearSVCParameters}
+                disabled={!createMode}
+              />
+            ),
+          ],
+          [
+            equals<ModelTypes>(ModelTypes.SVC),
+            always(
+              <SVCClassifier
+                onParamsChange={onParamsChange(model.type, id)}
+                params={model.params as SVCParameters}
                 disabled={!createMode}
               />
             ),
