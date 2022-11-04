@@ -19,6 +19,7 @@ import {
   GradientBoostingClassifierParameters,
   BaggingClassifierParameters,
   ExtraTreesClassifierParameters,
+  SGDClassifierParameters,
 } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
 import { cond, values } from "lodash";
@@ -31,6 +32,7 @@ import { AdaBoostClassifier } from "./ModelPropsParts/ADB";
 import { GradientBoostingClassifier } from "./ModelPropsParts/GB";
 import { BaggingClassifier } from "./ModelPropsParts/Bagging";
 import { ExtraTreesClassifier } from "./ModelPropsParts/ETC";
+import { SGDClassifier } from "./ModelPropsParts/SGD";
 
 export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
   id,
@@ -174,6 +176,16 @@ export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
               <ExtraTreesClassifier
                 onParamsChange={onParamsChange(model.type, id)}
                 params={model.params as ExtraTreesClassifierParameters}
+                disabled={!createMode}
+              />
+            ),
+          ],
+          [
+            equals<ModelTypes>(ModelTypes.SGDClassifier),
+            always(
+              <SGDClassifier
+                onParamsChange={onParamsChange(model.type, id)}
+                params={model.params as SGDClassifierParameters}
                 disabled={!createMode}
               />
             ),

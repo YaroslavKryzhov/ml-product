@@ -6,6 +6,9 @@ import {
   GradientBoostingLoss,
   ModelParams,
   ModelTypes,
+  SGDClassifierLearningRate,
+  SGDClassifierLoss,
+  SGDClassifierPenalty,
 } from "ducks/reducers/types";
 
 export const SELECTORS_WIDTH = "190px";
@@ -59,6 +62,18 @@ export const ETC_DEFAULT_PARAMS = {
   bootstrap: true,
 };
 
+export const SDG_DEFAULT_PARAMS = {
+  loss: SGDClassifierLoss.hinge,
+  penalty: SGDClassifierPenalty.l2,
+  alpha: 0.0001,
+  l1_ratio: 0.15,
+  fit_intercept: true,
+  max_iter: 1000,
+  shuffle: true,
+  epsilon: 0.1,
+  learning_rate: SGDClassifierLearningRate.optimal,
+};
+
 export const DefaultParamsModels: Partial<Record<ModelTypes, ModelParams>> = {
   [ModelTypes.DecisionTreeClassifier]: DTC_DEFAULT_PARAMS,
   [ModelTypes.RandomForestClassifier]: RTC_DEFAULT_PARAMS,
@@ -66,6 +81,7 @@ export const DefaultParamsModels: Partial<Record<ModelTypes, ModelParams>> = {
   [ModelTypes.GradientBoostingClassifier]: GB_DEFAULT_PARAMS,
   [ModelTypes.BaggingClassifier]: BAGGING_DEFAULT_PARAMS,
   [ModelTypes.ExtraTreesClassifier]: ETC_DEFAULT_PARAMS,
+  [ModelTypes.SGDClassifier]: SDG_DEFAULT_PARAMS,
 };
 
 export const FloatRegexp = /^([+-]?([0-9]*[.])?[0-9]+[.]?)?$/g;

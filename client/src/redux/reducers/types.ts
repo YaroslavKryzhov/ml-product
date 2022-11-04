@@ -159,6 +159,7 @@ export enum ParamsCompositionType {
 }
 
 export type ModelParams =
+  | SGDClassifierParameters
   | ExtraTreesClassifierParameters
   | BaggingClassifierParameters
   | GradientBoostingClassifierParameters
@@ -228,6 +229,31 @@ export enum GradientBoostingLoss {
   exponential = "exponential",
 }
 
+export enum SGDClassifierLoss {
+  hinge = "hinge",
+  log = "log",
+  modifiedHuber = "modified_huber",
+  squaredHinge = "squared_hinge",
+  perceptron = "perceptron",
+  squaredError = "squared_error",
+  huber = "huber",
+  epsilonInsensitive = "epsilon_insensitive",
+  squaredEpsilonInsensitive = "squared_epsilon_insensitive",
+}
+
+export enum SGDClassifierLearningRate {
+  constant = "constant",
+  optimal = "optimal",
+  invscaling = "invscaling",
+  adaptive = "adaptive",
+}
+
+export enum SGDClassifierPenalty {
+  l2 = "l2",
+  l1 = "l1",
+  elasticnet = "elasticnet",
+}
+
 export type DecisionTreeClassifierParameters = {
   criterion?: DesicionCriterion;
   splitter?: DescicionSplitter;
@@ -282,6 +308,18 @@ export type ExtraTreesClassifierParameters = {
   min_samples_split?: number;
   min_samples_leaf?: number;
   bootstrap: boolean;
+};
+
+export type SGDClassifierParameters = {
+  loss: SGDClassifierLoss;
+  penalty: SGDClassifierPenalty;
+  alpha: number;
+  l1_ratio: number;
+  fit_intercept: boolean;
+  max_iter: number;
+  shuffle: boolean;
+  epsilon: number;
+  learning_rate: SGDClassifierLearningRate;
 };
 
 export type StandardResponse = {
