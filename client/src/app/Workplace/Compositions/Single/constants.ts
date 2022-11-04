@@ -7,6 +7,8 @@ import {
   LinearSVCLoss,
   LinearSVCMultiClass,
   LinearSVCPenalty,
+  LogisticRegressionPenalty,
+  LogisticRegressionSolver,
   ModelParams,
   ModelTypes,
   SGDClassifierLearningRate,
@@ -99,6 +101,16 @@ export const SVC_DEFAULT_PARAMS = {
   max_iter: -1,
 };
 
+export const LR_DEFAULT_PARAMS = {
+  penalty: LogisticRegressionPenalty.l2,
+  dual: false,
+  C: 1.0,
+  fit_intercept: true,
+  solver: LogisticRegressionSolver.lbfgs,
+  max_iter: 100,
+  l1_ratio: null,
+};
+
 export const DefaultParamsModels: Partial<Record<ModelTypes, ModelParams>> = {
   [ModelTypes.DecisionTreeClassifier]: DTC_DEFAULT_PARAMS,
   [ModelTypes.RandomForestClassifier]: RTC_DEFAULT_PARAMS,
@@ -109,6 +121,7 @@ export const DefaultParamsModels: Partial<Record<ModelTypes, ModelParams>> = {
   [ModelTypes.SGDClassifier]: SDG_DEFAULT_PARAMS,
   [ModelTypes.LinearSVC]: LSVC_DEFAULT_PARAMS,
   [ModelTypes.SVC]: SVC_DEFAULT_PARAMS,
+  [ModelTypes.LogisticRegression]: LR_DEFAULT_PARAMS,
 };
 
 export const FloatRegexp = /^([+-]?([0-9]*[.])?[0-9]+[.]?)?$/g;

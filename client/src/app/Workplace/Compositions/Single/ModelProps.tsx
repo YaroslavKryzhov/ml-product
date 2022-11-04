@@ -22,6 +22,7 @@ import {
   SGDClassifierParameters,
   LinearSVCParameters,
   SVCParameters,
+  LogisticRegressionParameters,
 } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
 import { cond, values } from "lodash";
@@ -37,6 +38,7 @@ import { ExtraTreesClassifier } from "./ModelPropsParts/ETC";
 import { SGDClassifier } from "./ModelPropsParts/SGD";
 import { LinearSVCClassifier } from "./ModelPropsParts/LSVC";
 import { SVCClassifier } from "./ModelPropsParts/SVC";
+import { LogisticRegression } from "./ModelPropsParts/LR";
 
 export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
   id,
@@ -210,6 +212,16 @@ export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
               <SVCClassifier
                 onParamsChange={onParamsChange(model.type, id)}
                 params={model.params as SVCParameters}
+                disabled={!createMode}
+              />
+            ),
+          ],
+          [
+            equals<ModelTypes>(ModelTypes.LogisticRegression),
+            always(
+              <LogisticRegression
+                onParamsChange={onParamsChange(model.type, id)}
+                params={model.params as LogisticRegressionParameters}
                 disabled={!createMode}
               />
             ),

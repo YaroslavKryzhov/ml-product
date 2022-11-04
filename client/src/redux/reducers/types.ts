@@ -159,6 +159,7 @@ export enum ParamsCompositionType {
 }
 
 export type ModelParams =
+  | LogisticRegressionParameters
   | SVCParameters
   | LinearSVCParameters
   | SGDClassifierParameters
@@ -285,6 +286,21 @@ export enum SVCGamma {
   auto = "auto",
 }
 
+export enum LogisticRegressionPenalty {
+  l1 = "l1",
+  l2 = "l2",
+  elasticnet = "elasticnet",
+  none = "none",
+}
+
+export enum LogisticRegressionSolver {
+  newtonCg = "newton-cg",
+  lbfgs = "lbfgs",
+  liblinear = "liblinear",
+  sag = "sag",
+  saga = "saga",
+}
+
 export type DecisionTreeClassifierParameters = {
   criterion?: DesicionCriterion;
   splitter?: DescicionSplitter;
@@ -371,6 +387,16 @@ export type SVCParameters = {
   coef0: number;
   shrinking: boolean;
   max_iter: number;
+};
+
+export type LogisticRegressionParameters = {
+  penalty: LogisticRegressionPenalty;
+  dual: boolean;
+  C: number;
+  fit_intercept: boolean;
+  solver: LogisticRegressionSolver;
+  max_iter: number;
+  l1_ratio?: number | null;
 };
 
 export type StandardResponse = {
