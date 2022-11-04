@@ -4,6 +4,9 @@ import {
   DesicionCriterion,
   GradientBoostingCriterion,
   GradientBoostingLoss,
+  LinearSVCLoss,
+  LinearSVCMultiClass,
+  LinearSVCPenalty,
   ModelParams,
   ModelTypes,
   SGDClassifierLearningRate,
@@ -74,6 +77,16 @@ export const SDG_DEFAULT_PARAMS = {
   learning_rate: SGDClassifierLearningRate.optimal,
 };
 
+export const LSVC_DEFAULT_PARAMS = {
+  loss: LinearSVCLoss.squaredHinge,
+  penalty: LinearSVCPenalty.l2,
+  dual: true,
+  C: 1.0,
+  multi_class: LinearSVCMultiClass.ovr,
+  fit_intercept: true,
+  max_iter: 1000,
+};
+
 export const DefaultParamsModels: Partial<Record<ModelTypes, ModelParams>> = {
   [ModelTypes.DecisionTreeClassifier]: DTC_DEFAULT_PARAMS,
   [ModelTypes.RandomForestClassifier]: RTC_DEFAULT_PARAMS,
@@ -82,6 +95,7 @@ export const DefaultParamsModels: Partial<Record<ModelTypes, ModelParams>> = {
   [ModelTypes.BaggingClassifier]: BAGGING_DEFAULT_PARAMS,
   [ModelTypes.ExtraTreesClassifier]: ETC_DEFAULT_PARAMS,
   [ModelTypes.SGDClassifier]: SDG_DEFAULT_PARAMS,
+  [ModelTypes.LinearSVC]: LSVC_DEFAULT_PARAMS,
 };
 
 export const FloatRegexp = /^([+-]?([0-9]*[.])?[0-9]+[.]?)?$/g;

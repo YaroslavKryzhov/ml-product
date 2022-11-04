@@ -159,6 +159,7 @@ export enum ParamsCompositionType {
 }
 
 export type ModelParams =
+  | LinearSVCParameters
   | SGDClassifierParameters
   | ExtraTreesClassifierParameters
   | BaggingClassifierParameters
@@ -254,6 +255,21 @@ export enum SGDClassifierPenalty {
   elasticnet = "elasticnet",
 }
 
+export enum LinearSVCPenalty {
+  l2 = "l2",
+  l1 = "l1",
+}
+
+export enum LinearSVCLoss {
+  hinge = "hinge",
+  squaredHinge = "squared_hinge",
+}
+
+export enum LinearSVCMultiClass {
+  ovr = "ovr",
+  crammer_singer = "crammer_singer",
+}
+
 export type DecisionTreeClassifierParameters = {
   criterion?: DesicionCriterion;
   splitter?: DescicionSplitter;
@@ -320,6 +336,16 @@ export type SGDClassifierParameters = {
   shuffle: boolean;
   epsilon: number;
   learning_rate: SGDClassifierLearningRate;
+};
+
+export type LinearSVCParameters = {
+  penalty: LinearSVCPenalty;
+  loss: LinearSVCLoss;
+  dual: boolean;
+  C: number;
+  multi_class: LinearSVCMultiClass;
+  fit_intercept: boolean;
+  max_iter: number;
 };
 
 export type StandardResponse = {
