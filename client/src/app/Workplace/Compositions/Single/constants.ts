@@ -9,6 +9,9 @@ import {
   LinearSVCPenalty,
   LogisticRegressionPenalty,
   LogisticRegressionSolver,
+  MLPClassifierActivation,
+  MLPClassifierLearningRate,
+  MLPClassifierSolver,
   ModelParams,
   ModelTypes,
   SGDClassifierLearningRate,
@@ -111,6 +114,15 @@ export const LR_DEFAULT_PARAMS = {
   l1_ratio: null,
 };
 
+export const MLP_DEFAULT_PARAMS = {
+  hidden_layer_sizes: [100],
+  activation: MLPClassifierActivation.relu,
+  solver: MLPClassifierSolver.adam,
+  alpha: 0.0001,
+  max_iter: 200,
+  learning_rate: MLPClassifierLearningRate.constant,
+};
+
 export const DefaultParamsModels: Partial<Record<ModelTypes, ModelParams>> = {
   [ModelTypes.DecisionTreeClassifier]: DTC_DEFAULT_PARAMS,
   [ModelTypes.RandomForestClassifier]: RTC_DEFAULT_PARAMS,
@@ -122,6 +134,7 @@ export const DefaultParamsModels: Partial<Record<ModelTypes, ModelParams>> = {
   [ModelTypes.LinearSVC]: LSVC_DEFAULT_PARAMS,
   [ModelTypes.SVC]: SVC_DEFAULT_PARAMS,
   [ModelTypes.LogisticRegression]: LR_DEFAULT_PARAMS,
+  [ModelTypes.Perceptron]: MLP_DEFAULT_PARAMS,
 };
 
 export const FloatRegexp = /^([+-]?([0-9]*[.])?[0-9]+[.]?)?$/g;

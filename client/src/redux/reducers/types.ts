@@ -159,6 +159,7 @@ export enum ParamsCompositionType {
 }
 
 export type ModelParams =
+  | MLPClassifierParameters
   | LogisticRegressionParameters
   | SVCParameters
   | LinearSVCParameters
@@ -190,6 +191,7 @@ export enum ModelTypes {
   SVC = "SVC",
   LogisticRegression = "LogisticRegression",
   Perceptron = "Perceptron",
+  KNeighborsClassifier = "KNeighborsClassifier",
   // XGBoost = "XGBoost",
   // LightGBM = "LightGBM",
 }
@@ -301,6 +303,25 @@ export enum LogisticRegressionSolver {
   saga = "saga",
 }
 
+export enum MLPClassifierActivation {
+  identity = "identity",
+  logistic = "logistic",
+  tanh = "tanh",
+  relu = "relu",
+}
+
+export enum MLPClassifierSolver {
+  lbfgs = "lbfgs",
+  sgd = "sgd",
+  adam = "adam",
+}
+
+export enum MLPClassifierLearningRate {
+  constant = "constant",
+  invscaling = "invscaling",
+  adaptive = "adaptive",
+}
+
 export type DecisionTreeClassifierParameters = {
   criterion?: DesicionCriterion;
   splitter?: DescicionSplitter;
@@ -397,6 +418,15 @@ export type LogisticRegressionParameters = {
   solver: LogisticRegressionSolver;
   max_iter: number;
   l1_ratio?: number | null;
+};
+
+export type MLPClassifierParameters = {
+  hidden_layer_sizes: number[];
+  activation: MLPClassifierActivation;
+  solver: MLPClassifierSolver;
+  alpha: number;
+  max_iter: number;
+  learning_rate: MLPClassifierLearningRate;
 };
 
 export type StandardResponse = {

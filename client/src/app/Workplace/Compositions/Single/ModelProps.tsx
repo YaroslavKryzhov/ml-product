@@ -23,6 +23,7 @@ import {
   LinearSVCParameters,
   SVCParameters,
   LogisticRegressionParameters,
+  MLPClassifierParameters,
 } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
 import { cond, values } from "lodash";
@@ -39,6 +40,7 @@ import { SGDClassifier } from "./ModelPropsParts/SGD";
 import { LinearSVCClassifier } from "./ModelPropsParts/LSVC";
 import { SVCClassifier } from "./ModelPropsParts/SVC";
 import { LogisticRegression } from "./ModelPropsParts/LR";
+import { MLPClassifier } from "./ModelPropsParts/MLP";
 
 export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
   id,
@@ -222,6 +224,16 @@ export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
               <LogisticRegression
                 onParamsChange={onParamsChange(model.type, id)}
                 params={model.params as LogisticRegressionParameters}
+                disabled={!createMode}
+              />
+            ),
+          ],
+          [
+            equals<ModelTypes>(ModelTypes.Perceptron),
+            always(
+              <MLPClassifier
+                onParamsChange={onParamsChange(model.type, id)}
+                params={model.params as MLPClassifierParameters}
                 disabled={!createMode}
               />
             ),
