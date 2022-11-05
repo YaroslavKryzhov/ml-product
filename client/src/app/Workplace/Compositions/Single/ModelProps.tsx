@@ -101,30 +101,34 @@ export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
           </Select>
         </FormControl>
 
-        <FormControlLabel
-          sx={{ ml: theme.spacing(0) }}
-          control={
-            <Checkbox
-              value={true}
-              onChange={(_, checked) =>
-                dispatch(
-                  changeModel({
-                    id,
-                    model: {
-                      ...model,
-                      isDefaultParams: checked,
-                    },
-                  })
-                )
+        {createMode && (
+          <>
+            <FormControlLabel
+              sx={{ ml: theme.spacing(0) }}
+              control={
+                <Checkbox
+                  value={true}
+                  onChange={(_, checked) =>
+                    dispatch(
+                      changeModel({
+                        id,
+                        model: {
+                          ...model,
+                          isDefaultParams: checked,
+                        },
+                      })
+                    )
+                  }
+                />
               }
+              disabled={!createMode}
+              label="Default params"
             />
-          }
-          disabled={!createMode}
-          label="Default params"
-        />
-        <IconButton disabled={!createMode}>
-          <ClearIcon onClick={onModelDelete} />
-        </IconButton>
+            <IconButton disabled={!createMode}>
+              <ClearIcon onClick={onModelDelete} />
+            </IconButton>
+          </>
+        )}
       </Box>
 
       {model.type &&

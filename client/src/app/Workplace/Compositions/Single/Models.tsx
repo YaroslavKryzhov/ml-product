@@ -2,10 +2,18 @@ import { Box, Button, Divider, Typography } from "@mui/material";
 import { UnavailableBlock } from "app/Workplace/common/UnavailableBlock";
 import { useAppDispatch, useSESelector } from "ducks/hooks";
 import { useCompositionInfoQuery } from "ducks/reducers/api/compositions.api";
-import { addModel, setModels } from "ducks/reducers/compositions";
+import {
+  addModel,
+  changeCompositionType,
+  changeDocumentName,
+  changeParamsType,
+  changeTestSize,
+  setModels,
+} from "ducks/reducers/compositions";
 import { theme } from "globalStyle/theme";
 import { isEmpty, keys } from "lodash";
 import { useEffect } from "react";
+import { batch } from "react-redux";
 import { ModelProps } from "./ModelProps";
 
 export const Models: React.FC<{ createMode?: boolean }> = ({ createMode }) => {
@@ -19,12 +27,24 @@ export const Models: React.FC<{ createMode?: boolean }> = ({ createMode }) => {
     {
       model_name: customCompositionName,
     },
-    { skip: createMode }
+    { skip: createMode || !customCompositionName }
   );
 
   useEffect(() => {
-    modelData?.composition_params &&
-      dispatch(setModels(modelData.composition_params));
+    batch(() => {
+      modelData?.composition_params &&
+        dispatch(setModels(modelData.composition_params));
+
+      modelData?.composition_type &&
+        dispatch(changeCompositionType("none" as any));
+
+      modelData?.csv_name && dispatch(changeDocumentName(modelData.csv_name));
+
+      modelData?.test_size && dispatch(changeTestSize(modelData.test_size));
+
+      modelData?.params_type &&
+        dispatch(changeParamsType(modelData.params_type));
+    });
   }, [modelData]);
 
   return (

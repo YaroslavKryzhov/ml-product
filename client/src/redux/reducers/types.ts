@@ -480,6 +480,8 @@ export type CompositionInfo = {
   create_date: string;
   task_type: TaskType;
   composition_type: CompositionType;
+  test_size: number;
+  params_type: ParamsCompositionType;
   composition_params: {
     type: ModelTypes;
     params: DecisionTreeClassifierParameters | RandomForestClassifierParameters;
@@ -504,7 +506,7 @@ export type CompositionInfo = {
       tpr_macro: null;
     };
   };
-  csv_name: "Iris-binary.csv";
+  csv_name: string;
 };
 
 export type CompositionInfoShort = {

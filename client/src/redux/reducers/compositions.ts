@@ -22,6 +22,8 @@ const initialState: CompositionsSlice = {
   documentName: "",
   testSize: 0.2,
   taskType: TaskType.classification,
+  compositionType: CompositionType.none,
+  paramsType: ParamsCompositionType.default,
 };
 
 const compositionsSlice = createSlice({
