@@ -4,6 +4,9 @@ import {
   DesicionCriterion,
   GradientBoostingCriterion,
   GradientBoostingLoss,
+  KNeighborsAlgorithm,
+  KNeighborsMetric,
+  KNeighborsWeights,
   LinearSVCLoss,
   LinearSVCMultiClass,
   LinearSVCPenalty,
@@ -123,6 +126,13 @@ export const MLP_DEFAULT_PARAMS = {
   learning_rate: MLPClassifierLearningRate.constant,
 };
 
+export const KNC_DEFAULT_PARAMS = {
+  n_neighbors: 5,
+  weights: KNeighborsWeights.uniform,
+  algorithm: KNeighborsAlgorithm.auto,
+  metric: KNeighborsMetric.minkowski,
+};
+
 export const DefaultParamsModels: Partial<Record<ModelTypes, ModelParams>> = {
   [ModelTypes.DecisionTreeClassifier]: DTC_DEFAULT_PARAMS,
   [ModelTypes.RandomForestClassifier]: RTC_DEFAULT_PARAMS,
@@ -135,6 +145,7 @@ export const DefaultParamsModels: Partial<Record<ModelTypes, ModelParams>> = {
   [ModelTypes.SVC]: SVC_DEFAULT_PARAMS,
   [ModelTypes.LogisticRegression]: LR_DEFAULT_PARAMS,
   [ModelTypes.Perceptron]: MLP_DEFAULT_PARAMS,
+  [ModelTypes.KNeighborsClassifier]: KNC_DEFAULT_PARAMS,
 };
 
 export const FloatRegexp = /^([+-]?([0-9]*[.])?[0-9]+[.]?)?$/g;

@@ -24,6 +24,7 @@ import {
   SVCParameters,
   LogisticRegressionParameters,
   MLPClassifierParameters,
+  KNeighborsClassifierParameters,
 } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
 import { cond, values } from "lodash";
@@ -41,6 +42,7 @@ import { LinearSVCClassifier } from "./ModelPropsParts/LSVC";
 import { SVCClassifier } from "./ModelPropsParts/SVC";
 import { LogisticRegression } from "./ModelPropsParts/LR";
 import { MLPClassifier } from "./ModelPropsParts/MLP";
+import { KNeighborsClassifier } from "./ModelPropsParts/KNC";
 
 export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
   id,
@@ -234,6 +236,16 @@ export const ModelProps: React.FC<{ id: string; createMode?: boolean }> = ({
               <MLPClassifier
                 onParamsChange={onParamsChange(model.type, id)}
                 params={model.params as MLPClassifierParameters}
+                disabled={!createMode}
+              />
+            ),
+          ],
+          [
+            equals<ModelTypes>(ModelTypes.KNeighborsClassifier),
+            always(
+              <KNeighborsClassifier
+                onParamsChange={onParamsChange(model.type, id)}
+                params={model.params as KNeighborsClassifierParameters}
                 disabled={!createMode}
               />
             ),

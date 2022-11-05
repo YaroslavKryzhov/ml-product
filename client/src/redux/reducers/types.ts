@@ -159,6 +159,7 @@ export enum ParamsCompositionType {
 }
 
 export type ModelParams =
+  | KNeighborsClassifierParameters
   | MLPClassifierParameters
   | LogisticRegressionParameters
   | SVCParameters
@@ -322,6 +323,31 @@ export enum MLPClassifierLearningRate {
   adaptive = "adaptive",
 }
 
+export enum KNeighborsWeights {
+  uniform = "uniform",
+  distance = "distance",
+}
+
+export enum KNeighborsAlgorithm {
+  auto = "auto",
+  ball_tree = "ball_tree",
+  kd_tree = "kd_tree",
+  brute = "brute",
+}
+
+export enum KNeighborsMetric {
+  cityblock = "cityblock",
+  cosine = "cosine",
+  euclidean = "euclidean",
+  haversine = "haversine",
+  l1 = "l1",
+  l2 = "l2",
+  manhattan = "manhattan",
+  nan_euclidean = "nan_euclidean",
+  minkowski = "minkowski",
+  mahalanobis = "mahalanobis",
+}
+
 export type DecisionTreeClassifierParameters = {
   criterion?: DesicionCriterion;
   splitter?: DescicionSplitter;
@@ -427,6 +453,13 @@ export type MLPClassifierParameters = {
   alpha: number;
   max_iter: number;
   learning_rate: MLPClassifierLearningRate;
+};
+
+export type KNeighborsClassifierParameters = {
+  n_neighbors: number;
+  weights: KNeighborsWeights;
+  algorithm: KNeighborsAlgorithm;
+  metric: KNeighborsMetric;
 };
 
 export type StandardResponse = {
