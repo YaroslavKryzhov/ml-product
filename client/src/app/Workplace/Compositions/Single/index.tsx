@@ -7,6 +7,7 @@ import { AppPage, WorkPage, DocumentPage } from "ducks/reducers/types";
 import { entries, isEmpty } from "lodash";
 import React from "react";
 import { useNavigate } from "react-router";
+import { CompositionMetrics } from "./CompositionMetrics";
 import { CompositionProps } from "./CompositionProps";
 import { Models } from "./Models";
 
@@ -60,6 +61,9 @@ export const CompositionSingle: React.FC<{ createMode?: boolean }> = ({
       <WorkPageHeader />
       <Stack sx={{ flexGrow: 1 }}>
         <CompositionProps createMode={createMode} />
+        {!createMode && customCompositionName && (
+          <CompositionMetrics model_name={customCompositionName} />
+        )}
         <Models createMode={createMode} />
         {createMode && (
           <Tooltip

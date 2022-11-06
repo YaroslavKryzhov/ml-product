@@ -12,7 +12,7 @@ import { CellProps } from "react-table";
 import { OverflowText } from "components/styles";
 import { entries } from "lodash";
 
-const CellUnit: React.FC<{ value: string }> = ({ value }) => (
+export const CellUnit: React.FC<{ value: string }> = ({ value }) => (
   <Tooltip followCursor title={value}>
     <Box
       sx={{
