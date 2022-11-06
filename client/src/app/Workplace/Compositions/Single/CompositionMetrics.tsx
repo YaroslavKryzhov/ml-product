@@ -27,7 +27,16 @@ export const CompositionMetrics: React.FC<{ model_name: string }> = ({
   const describeDataMerged = modelData
     ? Object.fromEntries(
         Object.entries(modelData.report.metrics).filter(
-          ([key, val]) => !isNil(val) && !["fpr", "tpr"].includes(key)
+          ([key, val]) =>
+            !isNil(val) &&
+            ![
+              "fpr",
+              "tpr",
+              "tpr_macro",
+              "fpr_macro",
+              "tpr_micro",
+              "fpr_micro",
+            ].includes(key)
         )
       )
     : {};
@@ -43,9 +52,26 @@ export const CompositionMetrics: React.FC<{ model_name: string }> = ({
 
   const chartData =
     modelData &&
-    modelData.report.metrics.fpr.map((fprVal, inx, arr) => ({
+    !isEmpty(modelData.report.metrics.fpr) &&
+    modelData.report.metrics.fpr?.map((fprVal, inx, arr) => ({
       fpr: fprVal,
-      tpr: modelData.report.metrics.tpr[inx],
+      tpr: modelData.report.metrics.tpr![inx],
+    }));
+
+  const chartDataMacro =
+    modelData &&
+    !isEmpty(modelData.report.metrics.fpr_macro) &&
+    modelData.report.metrics.fpr_macro?.map((fprVal, inx, arr) => ({
+      fpr_macro: fprVal,
+      tpr_macro: modelData.report.metrics.tpr_macro![inx],
+    }));
+
+  const chartDataMicro =
+    modelData &&
+    !isEmpty(modelData.report.metrics.fpr_micro) &&
+    modelData.report.metrics.fpr_micro?.map((fprVal, inx, arr) => ({
+      fpr_micro: fprVal,
+      tpr_micro: modelData.report.metrics.tpr_micro![inx],
     }));
 
   return (
@@ -95,6 +121,61 @@ export const CompositionMetrics: React.FC<{ model_name: string }> = ({
             </YAxis>
             <Tooltip cursor={{ strokeDasharray: "3 3" }} />
             <Scatter data={chartData} fill={theme.palette.info.main} line />
+          </ScatterChart>
+        )}
+        {chartDataMacro && (
+          <ScatterChart
+            width={1000}
+            height={800}
+            margin={{ bottom: 20, top: 10, right: 10, left: 10 }}
+          >
+            <CartesianGrid />
+            <XAxis dataKey="fpr_macro" type="number">
+              <Label value="FPR MACRO" offset={-15} position="insideBottom" />
+            </XAxis>
+
+            <YAxis type="number" dataKey="tpr_macro">
+              <Label
+                value="TPR MACRO"
+                position="insideLeft"
+                angle={-90}
+                offset={10}
+              />
+            </YAxis>
+            <Tooltip cursor={{ strokeDasharray: "3 3" }} />
+            <Scatter
+              data={chartDataMacro}
+              fill={theme.palette.info.main}
+              line
+            />
+          </ScatterChart>
+        )}
+
+        {chartDataMicro && (
+          <ScatterChart
+            width={1000}
+            height={800}
+            margin={{ bottom: 20, top: 10, right: 10, left: 10 }}
+          >
+            <CartesianGrid />
+            <XAxis dataKey="fpr_micro" type="number">
+              <Label value="FPR MICRO" offset={-15} position="insideBottom" />
+            </XAxis>
+
+            <YAxis type="number" dataKey="tpr_micro">
+              <Label
+                value="TPR MICRO"
+                position="insideLeft"
+                angle={-90}
+                offset={10}
+              />
+            </YAxis>
+            <Tooltip cursor={{ strokeDasharray: "3 3" }} />
+            <Scatter
+              data={chartDataMicro}
+              fill={theme.palette.info.main}
+              line
+            />
           </ScatterChart>
         )}
       </Box>
