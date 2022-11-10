@@ -6,6 +6,7 @@ import {
   FormControl,
   InputLabel,
   MenuItem,
+  Pagination,
   Select,
   Tooltip,
   Typography,
@@ -26,8 +27,8 @@ import {
 import { changePredictDocumentName } from "ducks/reducers/compositions";
 import { addNotice, SnackBarType } from "ducks/reducers/notices";
 import { theme } from "globalStyle/theme";
-import { unzip, values, zipObject, keys } from "lodash";
-import React from "react";
+import { unzip, values, zipObject, keys, omit } from "lodash";
+import React, { useState } from "react";
 import { SELECTORS_WIDTH } from "./constants";
 
 const convertData = (data: Record<string, (string | number)[]>) =>
@@ -48,10 +49,11 @@ const convertToCSV = (arr: any[]) => {
 export const Predict: React.FC<{ model_name: string }> = ({ model_name }) => {
   const { predictDocumentName } = useSESelector((state) => state.compositions);
   const [predict, { data }] = usePredictCompositionMutation();
-
+  const [page, setPage] = useState<number>(1);
   const { data: allDocuments, isFetching } = useAllDocumentsQuery();
+
   const { data: predictDocumentData } = useDocumentQuery(
-    { filename: predictDocumentName, page: 1 },
+    { filename: predictDocumentName, page },
     { skip: !data }
   );
 
@@ -68,14 +70,14 @@ export const Predict: React.FC<{ model_name: string }> = ({ model_name }) => {
   const convertedData =
     data && predictDocumentData?.records
       ? convertData({
-          ...predictDocumentData.records,
-          [modelData?.target!]: data,
+          ...omit(predictDocumentData.records, [modelData?.target!]),
+          [modelData?.target!]: data.slice((page - 1) * 50, page * 50),
         })
       : [];
 
   const columns = infoData
     ? [
-        ...infoData,
+        ...infoData.filter((x) => x.name !== modelData?.target),
         {
           name: modelData?.target!,
         },
@@ -180,6 +182,14 @@ export const Predict: React.FC<{ model_name: string }> = ({ model_name }) => {
             resizable
             data={convertedData}
             columns={columns}
+          />
+          <Pagination
+            sx={{ mt: theme.spacing(2) }}
+            page={page}
+            onChange={(_, page) => setPage(page)}
+            count={predictDocumentData?.total}
+            variant="outlined"
+            shape="rounded"
           />
         </Box>
       )}
