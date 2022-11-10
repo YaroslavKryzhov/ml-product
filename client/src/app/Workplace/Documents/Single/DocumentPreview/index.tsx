@@ -15,7 +15,7 @@ import { setDialog } from "ducks/reducers/dialog";
 import { T } from "ramda";
 import { HeightContext } from "components/Dialog";
 
-const convertData = (data: Record<string, string | number>) =>
+const convertData = (data: Record<string, (string | number)[]>) =>
   unzip(values(data).map((x) => values(x as any))).map((zipArr) =>
     zipObject(keys(data), zipArr)
   );

@@ -100,7 +100,7 @@ export type CategoricalData = { name: string; value: number };
 
 export type FullDocument = {
   total: number;
-  records: Record<string, string | number>;
+  records: Record<string, (string | number)[]>;
 };
 
 export enum DocumentMethod {

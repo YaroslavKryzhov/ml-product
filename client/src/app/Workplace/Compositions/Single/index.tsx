@@ -10,6 +10,7 @@ import { useNavigate } from "react-router";
 import { CompositionMetrics } from "./CompositionMetrics";
 import { CompositionProps } from "./CompositionProps";
 import { Models } from "./Models";
+import { Predict } from "./Predict";
 
 export const CompositionSingle: React.FC<{ createMode?: boolean }> = ({
   createMode,
@@ -61,6 +62,7 @@ export const CompositionSingle: React.FC<{ createMode?: boolean }> = ({
       <WorkPageHeader />
       <Stack sx={{ flexGrow: 1 }}>
         <CompositionProps createMode={createMode} />
+        {!createMode && <Predict model_name={customCompositionName} />}
         {!createMode && customCompositionName && (
           <CompositionMetrics model_name={customCompositionName} />
         )}

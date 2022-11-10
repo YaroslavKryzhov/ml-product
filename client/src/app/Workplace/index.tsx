@@ -59,7 +59,7 @@ const ListItemText: React.FC<ListItemTextProps> = (props) => (
 export const MenuContext = createContext({ menuOpened: false });
 
 export const Workplace: React.FC = () => {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(true);
   const isDocs = !!useMatch(
     pathify([AppPage.Workplace, WorkPage.Documents], { matcher: Matcher.start })
   );
@@ -120,7 +120,7 @@ export const Workplace: React.FC = () => {
         open={open}
       >
         <DrawerHeader>
-          <IconButtonCustom
+          {/* <IconButtonCustom
             sx={{
               "&:hover": {
                 backgroundColor: "primary.light",
@@ -129,7 +129,7 @@ export const Workplace: React.FC = () => {
             onClick={() => setOpen(false)}
           >
             <ChevronLeftIcon color="secondary" />
-          </IconButtonCustom>
+          </IconButtonCustom> */}
         </DrawerHeader>
         <Divider sx={{ backgroundColor: "primary.light" }} />
         <List>

@@ -80,13 +80,14 @@ export const compositionsApi = createApi({
         };
       },
     }),
-    predictComposition: builder.query<
-      string,
+    predictComposition: builder.mutation<
+      string[],
       { model_name: string; document_name: string }
     >({
       query: (params) => ({
         url: ROUTES.COMPOSITIONS.PREDICT,
         params,
+        method: "GET",
       }),
     }),
     trainComposition: builder.mutation<
@@ -112,7 +113,7 @@ export const {
   useCompositionInfoQuery,
   useDeleteCompositionMutation,
   useDownloadCompositionMutation,
-  usePredictCompositionQuery,
+  usePredictCompositionMutation,
   useRenameCompositionMutation,
   useTrainCompositionMutation,
 } = compositionsApi;
