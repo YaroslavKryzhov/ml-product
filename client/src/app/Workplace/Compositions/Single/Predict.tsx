@@ -71,7 +71,10 @@ export const Predict: React.FC<{ model_name: string }> = ({ model_name }) => {
     data && predictDocumentData?.records
       ? convertData({
           ...omit(predictDocumentData.records, [modelData?.target!]),
-          [modelData?.target!]: data.slice((page - 1) * 50, page * 50),
+          [modelData?.target!]: data.predictions.slice(
+            (page - 1) * 50,
+            page * 50
+          ),
         })
       : [];
 
@@ -124,6 +127,7 @@ export const Predict: React.FC<{ model_name: string }> = ({ model_name }) => {
         <LoadingButton
           loading={isFetching}
           variant="contained"
+          disabled={!predictDocumentName}
           onClick={() =>
             predict({
               model_name,
