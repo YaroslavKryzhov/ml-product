@@ -107,3 +107,7 @@ class CompositionShortInfo(BaseModel):
 
 class CompositionShortInfoResponse(CompositionShortInfo):
     csv_name: str
+
+
+class PredictionResult(BaseModel):
+    predictions: List

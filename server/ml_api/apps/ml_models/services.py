@@ -51,6 +51,7 @@ from ml_api.apps.ml_models.schemas import (
     CompositionReport,
     CompositionFullInfoResponse,
     CompositionShortInfoResponse,
+    PredictionResult,
 )
 
 
@@ -97,15 +98,15 @@ class ModelService:
         ModelPickleCRUD(self._user).delete(model_name)
 
     def train_model(
-        self,
-        task_type: str,
-        composition_type: str,
-        composition_params: List[CompositionParams],
-        params_type: str,
-        document_name: str,
-        model_name: str,
-        background_tasks: BackgroundTasks,
-        test_size: Optional[float] = 0.2,
+            self,
+            task_type: str,
+            composition_type: str,
+            composition_params: List[CompositionParams],
+            params_type: str,
+            document_name: str,
+            model_name: str,
+            background_tasks: BackgroundTasks,
+            test_size: Optional[float] = 0.2,
     ):
 
         error = self.check_errors_in_input(
@@ -175,11 +176,11 @@ class ModelService:
         )
 
     def check_errors_in_input(
-        self,
-        document_name: str,
-        model_name: str,
-        composition_type: str,
-        composition_params: List[CompositionParams],
+            self,
+            document_name: str,
+            model_name: str,
+            composition_type: str,
+            composition_params: List[CompositionParams],
     ) -> bool:
         # checks if name is available
         model_info = ModelPostgreCRUD(self._db, self._user).read_by_name(
@@ -210,16 +211,16 @@ class ModelService:
         return False
 
     def _validate_training(
-        self,
-        document_name: str,
-        features,
-        target,
-        task_type: str,
-        composition_type: str,
-        composition_params: List[CompositionParams],
-        params_type: str,
-        model_name: str,
-        test_size: Optional[float] = 0.2,
+            self,
+            document_name: str,
+            features,
+            target,
+            task_type: str,
+            composition_type: str,
+            composition_params: List[CompositionParams],
+            params_type: str,
+            model_name: str,
+            test_size: Optional[float] = 0.2,
     ):
         if params_type == 'auto':
             composition_params = AutoParamsSearch(
@@ -254,11 +255,11 @@ class ModelService:
         )
 
     def _save_model(
-        self,
-        model_name: str,
-        model,
-        composition_params: List[CompositionParams],
-        report,
+            self,
+            model_name: str,
+            model,
+            composition_params: List[CompositionParams],
+            report,
     ):
         query = {
             'composition_params': composition_params,
@@ -270,7 +271,9 @@ class ModelService:
             model_name=model_name, query=query
         )
 
-    def predict_on_model(self, filename: str, model_name: str):
+    def predict_on_model(
+        self, filename: str, model_name: str
+    ) -> PredictionResult:
         features = DocumentService(self._db, self._user)._read_document(
             filename
         )
@@ -281,20 +284,20 @@ class ModelService:
             return JSONResponse(
                 status_code=status.HTTP_406_NOT_ACCEPTABLE,
                 content="Features in doc and in model training history are "
-                "different",
+                        "different",
             )
         model = ModelPickleCRUD(self._user).load(model_name)
-        predictions = model.predict(features)
-        return {"predictions": list(predictions)}
+        predictions = model.predict(features).tolist()
+        return PredictionResult(predictions=predictions)
 
 
 class AutoParamsSearch:
     def __init__(
-        self,
-        task_type: str,
-        composition_params: List[CompositionParams],
-        features,
-        target,
+            self,
+            task_type: str,
+            composition_params: List[CompositionParams],
+            features,
+            target,
     ):
         self.task_type = task_type
         self.composition_params = composition_params
@@ -309,7 +312,7 @@ class AutoParamsSearch:
         return self.composition_params
 
     def _validate_params(
-        self, model_type: models_config.AvailableModels
+            self, model_type: models_config.AvailableModels
     ) -> Dict[str, Any]:
         # to bo: add regression
         if self.task_type == 'classification':
@@ -339,7 +342,7 @@ class AutoParamsSearch:
         return {}
 
     def _objective_binary(
-        self, params, model_type: models_config.AvailableModels
+            self, params, model_type: models_config.AvailableModels
     ):
         """
         Auxiliary function for scoring of checking iterating parameters.
@@ -365,7 +368,7 @@ class AutoParamsSearch:
         return {'loss': -score.mean(), 'params': params, 'status': STATUS_OK}
 
     def _objective_multiclass(
-        self, params, model_type: models_config.AvailableModels
+            self, params, model_type: models_config.AvailableModels
     ):
         """
         Auxiliary function for scoring of checking iterating parameters.
@@ -408,10 +411,10 @@ class ModelConstructor:
     """
 
     def __init__(
-        self,
-        task_type: str,
-        model_type: models_config.AvailableModels,
-        params=Dict[str, Any],
+            self,
+            task_type: str,
+            model_type: models_config.AvailableModels,
+            params=Dict[str, Any],
     ):
         self.model_type = model_type
         self.params = params
@@ -549,10 +552,10 @@ class CompositionConstructor:
     Uses ModelConstructor class for component estimators"""
 
     def __init__(
-        self,
-        task_type: str,
-        composition_type: str,
-        models_with_params: List[CompositionParams],
+            self,
+            task_type: str,
+            composition_type: str,
+            models_with_params: List[CompositionParams],
     ):
         """
         :param task_type: one of ml_models.schemas.AvailableTaskTypes
@@ -613,7 +616,8 @@ class CompositionValidator:
     """
 
     def __init__(
-        self, task_type, composition, model_name, features, target, test_size
+            self, task_type, composition, model_name, features, target,
+            test_size
     ):
         self.task_type = task_type
         self.composition = composition
@@ -645,8 +649,8 @@ class CompositionValidator:
         predictions = self.composition.predict(features_valid)
         try:
             probabilities = self.composition.predict_proba(features_valid)[
-                :, 1
-            ]
+                            :, 1
+                            ]
         except AttributeError:
             try:
                 probabilities = self.composition.decision_function(

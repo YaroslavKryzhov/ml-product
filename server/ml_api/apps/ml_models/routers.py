@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, BackgroundTasks
-from typing import List
+from typing import List, Dict
 
 from ml_api.common.database.db_deps import get_db
 from ml_api.apps.users.routers import current_active_user
@@ -12,6 +12,7 @@ from ml_api.apps.ml_models.schemas import (
     CompositionParams,
     CompositionShortInfoResponse,
     CompositionFullInfoResponse,
+    PredictionResult
 )
 
 models_router = APIRouter(
@@ -46,7 +47,7 @@ def train_composition(  # task_type: AvailableTaskTypes,
     return result
 
 
-@models_router.get("/predict")
+@models_router.get("/predict", response_model=PredictionResult)
 def predict(
     document_name: str,
     model_name: str,
