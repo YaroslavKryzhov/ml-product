@@ -2,17 +2,26 @@
 
 ## Frontend Get Started
 
-убедиться, что стоит nodejs 
+try:
+	docker-compose up --build
 
-`node -v` 
+start_server:
+	docker-compose up --build -d --force-recreate
 
-если не стоит поставить lts версию https://nodejs.org/en/
+migrations:
+	echo "alembic revision --autogenerate -m "msq_$(message)"" | docker exec -i ml-product-rest-api bash
 
-`cd client`
+migrate:
+	echo "alembic upgrade head" | docker exec -i ml-product-rest-api bash
 
-Один раз и после изменений зависимостей
-`npm install`
+sleep_5:
+	echo "sleep 5 sec" && \
+	sleep 5
 
+build_server:
+	make start_server sleep_5 && \
+	make migrations message='1' sleep_5 && \
+	make migrate sleep_5
 
-`npm start`
-
+stop_server:
+	docker-compose down
