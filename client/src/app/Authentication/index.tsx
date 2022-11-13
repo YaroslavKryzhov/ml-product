@@ -9,15 +9,11 @@ import {
   Toolbar,
 } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useState,
-} from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import { CenteredContainer, helperTextProps } from "components/muiOverride";
 import { pathify, useAppDispatch, useSESelector } from "ducks/hooks";
 import {
+  authReset,
   changeEmail,
   changePasswordInput,
   changeSecondPasswordInput,
@@ -73,15 +69,18 @@ export const Authentication: React.FC = () => {
 
     if (!isReg)
       auth({ username: emailInput, password: passwordInput }).then(
-        (res: any) =>
-          (res as any).error.data.detail === BAD_LOGIN &&
-          dispatch(
-            addNotice({
-              label: "Ошибка. Попробуйте еще раз.",
-              type: SnackBarType.error,
-              id: Date.now(),
-            })
-          )
+        (res: any) => {
+          (res as any).error?.data?.detail === BAD_LOGIN &&
+            dispatch(
+              addNotice({
+                label: "Ошибка. Попробуйте еще раз.",
+                type: SnackBarType.error,
+                id: Date.now(),
+              })
+            );
+
+          dispatch(authReset());
+        }
       );
     else
       register({ email: emailInput, password: passwordInput }).then(
@@ -107,13 +106,13 @@ export const Authentication: React.FC = () => {
         pathify([AppPage.Workplace, WorkPage.Documents, DocumentPage.List])
       );
     }
-  }, [isAuthSuccess, authResponse]);
+  }, [isAuthSuccess, authResponse, navigate]);
 
   useLayoutEffect(() => {
     if (isRegSuccess) {
       auth({ username: emailInput, password: passwordInput });
     }
-  }, [isRegSuccess]);
+  }, [auth, emailInput, isRegSuccess, passwordInput]);
 
   return (
     <Stack direction="column" sx={{ height: "100vh" }}>

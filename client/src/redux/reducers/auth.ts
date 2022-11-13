@@ -1,5 +1,4 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { authApi } from "./api/auth.api";
 import { AuthSlice } from "./types";
 
 const initialState: AuthSlice = {
@@ -19,17 +18,19 @@ const authSlice = createSlice({
 
     changeEmail: (state, action: PayloadAction<string>) =>
       void (state.emailInput = action.payload),
-  },
-  extraReducers: (builder) => {
-    builder.addMatcher(authApi.endpoints.auth.matchFulfilled, (state) => {
+    authReset: (state) => {
       state.emailInput = "";
       state.passwordInput = "";
       state.secondPasswordInput = "";
-    });
+    },
   },
 });
 
-export const { changePasswordInput, changeSecondPasswordInput, changeEmail } =
-  authSlice.actions;
+export const {
+  changePasswordInput,
+  changeSecondPasswordInput,
+  changeEmail,
+  authReset,
+} = authSlice.actions;
 
 export default authSlice.reducer;
