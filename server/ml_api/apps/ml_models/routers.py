@@ -12,7 +12,6 @@ from ml_api.apps.ml_models.schemas import (
     CompositionParams,
     CompositionShortInfoResponse,
     CompositionFullInfoResponse,
-    PredictionResult
 )
 
 models_router = APIRouter(
@@ -47,7 +46,7 @@ def train_composition(  # task_type: AvailableTaskTypes,
     return result
 
 
-@models_router.get("/predict", response_model=PredictionResult)
+@models_router.get("/predict")
 def predict(
     document_name: str,
     model_name: str,

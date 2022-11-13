@@ -51,7 +51,6 @@ from ml_api.apps.ml_models.schemas import (
     CompositionReport,
     CompositionFullInfoResponse,
     CompositionShortInfoResponse,
-    PredictionResult,
 )
 
 
@@ -271,9 +270,7 @@ class ModelService:
             model_name=model_name, query=query
         )
 
-    def predict_on_model(
-        self, filename: str, model_name: str
-    ) -> PredictionResult:
+    def predict_on_model(self, filename: str, model_name: str):
         features = DocumentService(self._db, self._user)._read_document(
             filename
         )
@@ -288,7 +285,8 @@ class ModelService:
             )
         model = ModelPickleCRUD(self._user).load(model_name)
         predictions = model.predict(features).tolist()
-        return PredictionResult(predictions=predictions)
+        features['predictions'] = predictions
+        return features.to_dict('list')
 
 
 class AutoParamsSearch:
