@@ -19,15 +19,11 @@ import {
   useCompositionInfoQuery,
   usePredictCompositionMutation,
 } from "ducks/reducers/api/compositions.api";
-import {
-  useAllDocumentsQuery,
-  useDocumentQuery,
-  useInfoStatsDocumentQuery,
-} from "ducks/reducers/api/documents.api";
+import { useAllDocumentsQuery } from "ducks/reducers/api/documents.api";
 import { changePredictDocumentName } from "ducks/reducers/compositions";
 import { addNotice, SnackBarType } from "ducks/reducers/notices";
 import { theme } from "globalStyle/theme";
-import { unzip, values, zipObject, keys, omit } from "lodash";
+import { unzip, values, zipObject, keys } from "lodash";
 import React, { useState } from "react";
 import { SELECTORS_WIDTH } from "./constants";
 
@@ -52,44 +48,25 @@ export const Predict: React.FC<{ model_name: string }> = ({ model_name }) => {
   const [page, setPage] = useState<number>(1);
   const { data: allDocuments, isFetching } = useAllDocumentsQuery();
 
-  const { data: predictDocumentData } = useDocumentQuery(
-    { filename: predictDocumentName, page },
-    { skip: !data }
-  );
-
   const { data: modelData } = useCompositionInfoQuery({
     model_name,
   });
 
-  const { data: infoData } = useInfoStatsDocumentQuery(predictDocumentName, {
-    skip: !data,
-  });
-
   const dispatch = useAppDispatch();
 
-  const convertedData =
-    data && predictDocumentData?.records
-      ? convertData({
-          ...omit(predictDocumentData.records, [modelData?.target!]),
-          [modelData?.target!]: data.predictions.slice(
-            (page - 1) * 50,
-            page * 50
-          ),
-        })
-      : [];
+  const convertedData = data ? convertData(data) : [];
 
-  const columns = infoData
+  const columns = data
     ? [
-        ...infoData.filter((x) => x.name !== modelData?.target),
-        {
-          name: modelData?.target!,
-        },
-      ].map((df, inx, arr) => ({
-        accessor: df.name,
+        ...keys(data).map((x) =>
+          x === "predictions" ? modelData?.target! : x
+        ),
+      ].map((x, inx, arr) => ({
+        accessor: x === modelData?.target ? "predictions" : x,
         fixed: inx === arr.length - 1 ? Fixed.right : Fixed.left,
         Header: (
-          <Tooltip followCursor title={df.name}>
-            <Box sx={{ ...OverflowText }}>{df.name}</Box>
+          <Tooltip followCursor title={x}>
+            <Box sx={{ ...OverflowText }}>{x}</Box>
           </Tooltip>
         ),
       }))
@@ -176,7 +153,7 @@ export const Predict: React.FC<{ model_name: string }> = ({ model_name }) => {
         )}
       </Box>
 
-      {predictDocumentData && data && (
+      {data && (
         <Box sx={{ mt: theme.spacing(5) }}>
           <TableFix
             compact
@@ -184,14 +161,14 @@ export const Predict: React.FC<{ model_name: string }> = ({ model_name }) => {
             defaultColumnSizing={{ minWidth: 135 }}
             forceResize
             resizable
-            data={convertedData}
+            data={convertedData.slice((page - 1) * 50, page * 50)}
             columns={columns}
           />
           <Pagination
             sx={{ mt: theme.spacing(2) }}
             page={page}
             onChange={(_, page) => setPage(page)}
-            count={predictDocumentData?.total}
+            count={Math.ceil(data.predictions.length / 50)}
             variant="outlined"
             shape="rounded"
           />

@@ -81,7 +81,7 @@ export const compositionsApi = createApi({
       },
     }),
     predictComposition: builder.mutation<
-      { predictions: string[] },
+      { predictions: string[]; [key: string]: Array<string | number> },
       { model_name: string; document_name: string }
     >({
       query: (params) => ({
