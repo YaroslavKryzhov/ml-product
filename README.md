@@ -1,27 +1,39 @@
-# ml-product
+# ml-product v1
 
-## Frontend Get Started
+## Для деплоя:
 
-try:
-	docker-compose up --build
+### Первоначальная сборка проекта:
+```bash
+make build_server
+```
+Запускает: 
+- make start_server 
+- make migrations 
+- make migrate
 
-start_server:
-	docker-compose up --build -d --force-recreate
+**Выполняется один раз для создания структуры базы данных**
 
-migrations:
-	echo "alembic revision --autogenerate -m "msq_$(message)"" | docker exec -i ml-product-rest-api bash
+---
+### Для запуска в dev-режиме (с отображением логов в консоль)
+```bash
+make try
+```
+### В обычном режиме:
+```bash
+make start_server
+```
+### Остановка контейнеров:
+```bash
+make stop_server
+```
 
-migrate:
-	echo "alembic upgrade head" | docker exec -i ml-product-rest-api bash
+---
+## После запуска сервисы доступны по:
 
-sleep_5:
-	echo "sleep 5 sec" && \
-	sleep 5
+### API Swagger: localhost:8006/docs
 
-build_server:
-	make start_server sleep_5 && \
-	make migrations message='1' sleep_5 && \
-	make migrate sleep_5
+### Интерфейс: localhost:3036
 
-stop_server:
-	docker-compose down
+---
+
+Contacts: https://github.com/KirillKosvintsev
