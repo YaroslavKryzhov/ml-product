@@ -1,5 +1,5 @@
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
-from ml_api.common.database.base_model import Base
+from ml_api.common.models.base import Base
 from sqlalchemy.orm import relationship
 
 

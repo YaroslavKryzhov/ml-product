@@ -8,7 +8,7 @@ from alembic import context
 
 sys.path = ['', '../../..'] + sys.path[1:]
 
-from ml_api.common.database import Base
+from ml_api.common.db import Base
 from ml_api.common.config import DATABASE_URL
 
 

@@ -1,9 +1,4 @@
-from typing import List, Union, Dict, Any, Optional
 from enum import Enum
-from uuid import UUID
-from datetime import datetime
-
-from pydantic import BaseModel
 
 
 class TaskType(Enum):
@@ -11,73 +6,11 @@ class TaskType(Enum):
     regression = 'regression'
 
 
-class ColumnTypes(BaseModel):
-    numeric: List[str]
-    categorical: List[str]
-    target: Optional[str] = None
-    task_type: Optional[TaskType] = None
-
-
-class ColumnDescription(BaseModel):
-    name: str
-    type: str
-    not_null_count: int
-    data_type: str
-    data: List[Dict]
-
-
-class DocumentDescription(BaseModel):
-    count: Dict
-    mean: Dict
-    std: Dict
-    min: Dict
-    first_percentile: Dict
-    second_percentile: Dict
-    third_percentile: Dict
-    max: Dict
-
-
-class PipelineElement(BaseModel):
-    function_name: str
-    param: Union[str, int, float] = None
-
-
-class DocumentFullInfo(BaseModel):
-    id: UUID
-    name: str
-    upload_date: datetime
-    change_date: datetime
-    pipeline: List[PipelineElement]
-    column_types: Optional[ColumnTypes]
-
-    class Config:
-        orm_mode = True
-
-
-class DocumentShortInfo(BaseModel):
-    name: str
-    upload_date: datetime
-    change_date: datetime
-    pipeline: List[PipelineElement]
-
-    class Config:
-        orm_mode = True
-
-
-class ReadDocumentResponse(BaseModel):
-    total: int
-    records: Dict[str, List]
-
-
-class ServiceResponse(BaseModel):
-    status_code: int
-    content: Any
-
-
 class AvailableFunctions(Enum):
     # GROUP 1: Обработка данных
     remove_duplicates = 'remove_duplicates'  # Удаление дубликатов
     drop_na = 'drop_na'  # Удаление пропусков
+    drop_column = 'drop_column'
     miss_insert_mean_mode = (
         'miss_insert_mean_mode'  # Замена пропусков: Среднее и мода
     )

@@ -12,17 +12,8 @@ AsyncSession = sessionmaker(
     async_engine, class_=AsyncSession, expire_on_commit=False
 )
 
-
-async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
-    async with AsyncSession() as db:
-        yield db
-
-
 # standard connection
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 Session = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 
-def get_db() -> Generator:
-    with Session() as db:
-        yield db

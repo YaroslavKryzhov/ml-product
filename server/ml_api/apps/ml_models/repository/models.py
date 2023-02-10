@@ -4,7 +4,7 @@ from sqlalchemy import Column, String, DateTime, ForeignKey, PickleType
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 
-from ml_api.common.database.base_model import Base
+from ml_api.common.db.base_model import Base
 
 
 # document_in_model = Table('document_in_model', Base.metadata,

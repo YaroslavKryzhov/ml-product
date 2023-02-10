@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 from ml_api.apps.users.models import User
-from ml_api.common.database.db_deps import get_async_db
+from ml_api.common.db.db_deps import get_async_db
 
 SECRET = "dfgb34gb3obdjkfgb983bkjfdg"
 

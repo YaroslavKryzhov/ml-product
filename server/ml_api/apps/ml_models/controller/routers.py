@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, BackgroundTasks
 from typing import List, Dict
 
-from ml_api.common.database.db_deps import get_db
+from ml_api.common.db.db_deps import get_db
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.models import User
 from ml_api.apps.ml_models.services import ModelService

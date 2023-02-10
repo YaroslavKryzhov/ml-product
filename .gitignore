@@ -1,4 +1,4 @@
 /volumes/
 /server/catboost_info/
-/server/ml_api/common/database/migrations/versions
+/server/ml_api/common/db/migrations/versions
 /.idea

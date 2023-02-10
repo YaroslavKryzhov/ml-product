@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, UploadFile, File, status
 
-from ml_api.common.database.db_deps import get_db
+from ml_api.common.db.db_deps import get_db
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.models import User
 from ml_api.apps.documents.services import DocumentService
@@ -175,7 +175,7 @@ def set_target_feature(
     db: get_db = Depends(),
     user: User = Depends(current_active_user),
 ):
-    DocumentService(db, user).set_column_types(
+    DocumentService(db, user)._set_column_types(
         filename=filename,
         target_column=target_column,
         # task_type=task_type
