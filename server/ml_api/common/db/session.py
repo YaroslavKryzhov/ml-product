@@ -14,6 +14,5 @@ AsyncSession = sessionmaker(
 
 # standard connection
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+# TODO: session in celery task, if errors
 Session = sessionmaker(bind=engine, autocommit=False, autoflush=False)
-
-

@@ -1,36 +1,74 @@
-version: "3"
+version: "3.4"
 
 services:
   server:
-    container_name: "ml-product-rest-api"
+    container_name: "ml-product-server"
     build:
       context: ./server
       dockerfile: Dockerfile
-    command: "uvicorn ml_api.main:app --reload --workers 1 --host 0.0.0.0 --port 8000"
-    restart: always
+    command: "${API_COMMAND}"
+    env_file:
+      - .env
+    ports:
+      - "8006:8000"
     volumes:
       - ./volumes/server_data:/data/
       - ./server:/server
-    ports:
-      - "8006:8000"
     depends_on:
       - postgres_db
     networks:
       - ml-net
+    restart: unless-stopped
 
   postgres_db:
-    image: postgres:13-alpine
     container_name: "ml-product-postgres"
-    environment:
-      POSTGRES_DB: "ml_project"
-      POSTGRES_USER: "userJBH134JHVA23"
-      POSTGRES_PASSWORD: "passJHHSFAJ652538HVJKJ"
+    image: postgres:13-alpine
+    env_file:
+      - .env
+    ports:
+      - "${DB_PORT_OUT}:5432"
     volumes:
       - ./volumes/postgres_data:/var/lib/postgresql/data/
-    ports:
-      - "5432:5432"
     networks:
       - ml-net
+    restart: unless-stopped
+
+  worker:
+    container_name: "ml-product-celery-worker"
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    command: "${CELERY_COMMAND}"
+    env_file:
+      - .env
+    volumes:
+      - ./volumes/server_data:/data/
+      - ./server:/server
+    networks:
+      - ml-net
+    restart: unless-stopped
+
+  rabbitmq_server:
+    container_name: "ml-product-rabbitmq-server"
+    image: rabbitmq:3-management
+    env_file:
+      - .env
+    ports:
+      - "5672:5672"
+    networks:
+      - ml-net
+    restart: unless-stopped
+
+  redis_server:
+    container_name: "ml-product-redis-server"
+    image: redis:6-alpine
+    env_file:
+      - .env
+    ports:
+      - "6379:6379"
+    networks:
+      - ml-net
+    restart: unless-stopped
 
   client:
     container_name: "ml-product-client"
@@ -40,9 +78,41 @@ services:
     ports:
       - "3036:80"
 
+  centrifugo:
+    container_name: "ml-product-centrifugo"
+    image: centrifugo/centrifugo:v3.0
+    volumes:
+      - ./deploy/centrifugo/config.json:/centrifugo/config.json
+    command: centrifugo -c config.json
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    networks:
+      - ml-net
+
+  nginx:
+    build:
+      context: ./deploy/nginx
+      dockerfile: Dockerfile
+    container_name: "ml-product-nginx"
+    depends_on:
+      - server
+      - client
+    volumes:
+      - "./deploy/nginx/nginx.conf:/etc/nginx/conf.d/ml-product.conf"
+      - ./volumes/client:/usr/share/nginx/html:ro
+    command: "/bin/sh -c 'while :; do sleep 5h & wait $${!}; nginx -s reload; done & nginx-debug -g \"daemon off;\"'"
+    ports:
+      - "6060:80"
+    profiles:
+      - backend
+    networks:
+      - ml-net
+
 networks:
   ml-net:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.138.0.0/24
+        - subnet: 172.167.0.0/24

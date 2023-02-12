@@ -6,29 +6,13 @@ import pickle
 
 from sqlalchemy.orm import Session
 from fastapi.responses import FileResponse
-from ml_api.common.config import ROOT_DIR
-from ml_api.apps.ml_models.models import Model
-from ml_api.apps.ml_models.schemas import (
-    CompositionFullInfo,
-    CompositionShortInfo,
-)
+from ml_api.common.file_manager.base import FileCRUD
 
 
-class BaseCRUD:
-    def __init__(self, user):
-        self.user_id = str(user.id)
-        self.user_path = os.path.join(ROOT_DIR, self.user_id, 'models')
-        if not os.path.exists(self.user_path):
-            os.makedirs(self.user_path)
-
-    def file_path(self, filename):
-        return os.path.join(self.user_path, filename + '.pickle')
-
-
-class ModelPostgreCRUD(BaseCRUD):
+class ModelInfoCRUD:
     def __init__(self, session: Session, user):
-        super().__init__(user)
         self.session = session
+        self.user_id = str(user.id)
 
     # CREATE
     def create(
@@ -122,35 +106,24 @@ class ModelPostgreCRUD(BaseCRUD):
         self.session.commit()
 
 
-class ModelPickleCRUD(BaseCRUD):
+class ModelFileCRUD(FileCRUD):
 
-    # CREATE/UPDATE
-    def save(self, model_name: str, model):
-        """DEV USE: Save model in the pickle format"""
-        model_path = self.file_path(model_name)
-        with open(model_path, 'wb') as handle:
-            pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    def read_onnx(self, model_uuid: str):
+        model_path = self._get_path(model_uuid)
+        # with open(model_path, 'rb') as handle:
+        #     model = pickle.load(handle)
 
-    # READ
-    def load(self, model_name: str):
-        """DEV USE: Load model from the pickle format"""
-        model_path = self.file_path(model_name)
-        with open(model_path, 'rb') as handle:
-            model = pickle.load(handle)
+        # TODO: ONNX.read
         return model
 
-    def download_pickled(self, model_name: str):
-        model_path = self.file_path(model_name)
-        return FileResponse(
-            path=model_path, filename=str(model_name + '.pickle')
-        )
+    def download_onnx(self, model_uuid: str, filename: str):
+        file_response = self.download(file_uuid=model_uuid, filename=filename)
+        return file_response
 
-    # UPDATE
-    def rename(self, model_name: str, new_model_name: str):
-        old_path = self.file_path(model_name)
-        new_path = self.file_path(new_model_name)
-        shutil.move(old_path, new_path)
+    def save_onnx(self, model_uuid: str, model):
+        """DEV USE: Save model in the pickle format"""
+        model_path = self._get_path(model_uuid)
+        # with open(model_path, 'wb') as handle:
+        #     pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    # DELETE
-    def delete(self, model_name: str):
-        os.remove(self.file_path(model_name))
+        # TODO: ONNX.write UUID.onnx

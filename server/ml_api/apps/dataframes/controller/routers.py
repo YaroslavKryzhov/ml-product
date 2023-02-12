@@ -10,6 +10,7 @@ from ml_api.apps.documents.schemas import DocumentFullInfo, DocumentDescription
 from ml_api.apps.documents.schemas import AvailableFunctions, ServiceResponse
 from ml_api.apps.documents.schemas import ReadDocumentResponse, TaskType
 from ml_api.apps.documents.schemas import ColumnDescription, DocumentShortInfo
+from ml_api.celery_worker import apply_function_celery, copy_pipeline_celery
 
 documents_file_router = APIRouter(
     prefix="/document",
@@ -262,33 +263,21 @@ def apply_method(
     filename: str,
     function_name: AvailableFunctions,
     param: Optional[float] = None,
-    db: get_db = Depends(),
-    user: User = Depends(current_active_user),
 ):
-    result = DocumentService(db, user).apply_function(
-        filename, function_name.value, param
+    task_id = apply_function_celery.delay(str(filename), function_name.value, param)
+    return ServiceResponse(
+        status_code=status.HTTP_200_OK,
+        content=task_id,
     )
-    if result:
-        return ServiceResponse(
-            status_code=status.HTTP_200_OK,
-            content=f"The method '{function_name.value}' successfully applied",
-        )
-    else:
-        return ServiceResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content=f"Error with applying",
-        )
 
 
 @documents_method_router.post("/copy_pipeline", response_model=ServiceResponse)
 def copy_pipeline(
     from_document: str,
     to_document: str,
-    db: get_db = Depends(),
-    user: User = Depends(current_active_user),
 ):
-    DocumentService(db, user).copy_pipeline(from_document, to_document)
+    task_id = copy_pipeline_celery.delay(from_document, to_document)
     return ServiceResponse(
         status_code=status.HTTP_200_OK,
-        content=f"Pipeline from '{from_document}' applied to '{to_document}'",
+        content=task_id,
     )

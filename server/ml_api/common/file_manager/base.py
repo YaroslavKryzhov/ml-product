@@ -1,10 +1,9 @@
 import tempfile
-import uuid
 import os
 
 from fastapi.responses import FileResponse
 
-import ml_api.common.config as config
+import ml_api.config as config
 
 
 class FileCRUD:
@@ -20,9 +19,9 @@ class FileCRUD:
             f.write(context)
         return file_uuid
 
-    def download(self, file_uuid: str) -> FileResponse:
+    def download(self, file_uuid: str, filename: str) -> FileResponse:
         path = self._get_path(file_uuid)
-        return FileResponse(path=path)
+        return FileResponse(path=path, filename=filename)
 
     def replace(self, file_uuid: str, file: tempfile.SpooledTemporaryFile) -> str:
         path = self._get_path(file_uuid)

@@ -3,18 +3,21 @@ FROM amd64/python:3.9-buster
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
+RUN apt-get update
+RUN apt-get install ffmpeg libsm6 libxext6 netcat gcc python-dev postgresql libpq-dev -y
+RUN apt-get clean
+
+
+RUN python -m pip --no-cache-dir install --upgrade pip
+RUN python -m pip install poetry && \
+    poetry config virtualenvs.create true && \
+    poetry config virtualenvs.path /virtualenv && \
+    poetry config virtualenvs.in-project false
+
+
 WORKDIR /server
 
-#RUN apt-get update \
-#  && apt-get -y install netcat gcc python-dev postgresql libpq-dev \
-#  && apt-get clean
+COPY pyproject.toml poetry.lock ./
 
-RUN pip install --upgrade pip
-#RUN pip install --upgrade setuptools
-#RUN pip install catboost
-#RUN pip install xgboost
-#RUN pip install lightgbm
-
-COPY ./requirements.txt .
-
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
+RUN poetry install
+RUN #poetry run poe catboost_install

@@ -5,7 +5,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 
 from ml_api.common.models.base import Base
-# from ml_api.common.db import Base
 
 
 class DataFrame(Base):
@@ -19,7 +18,7 @@ class DataFrame(Base):
         default=uuid.uuid4,
         unique=True,
     )
-    filename = Column(String)
+    filename = Column(String, unique=True)
     user_id = Column(UUID, ForeignKey("user.id"))
     created_at = Column(DateTime)
     updated_at = Column(DateTime)

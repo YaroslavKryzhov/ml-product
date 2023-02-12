@@ -12,9 +12,9 @@ from ml_api.apps.dataframes.controller.schemas import DataFrameInfo
 
 
 class DataFrameInfoCRUD:
-    def __init__(self, session: Session, user):
+    def __init__(self, session: Session, user_id: str):
         self.session = session
-        self.user_id = str(user.id)
+        self.user_id = user_id
 
     def get(self, dataframe_id: UUID) -> DataFrameInfo:
         dataframe = (
@@ -79,8 +79,8 @@ class DataFrameFileCRUD(FileCRUD):
         data = pd.read_csv(csv_path)
         return data
 
-    def download_csv(self, file_uuid: str) -> FileResponse:
-        file_response = self.download(file_uuid=file_uuid)
+    def download_csv(self, file_uuid: str, filename: str) -> FileResponse:
+        file_response = self.download(file_uuid=file_uuid, filename=filename)
         file_response.media_type = 'text/csv'
         return file_response
 

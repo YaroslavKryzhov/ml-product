@@ -1,17 +1,29 @@
-from fastapi import FastAPI
+import fastapi
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 
-from ml_api.common import config
-from ml_api.apps.documents.routers import (
+from ml_api import config
+from ml_api.apps.dataframes.controller.routers import (
     documents_file_router,
     documents_df_router,
     documents_method_router,
 )
-from ml_api.apps.users.routers import users_router
-from ml_api.apps.ml_models.routers import models_router
+from ml_api.apps.users.controller.routers import users_router
+from ml_api.apps.ml_models.controller.routers import models_router
 
+if config.STAGE.upper() == 'PRODUCTION':
+    docs_url = None
+    openapi_url = None
+else:
+    docs_url = config.DOCS_URL
+    openapi_url = config.OPENAPI_URL
 
-app = FastAPI(title=config.PROJECT_NAME, version=config.VERSION)
+app = FastAPI(
+    title=config.PROJECT_NAME,
+    version=config.VERSION,
+    docs_url=docs_url,
+    openapi_url=openapi_url,
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,8 +37,10 @@ app.add_middleware(
 # async def custom_app_exception_handler(request, e):
 #     return await app_exception_handler(request, e)
 
-app.include_router(documents_file_router)
-app.include_router(documents_df_router)
-app.include_router(documents_method_router)
-app.include_router(users_router)
-app.include_router(models_router)
+api_router = APIRouter(prefix=config.API_PREFIX)
+api_router.include_router(documents_file_router)
+api_router.include_router(documents_df_router)
+api_router.include_router(documents_method_router)
+api_router.include_router(users_router)
+api_router.include_router(models_router)
+app.include_router(api_router)

@@ -1,7 +1,7 @@
 import logging
 from typing import Generator
 
-from ml_api.common import config
+from ml_api import config
 from ml_api.common.pubsub.client import PubSub
 
 logger = logging.getLogger(__name__)

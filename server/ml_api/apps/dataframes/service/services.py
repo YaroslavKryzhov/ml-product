@@ -1,5 +1,5 @@
 from uuid import UUID
-from typing import Optional, List, Any, Callable, Dict
+from typing import List, Any
 from datetime import datetime
 
 from fastapi.responses import FileResponse
@@ -9,43 +9,43 @@ import ml_api.apps.dataframes.controller.schemas as schemas
 import ml_api.apps.dataframes.specs.specs as specs
 from ml_api.apps.dataframes.repository.repository import DataFrameInfoCRUD, DataFrameFileCRUD
 import ml_api.apps.dataframes.service.utils as utils
-from ml_api.apps.dataframes.service.function_service import DataframeFunctionService
+from ml_api.apps.dataframes.service.function_service_RAW import DataframeFunctionService
 
 
 class DataframeManagerService:
-    def __init__(self, db, user):
+    def __init__(self, db, user_id):
         self._db = db
-        self._user = user
+        self._user_id = user_id
 
     # 1: FILE MANAGEMENT OPERATIONS -------------------------------------------
     def upload_file(self, file, filename: str) -> bool:
         if self._check_if_dataframe_name_exists(filename):
             return False
-        dataframe_id = DataFrameInfoCRUD(self._db, self._user).create(filename)
-        DataFrameFileCRUD(self._user).upload(file_uuid=dataframe_id, file=file)
+        dataframe_id = DataFrameInfoCRUD(self._db, self._user_id).create(filename)
+        DataFrameFileCRUD().upload(file_uuid=dataframe_id, file=file)
         column_types = self._define_column_types(dataframe_id)
         self._set_column_types(dataframe_id, column_types)
         return True
 
     def download_file(self, dataframe_id: UUID) -> FileResponse:
-        dataframe_info = DataFrameInfoCRUD(self._db, self._user).get(dataframe_id)
-        response = DataFrameFileCRUD(self._user).download_csv(file_uuid=dataframe_id)
-        response.filename = dataframe_info.filename
+        dataframe_info = DataFrameInfoCRUD(self._db, self._user_id).get(dataframe_id)
+        response = DataFrameFileCRUD().download_csv(
+            file_uuid=dataframe_id, filename=dataframe_info.filename)
         return response
 
     def rename_file(self, dataframe_id: UUID, new_filename: str) -> bool:
         if self._check_if_dataframe_name_exists(new_filename):
             return False
         query = {'filename': new_filename}
-        DataFrameInfoCRUD(self._db, self._user).update(dataframe_id, query)
+        DataFrameInfoCRUD(self._db, self._user_id).update(dataframe_id, query)
         return True
 
     def delete_file(self, dataframe_id: UUID):
-        DataFrameInfoCRUD(self._db, self._user).delete(dataframe_id)
-        DataFrameFileCRUD(self._user).delete(dataframe_id)
+        DataFrameInfoCRUD(self._db, self._user_id).delete(dataframe_id)
+        DataFrameFileCRUD().delete(dataframe_id)
 
     def _check_if_dataframe_name_exists(self, filename: str) -> bool:
-        dataframe_info = DataFrameInfoCRUD(self._db, self._user).get_by_name(
+        dataframe_info = DataFrameInfoCRUD(self._db, self._user_id).get_by_name(
             filename)
         if dataframe_info:
             return True
@@ -53,23 +53,23 @@ class DataframeManagerService:
             return False
 
     def _read_file_to_df(self, dataframe_id: UUID) -> pd.DataFrame:
-        return DataFrameFileCRUD(self._user).read_csv(dataframe_id)
+        return DataFrameFileCRUD().read_csv(dataframe_id)
 
     def _save_df_to_file(self, dataframe_id: UUID, df: pd.DataFrame):
-        DataFrameFileCRUD(self._user).save_csv(dataframe_id=dataframe_id, data=df)
+        DataFrameFileCRUD().save_csv(dataframe_id=dataframe_id, data=df)
 
     # 2: GET OPERATIONS -------------------------------------------------------
     def get_dataframe_info(self, dataframe_id: UUID) -> schemas.DataFrameInfo:
-        return DataFrameInfoCRUD(self._db, self._user).get(dataframe_id)
+        return DataFrameInfoCRUD(self._db, self._user_id).get(dataframe_id)
 
     def _get_dataframe_column_types(self, dataframe_id: UUID) -> schemas.ColumnTypes:
-        return DataFrameInfoCRUD(self._db, self._user).get(dataframe_id).column_types
+        return DataFrameInfoCRUD(self._db, self._user_id).get(dataframe_id).column_types
 
     def _get_dataframe_pipeline(self, dataframe_id: UUID) -> List[schemas.PipelineElement]:
-        return DataFrameInfoCRUD(self._db, self._user).get(dataframe_id).pipeline
+        return DataFrameInfoCRUD(self._db, self._user_id).get(dataframe_id).pipeline
 
     def get_all_dataframes_info(self) -> List[schemas.DataFrameInfo]:
-        return DataFrameInfoCRUD(self._db, self._user).get_all()
+        return DataFrameInfoCRUD(self._db, self._user_id).get_all()
 
     def get_dataframe_statistic_description(
         self, filename: str
@@ -132,7 +132,7 @@ class DataframeManagerService:
             'column_types': column_types,
             'updated_at': str(datetime.now())
         }
-        DataFrameInfoCRUD(self._db, self._user).update(dataframe_id, query)
+        DataFrameInfoCRUD(self._db, self._user_id).update(dataframe_id, query)
 
     def set_target_column(self, dataframe_id: UUID, target_column: str):
         column_types = self._get_dataframe_column_types(dataframe_id)
@@ -149,7 +149,7 @@ class DataframeManagerService:
         df = self._read_file_to_df(dataframe_id)
         try:
             df[column_name] = pd.to_numeric(df[column_name])
-            DataFrameFileCRUD(self._user).save_csv(dataframe_id, df)
+            DataFrameFileCRUD().save_csv(dataframe_id, df)
         except ValueError:
             return False
         column_types = self._get_dataframe_column_types(dataframe_id)
@@ -158,30 +158,27 @@ class DataframeManagerService:
         self._set_column_types(dataframe_id, column_types)
         return True
 
-    def copy_pipeline(self, id_from: UUID, id_to: UUID):
-        pipeline = self._get_dataframe_pipeline(id_from)
-        self.apply_pipeline_to_csv(id_to, pipeline)
-
     def _update_pipeline(self, dataframe_id: UUID, function_name: specs.AvailableFunctions, params: Any = None,):
         pipeline = self._get_dataframe_pipeline(dataframe_id)
         pipeline.append(schemas.PipelineElement(
             function_name=function_name, params=params
         ))
         query = {'pipeline': pipeline}
-        DataFrameInfoCRUD(self._db, self._user).update(dataframe_id, query)
+        DataFrameInfoCRUD(self._db, self._user_id).update(dataframe_id, query)
 
-    def apply_pipeline_to_csv(
+    def _apply_pipeline_to_csv(
         self, dataframe_id: UUID, pipeline: List[schemas.PipelineElement]
     ) -> bool:
         for function in pipeline:
-            is_ok = self.apply_function(
+            self.apply_function(
                 dataframe_id=dataframe_id,
                 function_name=function.function_name,
                 param=function.params,
             )
-            if not is_ok:
-                return False
-        return True
+
+    def copy_pipeline(self, id_from: UUID, id_to: UUID):
+        pipeline = self._get_dataframe_pipeline(id_from)
+        self._apply_pipeline_to_csv(id_to, pipeline)
 
     def apply_function(
         self,
@@ -189,6 +186,7 @@ class DataframeManagerService:
         function_name: str,
         params: Any = None,
     ) -> bool:
+        # TODO: UPDATE
         df = self._read_file_to_df(dataframe_id)
         column_types = self._get_dataframe_column_types(dataframe_id)
 
@@ -207,7 +205,7 @@ class DataframeManagerService:
         self._set_column_types(
             dataframe_id, column_types=function_service.get_column_types()
         )
-        DataFrameFileCRUD(self._user).save_csv(
+        DataFrameFileCRUD().save_csv(
             dataframe_id, function_service.get_df()
         )
         return True
