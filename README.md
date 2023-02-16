@@ -37,3 +37,16 @@ make stop_server
 ---
 
 Contacts: https://github.com/KirillKosvintsev
+
+### Костыли:
+
+```python
+NameError: name 'fastapi_users_db_sqlalchemy' is not defined
+```
+
+Добавить строку в файл миграции ml_api/common/bd/migration/versions/... 
+
+```python
+import fastapi_users_db_sqlalchemy
+```
+

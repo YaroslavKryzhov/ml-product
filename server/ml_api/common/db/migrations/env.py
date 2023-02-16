@@ -9,7 +9,7 @@ from alembic import context
 sys.path = ['', '../../..'] + sys.path[1:]
 
 from ml_api.common.db import Base
-from ml_api.common.config import DATABASE_URL
+from ml_api.config import DATABASE_URL
 
 
 # this is the Alembic Config object, which provides

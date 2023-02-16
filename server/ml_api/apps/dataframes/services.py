@@ -1,15 +1,21 @@
+import os
 from uuid import UUID
-from typing import List, Any
+from typing import List, Any, Union
 from datetime import datetime
 
 from fastapi.responses import FileResponse
+from fastapi import HTTPException, status
 import pandas as pd
 
-import ml_api.apps.dataframes.controller.schemas as schemas
+import ml_api.apps.dataframes.schemas as schemas
 import ml_api.apps.dataframes.specs.specs as specs
-from ml_api.apps.dataframes.repository.repository import DataFrameInfoCRUD, DataFrameFileCRUD
-import ml_api.apps.dataframes.service.utils as utils
-from ml_api.apps.dataframes.service.function_service_RAW import DataframeFunctionService
+from ml_api.apps.dataframes.repository import DataFrameInfoCRUD, DataFrameFileCRUD
+import ml_api.apps.dataframes.utils.utils as utils
+from ml_api.apps.dataframes.utils.df_worker import DataframeFunctionService
+
+
+class CopyPipelineException(Exception):
+    pass
 
 
 class DataframeManagerService:
@@ -18,14 +24,12 @@ class DataframeManagerService:
         self._user_id = user_id
 
     # 1: FILE MANAGEMENT OPERATIONS -------------------------------------------
-    def upload_file(self, file, filename: str) -> bool:
-        if self._check_if_dataframe_name_exists(filename):
-            return False
-        dataframe_id = DataFrameInfoCRUD(self._db, self._user_id).create(filename)
-        DataFrameFileCRUD().upload(file_uuid=dataframe_id, file=file)
-        column_types = self._define_column_types(dataframe_id)
-        self._set_column_types(dataframe_id, column_types)
-        return True
+    def upload_file(self, file, filename: str) -> str:
+        dataframe = DataFrameInfoCRUD(self._db, self._user_id).create(filename)
+        DataFrameFileCRUD().upload(file_uuid=dataframe.id, file=file)
+        column_types = self._define_column_types(dataframe.id)
+        self._set_column_types(dataframe.id, column_types)
+        return str(dataframe.id)
 
     def download_file(self, dataframe_id: UUID) -> FileResponse:
         dataframe_info = DataFrameInfoCRUD(self._db, self._user_id).get(dataframe_id)
@@ -33,24 +37,13 @@ class DataframeManagerService:
             file_uuid=dataframe_id, filename=dataframe_info.filename)
         return response
 
-    def rename_file(self, dataframe_id: UUID, new_filename: str) -> bool:
-        if self._check_if_dataframe_name_exists(new_filename):
-            return False
+    def rename_file(self, dataframe_id: UUID, new_filename: str):
         query = {'filename': new_filename}
         DataFrameInfoCRUD(self._db, self._user_id).update(dataframe_id, query)
-        return True
 
     def delete_file(self, dataframe_id: UUID):
         DataFrameInfoCRUD(self._db, self._user_id).delete(dataframe_id)
         DataFrameFileCRUD().delete(dataframe_id)
-
-    def _check_if_dataframe_name_exists(self, filename: str) -> bool:
-        dataframe_info = DataFrameInfoCRUD(self._db, self._user_id).get_by_name(
-            filename)
-        if dataframe_info:
-            return True
-        else:
-            return False
 
     def _read_file_to_df(self, dataframe_id: UUID) -> pd.DataFrame:
         return DataFrameFileCRUD().read_csv(dataframe_id)
@@ -65,7 +58,8 @@ class DataframeManagerService:
     def _get_dataframe_column_types(self, dataframe_id: UUID) -> schemas.ColumnTypes:
         return DataFrameInfoCRUD(self._db, self._user_id).get(dataframe_id).column_types
 
-    def _get_dataframe_pipeline(self, dataframe_id: UUID) -> List[schemas.PipelineElement]:
+    def _get_dataframe_pipeline(self, dataframe_id: UUID) -> List[
+        schemas.PipelineElement]:
         return DataFrameInfoCRUD(self._db, self._user_id).get(dataframe_id).pipeline
 
     def get_all_dataframes_info(self) -> List[schemas.DataFrameInfo]:
@@ -134,6 +128,7 @@ class DataframeManagerService:
         }
         DataFrameInfoCRUD(self._db, self._user_id).update(dataframe_id, query)
 
+    # TODO: test start_methods without target_column
     def set_target_column(self, dataframe_id: UUID, target_column: str):
         column_types = self._get_dataframe_column_types(dataframe_id)
         column_types.target = target_column
@@ -141,6 +136,7 @@ class DataframeManagerService:
 
     def change_column_type_to_categorical(self, dataframe_id: UUID, column_name: str):
         column_types = self._get_dataframe_column_types(dataframe_id)
+        # try:
         column_types.numeric.remove(column_name)
         column_types.categorical.append(column_name)
         self._set_column_types(dataframe_id, column_types)
@@ -153,6 +149,8 @@ class DataframeManagerService:
         except ValueError:
             return False
         column_types = self._get_dataframe_column_types(dataframe_id)
+        # TODO: DODODODODODOD - errors here
+        # try:
         column_types.categorical.remove(column_name)
         column_types.numeric.append(column_name)
         self._set_column_types(dataframe_id, column_types)
@@ -161,7 +159,7 @@ class DataframeManagerService:
     def _update_pipeline(self, dataframe_id: UUID, function_name: specs.AvailableFunctions, params: Any = None,):
         pipeline = self._get_dataframe_pipeline(dataframe_id)
         pipeline.append(schemas.PipelineElement(
-            function_name=function_name, params=params
+            function_name=function_name.value, params=params
         ))
         query = {'pipeline': pipeline}
         DataFrameInfoCRUD(self._db, self._user_id).update(dataframe_id, query)
@@ -173,31 +171,36 @@ class DataframeManagerService:
             self.apply_function(
                 dataframe_id=dataframe_id,
                 function_name=function.function_name,
-                param=function.params,
+                params=function.params,
             )
 
+    # TODO: test and add reject when pipeline exists
     def copy_pipeline(self, id_from: UUID, id_to: UUID):
         pipeline = self._get_dataframe_pipeline(id_from)
+        already_exists = len(self._get_dataframe_pipeline(id_to)) == 0
+        if already_exists:
+            raise CopyPipelineException(
+                f"Pipeline in document with id {id_to} already exists")
         self._apply_pipeline_to_csv(id_to, pipeline)
 
+    # TODO: add apply_many? or some logic  -- question: for what?
     def apply_function(
         self,
         dataframe_id: UUID,
         function_name: str,
         params: Any = None,
-    ) -> bool:
-        # TODO: UPDATE
+    ):
+        # TODO: rewrite to optimize
         df = self._read_file_to_df(dataframe_id)
         column_types = self._get_dataframe_column_types(dataframe_id)
 
+        function_name = specs.AvailableFunctions(function_name)
         function_service = DataframeFunctionService(df, column_types)
         function_service.apply_function(
             function_name=function_name, params=params
         )
-
-        errors = function_service.get_errors()
-        if len(errors) > 0:
-            return False
+        # errors = function_service.get_errors()
+        # if len(errors) == 0:
         if function_service.is_pipelined():
             self._update_pipeline(
                 dataframe_id, function_name=function_name, params=params
@@ -208,4 +211,3 @@ class DataframeManagerService:
         DataFrameFileCRUD().save_csv(
             dataframe_id, function_service.get_df()
         )
-        return True

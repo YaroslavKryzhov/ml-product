@@ -12,7 +12,7 @@ from fastapi_users.db import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ml_api import config
-from ml_api.apps.users.repository.models import User
+from ml_api.apps.users.models import User
 from ml_api.common.dependencies.db_deps import get_async_db
 
 SECRET = config.USER_SECRET

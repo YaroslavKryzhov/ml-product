@@ -1,22 +1,21 @@
-from typing import List
 import pandas as pd
 
-from ml_api.apps.dataframes.controller.schemas import ColumnDescription, DataFrameDescription, ColumnTypes
+from ml_api.apps.dataframes import schemas
 
 
-def _define_column_types(df: pd.DataFrame) -> ColumnTypes:
+def _define_column_types(df: pd.DataFrame) -> schemas.ColumnTypes:
     numeric_columns = df.select_dtypes('number').columns.to_list()
     categorical_columns = df.select_dtypes(
         include=['object', 'category']
     ).columns.to_list()
-    return ColumnTypes(
+    return schemas.ColumnTypes(
             numeric=numeric_columns,
             categorical=categorical_columns
     )
 
 
 def _get_column_histogram_data(df: pd.DataFrame, column_name: str, bins: int
-                               ) -> ColumnDescription:
+                               ) -> schemas.ColumnDescription:
     ints = (
         df[column_name].value_counts(bins=bins).sort_index().reset_index()
     )
@@ -27,7 +26,7 @@ def _get_column_histogram_data(df: pd.DataFrame, column_name: str, bins: int
     data = list(ints.to_dict('index').values())
     not_null_count = df[column_name].notna().sum()
     data_type = str(df[column_name].dtype)
-    return ColumnDescription(
+    return schemas.ColumnDescription(
         name=column_name,
         type='numeric',
         not_null_count=not_null_count,
@@ -36,14 +35,14 @@ def _get_column_histogram_data(df: pd.DataFrame, column_name: str, bins: int
     )
 
 
-def _get_column_value_counts_data(df: pd.DataFrame, column_name: str
-                                  ) -> ColumnDescription:
+def _get_column_value_counts_data(
+        df: pd.DataFrame, column_name: str) -> schemas.ColumnDescription:
     ints = df[column_name].value_counts(normalize=True).reset_index()
     ints.columns = ['name', 'value']
     data = list(ints.to_dict('index').values())
     not_null_count = df[column_name].notna().sum()
     data_type = str(df[column_name].dtype)
-    return ColumnDescription(
+    return schemas.ColumnDescription(
         name=column_name,
         type='categorical',
         not_null_count=not_null_count,
@@ -52,8 +51,8 @@ def _get_column_value_counts_data(df: pd.DataFrame, column_name: str
     )
 
 
-def _get_dataframe_statistic_description_data(df: pd.DataFrame
-                                              ) -> DataFrameDescription:
+def _get_dataframe_statistic_description_data(
+        df: pd.DataFrame) -> schemas.DataFrameDescription:
     result = df.describe()
     result.index = [
         "count",
@@ -65,4 +64,4 @@ def _get_dataframe_statistic_description_data(df: pd.DataFrame
         "third_percentile",
         "max",
     ]
-    return DataFrameDescription(**result.to_dict('index'))
+    return schemas.DataFrameDescription(**result.to_dict('index'))

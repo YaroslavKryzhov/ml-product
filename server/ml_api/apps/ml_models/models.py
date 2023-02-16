@@ -5,6 +5,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 
 from ml_api.common.models.base import Base
+from ml_api.apps.users.models import User
+from ml_api.apps.dataframes.models import DataFrame
 
 
 class Model(Base):
@@ -18,8 +20,8 @@ class Model(Base):
         unique=True,
     )
     filename = Column(String, unique=True)
-    user_id = Column(UUID, ForeignKey("user.id"))
-    csv_id = Column(UUID, ForeignKey("document.id"))
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"))
+    csv_id = Column(UUID(as_uuid=True), ForeignKey("dataframe.id"))
     features = Column(PickleType)
     target = Column(String)
     created_at = Column(DateTime)
@@ -29,5 +31,5 @@ class Model(Base):
     status = Column(String)
     report = Column(PickleType)
 
-    used_csv = relationship('Document', back_populates='used_in_model')
-    user = relationship('User', back_populates='models')
+    user = relationship('User')  # , back_populates='models')
+    used_csv = relationship('DataFrame')  # , back_populates='used_in_model')

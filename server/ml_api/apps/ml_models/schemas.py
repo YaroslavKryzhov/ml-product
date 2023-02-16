@@ -5,7 +5,9 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from ml_api.apps.ml_models.configs.classification_models import AvailableModels
+from ml_api.apps.ml_models.utils.classification_models import AvailableModels
+
+# TODO: rewrite
 
 
 class AvailableTaskTypes(Enum):

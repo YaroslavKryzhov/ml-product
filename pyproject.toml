@@ -7,6 +7,8 @@ authors = ["Kirill Kosvintsev <kosvintsevke@yandex.ru>"]
 [tool.poetry.dependencies]
 python = "^3.9"
 starlette = "^0.24.0"
+skl2onnx = "^1.13"
+onnxruntime = "^1.14.0"
 
 [tool.poetry.dev-dependencies]
 

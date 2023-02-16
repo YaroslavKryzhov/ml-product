@@ -1,10 +1,8 @@
-from typing import Generator, AsyncGenerator
-
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from ml_api.common.config import DATABASE_URL, DATABASE_ASYNC_URL
+from ml_api.config import DATABASE_URL, DATABASE_ASYNC_URL
 
 # async connection for users
 async_engine = create_async_engine(DATABASE_ASYNC_URL)
@@ -14,5 +12,4 @@ AsyncSession = sessionmaker(
 
 # standard connection
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
-# TODO: session in celery task, if errors
 Session = sessionmaker(bind=engine, autocommit=False, autoflush=False)

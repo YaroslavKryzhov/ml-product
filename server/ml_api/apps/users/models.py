@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
+    pass
     #
     # __tablename__ = "user"
     #
@@ -13,5 +14,6 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     # is_active = Column(Boolean, default=True, nullable=False)
     # is_superuser = Column(Boolean, default=False, nullable=False)
     # is_verified = Column(Boolean, default=False, nullable=False)
-    documents = relationship('Document', back_populates="user")
-    models = relationship('Model', back_populates="user")
+
+    # dataframes = relationship('DataFrame', back_populates="user")
+    # models = relationship('Model', back_populates="user")

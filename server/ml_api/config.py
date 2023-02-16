@@ -30,8 +30,9 @@ CENTRIFUGO_HMAC = config("CENTRIFUGO_HMAC", cast=str)
 USER_SECRET = config("USER_SECRET", cast=str)
 
 STAGE = config('STAGE', cast=str, default='DEVELOPMENT')
-DOCS_URL = config('DOCS_URL', cast=str)
-OPENAPI_URL = config('OPENAPI_URL', cast=str)
+
+DOCS_URL = f'{API_PREFIX}/docs'
+OPENAPI_URL = f'{API_PREFIX}/openapi.json'
 
 ALLOW_ORIGINS = ['*']
 HOST = config('HOST', cast=str, default='http://127.0.0.1')

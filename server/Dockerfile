@@ -20,4 +20,4 @@ WORKDIR /server
 COPY pyproject.toml poetry.lock ./
 
 RUN poetry install
-RUN #poetry run poe catboost_install
+#RUN poetry run poe catboost_install

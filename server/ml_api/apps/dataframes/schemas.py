@@ -4,8 +4,6 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from ml_api.common.schemas.base import CoreSchema
-
 
 class ColumnDescription(BaseModel):
     name: str
@@ -42,7 +40,7 @@ class ColumnTypes(BaseModel):
     target: Optional[str] = None
 
 
-class DataFrameInfo(CoreSchema):
+class DataFrameInfo(BaseModel):
     id: UUID
     filename: str
     user_id: UUID

@@ -1,14 +1,17 @@
 from typing import List, Any, Callable, Dict
 import pandas as pd
+from fastapi import HTTPException, status
 
-from sklearn import feature_selection, preprocessing, covariance, ensemble, \
-    neighbors, svm, linear_model, decomposition
-
-import ml_api.apps.dataframes.controller.schemas as schemas
+import ml_api.apps.dataframes.schemas as schemas
 import ml_api.apps.dataframes.specs.specs as specs
 
 
+class ApplyFunctionException(Exception):
+    pass
+
+
 # TODO: finish business logic of learning process
+# TODO: think of params: inheritance, etc
 class DataframeFunctionService:
     def __init__(self, dataframe: pd.DataFrame,
                  column_types: schemas.ColumnTypes):
@@ -47,15 +50,15 @@ class DataframeFunctionService:
     def get_column_types(self) -> schemas.ColumnTypes:
         return self.column_types
 
-    def get_errors(self) -> List[str]:
-        return self.errors
+    # def get_errors(self) -> List[str]:
+    #     return self.errors
 
     def is_pipelined(self) -> bool:
         return self.update_pipeline
 
     def no_func_error(self, params=None):
         del params
-        self.errors.append('Function not found in DocumentOperator.functions_map')
+        raise ApplyFunctionException('Unavailable function: Function not found in DocumentOperator.functions_map')
 
     def apply_function(self, function_name: str, params: Any = None):
         func = self._functions_map.get(function_name, self.no_func_error)
@@ -73,24 +76,30 @@ class DataframeFunctionService:
 
     # CHAPTER 1: MISSING DATA AND DUPLICATES-----------------------------------
 
-    def remove_duplicates(self):
+    def remove_duplicates(self, params):
+        self.update_pipeline = True
         self.df.drop_duplicates(inplace=True)
 
-    def drop_na(self):
+    def drop_na(self, params):
+        self.update_pipeline = True
         self.df.dropna(inplace=True)
 
-    def drop_column(self, param: str):
-        column = param
-        self.df.drop(column, axis=1, inplace=True)
+    def drop_column(self, params: str):
+        column = params
+        try:
+            self.df.drop(column, axis=1, inplace=True)
+        except KeyError:
+            raise ApplyFunctionException(f"Column {column} not found in dataframe.")
         self.update_pipeline = True
-        if self.column_types:
+        if self.column_types.target == column:
+            self.column_types.target = None
+        try:
+            self.column_types.numeric.remove(column)
+        except ValueError:
             try:
-                self.column_types.numeric.remove(column)
+                self.column_types.categorical.remove(column)
             except ValueError:
-                try:
-                    self.column_types.categorical.remove(column)
-                except ValueError:
-                    pass
+                raise ApplyFunctionException(f"DANGER! (drop_column): Name not in categorical or numeric column_types")
 
     # def miss_insert_mean_mode(self):
     #     numeric_columns = self.column_types.numeric
