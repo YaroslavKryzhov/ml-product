@@ -4,6 +4,17 @@ try:
 up:
 	docker-compose up --build -d --force-recreate
 
+down:
+	docker-compose down
+
+data_init:
+	make up sleep_5 && \
+	make migrations sleep_5 && \
+	make migrate sleep_5
+
+init_env:
+	cp ./.env.example ./.env
+
 migrations:
 	echo "poetry run alembic revision --autogenerate" | docker exec -i ml-product-server bash
 
@@ -16,11 +27,3 @@ revert_migration:
 sleep_5:
 	echo "sleep 5 sec" && \
 	sleep 5
-
-build_server:
-	make start_server sleep_5 && \
-	make migrations message='1' sleep_5 && \
-	make migrate sleep_5
-
-down:
-	docker-compose down
