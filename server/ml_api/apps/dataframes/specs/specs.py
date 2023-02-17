@@ -7,7 +7,7 @@ class TaskType(Enum):
 
 
 class AvailableFunctions(Enum):
-    # GROUP 1: Обработка данных
+    # GROUP 1: Обработка данных------------------------------------------------
     remove_duplicates = 'remove_duplicates'  # Удаление дубликатов
     drop_na = 'drop_na'  # Удаление пропусков
     drop_column = 'drop_column'
@@ -20,13 +20,15 @@ class AvailableFunctions(Enum):
     miss_knn_imputer = (
         'miss_knn_imputer'  # Замена пропусков: К-ближних соседей
     )
-    # GROUP 2: Трансформация признаков
+
+    # GROUP 2: Трансформация признаков (required: no NaN values)---------------
     standardize_features = (
         'standardize_features'  # Стандартизация цисленных признаков
     )
     ordinal_encoding = 'ordinal_encoding'  # Порядковое кодирование
     one_hot_encoding = 'one_hot_encoding'  # One-Hot кодирование (OHE)
-    # GROUP 3: Удаление выбросов
+
+    # GROUP 3: Удаление выбросов (required: no NaN values)---------------------
     outliers_isolation_forest = (
         'outliers_isolation_forest'  # Удаление выбросов: IsolationForest
     )
@@ -42,16 +44,18 @@ class AvailableFunctions(Enum):
     outliers_sgd_one_class_svm = (
         'outliers_sgd_one_class_svm'  # Удаление выбросов: SGDOneClassSVM
     )
-    # GROUP 4: Отбор признаков
-    fs_select_percentile = (
-        'fs_select_percentile'  # Отбор признаков: по перцентилю
-    )
-    fs_select_k_best = 'fs_select_k_best'  # Отбор признаков: k лучших
-    fs_select_fpr = 'fs_select_fpr'  # Отбор признаков: FPR
-    fs_select_fdr = 'fs_select_fdr'  # Отбор признаков: FDR
-    fs_select_fwe = 'fs_select_fwe'  # Отбор признаков: FWE
-    fs_select_rfe = 'fs_select_rfe'  # Отбор признаков: RFE
-    fs_select_from_model = (
-        'fs_select_from_model'  # Отбор признаков: из линейной модели
-    )
-    fs_select_pca = 'fs_select_pca'  # Отбор признаков: Метод главных компонент
+
+    # Временно приостановлено
+    # GROUP 4: Отбор признаков (required: only numeric columns)----------------
+    # fs_select_percentile = (
+    #     'fs_select_percentile'  # Отбор признаков: по перцентилю
+    # )
+    # fs_select_k_best = 'fs_select_k_best'  # Отбор признаков: k лучших
+    # fs_select_fpr = 'fs_select_fpr'  # Отбор признаков: FPR
+    # fs_select_fdr = 'fs_select_fdr'  # Отбор признаков: FDR
+    # fs_select_fwe = 'fs_select_fwe'  # Отбор признаков: FWE
+    # fs_select_rfe = 'fs_select_rfe'  # Отбор признаков: RFE
+    # fs_select_from_model = (
+    #     'fs_select_from_model'  # Отбор признаков: из линейной модели
+    # )
+    # fs_select_pca = 'fs_select_pca'  # Отбор признаков: Метод главных компонент

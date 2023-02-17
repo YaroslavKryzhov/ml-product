@@ -4,6 +4,8 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+from ml_api.apps.dataframes.specs.specs import AvailableFunctions
+
 
 class ColumnDescription(BaseModel):
     name: str
@@ -30,7 +32,7 @@ class DataFrameDescription(BaseModel):
 
 
 class PipelineElement(BaseModel):
-    function_name: str
+    function_name: AvailableFunctions
     params: Any = None
 
 

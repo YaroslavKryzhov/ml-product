@@ -1,12 +1,14 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, Request, status
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from ml_api import config
 from ml_api.apps.dataframes.routers import (
     dataframes_file_router,
-    documents_df_router,
-    documents_method_router,
+    dataframes_df_router,
+    dataframes_method_router,
 )
+from ml_api.apps.dataframes.utils.df_worker import ApplyFunctionException
 from ml_api.apps.users.routers import users_router
 # from ml_api.apps.ml_models.controller.routers import models_router
 
@@ -32,14 +34,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# @app.exception_handler(AppExceptionCase)
-# async def custom_app_exception_handler(request, e):
-#     return await app_exception_handler(request, e)
+
+@app.exception_handler(ApplyFunctionException)
+async def unicorn_exception_handler(request: Request, exc: ApplyFunctionException):
+    return JSONResponse(
+        status_code=status.HTTP_404_NOT_FOUND,
+        content=str(exc),
+    )
+
 
 api_router = APIRouter(prefix=config.API_PREFIX)
 api_router.include_router(dataframes_file_router)
-api_router.include_router(documents_df_router)
-api_router.include_router(documents_method_router)
+api_router.include_router(dataframes_df_router)
+api_router.include_router(dataframes_method_router)
 api_router.include_router(users_router)
 # api_router.include_router(models_router)
 app.include_router(api_router)

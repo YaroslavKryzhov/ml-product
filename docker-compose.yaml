@@ -35,6 +35,21 @@ services:
       - ml-net
     restart: unless-stopped
 
+  centrifugo:
+    container_name: "ml-product-centrifugo"
+    image: centrifugo/centrifugo:v2.8.7
+    volumes:
+      - ./deploy/centrifugo/config.json:/centrifugo/config.json
+    command: centrifugo -c config.json
+    ports:
+      - "8086:8000"
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    networks:
+      - ml-net
+
   postgres_db:
     container_name: "ml-product-postgres"
     image: postgres:13-alpine
@@ -47,17 +62,6 @@ services:
     networks:
       - ml-net
     restart: unless-stopped
-
-#  rabbitmq_server:
-#    container_name: "ml-product-rabbitmq-server"
-#    image: rabbitmq:3-management
-#    env_file:
-#      - .env
-#    ports:
-#      - "5672:5672"
-#    networks:
-#      - ml-net
-#    restart: unless-stopped
 
   redis:
     container_name: "ml-product-redis"
@@ -75,21 +79,9 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
-    ports:
-      - "3036:80"
-
-  centrifugo:
-    container_name: "ml-product-centrifugo"
-    image: centrifugo/centrifugo:v3.0
     volumes:
-      - ./deploy/centrifugo/config.json:/centrifugo/config.json
-    command: centrifugo -c config.json
-    ports:
-      - "8086:8000"
-    ulimits:
-      nofile:
-        soft: 65535
-        hard: 65535
+      - ./volumes/client:/build_results/build/
+    command: "/bin/sh -c 'cp -r /app/build /build_results/'"
     networks:
       - ml-net
 
@@ -102,13 +94,11 @@ services:
       - server
       - client
     volumes:
-      - "./deploy/nginx/nginx.conf:/etc/nginx/conf.d/ml-product.conf"
+      - ./deploy/nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf
       - ./volumes/client:/usr/share/nginx/html:ro
     command: "/bin/sh -c 'while :; do sleep 5h & wait $${!}; nginx -s reload; done & nginx-debug -g \"daemon off;\"'"
     ports:
       - "6060:80"
-    profiles:
-      - backend
     networks:
       - ml-net
 

@@ -7,5 +7,10 @@
   "allowed_origins": [
     "http://localhost:*",
     "*"
+  ],
+    "namespaces": [
+    {
+      "name": "INFO"
+    }
   ]
 }

@@ -9,9 +9,10 @@ import pandas as pd
 
 import ml_api.apps.dataframes.schemas as schemas
 import ml_api.apps.dataframes.specs.specs as specs
-from ml_api.apps.dataframes.repository import DataFrameInfoCRUD, DataFrameFileCRUD
+from ml_api.apps.dataframes.repository import DataFrameInfoCRUD, \
+    DataFrameFileCRUD
 import ml_api.apps.dataframes.utils.utils as utils
-from ml_api.apps.dataframes.utils.df_worker import DataframeFunctionService
+from ml_api.apps.dataframes.utils.df_worker import DataframeFunctionProcessor
 
 
 class CopyPipelineException(Exception):
@@ -32,7 +33,8 @@ class DataframeManagerService:
         return str(dataframe.id)
 
     def download_file(self, dataframe_id: UUID) -> FileResponse:
-        dataframe_info = DataFrameInfoCRUD(self._db, self._user_id).get(dataframe_id)
+        dataframe_info = DataFrameInfoCRUD(self._db, self._user_id).get(
+            dataframe_id)
         response = DataFrameFileCRUD().download_csv(
             file_uuid=dataframe_id, filename=dataframe_info.filename)
         return response
@@ -55,24 +57,27 @@ class DataframeManagerService:
     def get_dataframe_info(self, dataframe_id: UUID) -> schemas.DataFrameInfo:
         return DataFrameInfoCRUD(self._db, self._user_id).get(dataframe_id)
 
-    def _get_dataframe_column_types(self, dataframe_id: UUID) -> schemas.ColumnTypes:
-        return DataFrameInfoCRUD(self._db, self._user_id).get(dataframe_id).column_types
+    def _get_dataframe_column_types(self,
+                                    dataframe_id: UUID) -> schemas.ColumnTypes:
+        return DataFrameInfoCRUD(self._db, self._user_id).get(
+            dataframe_id).column_types
 
     def _get_dataframe_pipeline(self, dataframe_id: UUID) -> List[
         schemas.PipelineElement]:
-        return DataFrameInfoCRUD(self._db, self._user_id).get(dataframe_id).pipeline
+        return DataFrameInfoCRUD(self._db, self._user_id).get(
+            dataframe_id).pipeline
 
     def get_all_dataframes_info(self) -> List[schemas.DataFrameInfo]:
         return DataFrameInfoCRUD(self._db, self._user_id).get_all()
 
     def get_dataframe_statistic_description(
-        self, filename: str
+            self, filename: str
     ) -> schemas.DataFrameDescription:
         df = self._read_file_to_df(filename)
         return utils._get_dataframe_statistic_description_data(df)
 
     def get_dataframe_with_pagination(
-        self, dataframe_id: UUID, page: int = 1, rows_on_page: int = 50
+            self, dataframe_id: UUID, page: int = 1, rows_on_page: int = 50
     ) -> schemas.ReadDataFrameResponse:
         df = self._read_file_to_df(dataframe_id)
         length = len(df)
@@ -103,7 +108,7 @@ class DataframeManagerService:
         return self._read_file_to_df(dataframe_id).columns.to_list()
 
     def get_dataframe_column_statistics(
-        self, dataframe_id: UUID, bins: int = 10
+            self, dataframe_id: UUID, bins: int = 10
     ) -> List[schemas.ColumnDescription]:
         result = []
         df = self._read_file_to_df(dataframe_id)
@@ -121,93 +126,132 @@ class DataframeManagerService:
         df = self._read_file_to_df(dataframe_id)
         return utils._define_column_types(df)
 
-    def _set_column_types(self, dataframe_id: UUID, column_types: schemas.ColumnTypes):
+    def _set_column_types(self, dataframe_id: UUID,
+                          column_types: schemas.ColumnTypes):
         query = {
             'column_types': column_types,
             'updated_at': str(datetime.now())
         }
         DataFrameInfoCRUD(self._db, self._user_id).update(dataframe_id, query)
 
-    # TODO: test start_methods without target_column
     def set_target_column(self, dataframe_id: UUID, target_column: str):
         column_types = self._get_dataframe_column_types(dataframe_id)
-        column_types.target = target_column
+        if (target_column in column_types.numeric or
+                target_column in column_types.categorical):
+            column_types.target = target_column
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Column {target_column} not found in df.columns."
+            )
         self._set_column_types(dataframe_id, column_types)
 
-    def change_column_type_to_categorical(self, dataframe_id: UUID, column_name: str):
+    def change_column_type_to_categorical(self, dataframe_id: UUID,
+                                          column_name: str):
         column_types = self._get_dataframe_column_types(dataframe_id)
-        # try:
-        column_types.numeric.remove(column_name)
+        try:
+            column_types.numeric.remove(column_name)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Column {column_name} not found in numeric columns."
+            )
         column_types.categorical.append(column_name)
         self._set_column_types(dataframe_id, column_types)
 
-    def change_column_type_to_numeric(self, dataframe_id: UUID, column_name: str):
+    def change_column_type_to_numeric(self, dataframe_id: UUID,
+                                      column_name: str):
         df = self._read_file_to_df(dataframe_id)
+        column_types = self._get_dataframe_column_types(dataframe_id)
+        try:
+            column_types.categorical.remove(column_name)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Column {column_name} not found in categorical columns."
+            )
+        column_types.numeric.append(column_name)
+
         try:
             df[column_name] = pd.to_numeric(df[column_name])
             DataFrameFileCRUD().save_csv(dataframe_id, df)
         except ValueError:
-            return False
-        column_types = self._get_dataframe_column_types(dataframe_id)
-        # TODO: DODODODODODOD - errors here
-        # try:
-        column_types.categorical.remove(column_name)
-        column_types.numeric.append(column_name)
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Column {column_name} can't be parsed like numeric."
+            )
+
         self._set_column_types(dataframe_id, column_types)
         return True
 
-    def _update_pipeline(self, dataframe_id: UUID, function_name: specs.AvailableFunctions, params: Any = None,):
+    def _set_pipeline(self, dataframe_id: UUID,
+                      pipeline: List[schemas.PipelineElement]):
+        query = {'pipeline': pipeline}
+        DataFrameInfoCRUD(self._db, self._user_id).update(dataframe_id, query)
+
+    def _update_pipeline(self, dataframe_id: UUID,
+                         function_name: specs.AvailableFunctions,
+                         params: Any = None):
         pipeline = self._get_dataframe_pipeline(dataframe_id)
         pipeline.append(schemas.PipelineElement(
-            function_name=function_name.value, params=params
+            function_name=function_name, params=params
         ))
         query = {'pipeline': pipeline}
         DataFrameInfoCRUD(self._db, self._user_id).update(dataframe_id, query)
 
-    def _apply_pipeline_to_csv(
-        self, dataframe_id: UUID, pipeline: List[schemas.PipelineElement]
-    ) -> bool:
-        for function in pipeline:
-            self.apply_function(
-                dataframe_id=dataframe_id,
-                function_name=function.function_name,
-                params=function.params,
-            )
-
-    # TODO: test and add reject when pipeline exists
-    def copy_pipeline(self, id_from: UUID, id_to: UUID):
-        pipeline = self._get_dataframe_pipeline(id_from)
-        already_exists = len(self._get_dataframe_pipeline(id_to)) == 0
-        if already_exists:
-            raise CopyPipelineException(
-                f"Pipeline in document with id {id_to} already exists")
-        self._apply_pipeline_to_csv(id_to, pipeline)
-
-    # TODO: add apply_many? or some logic  -- question: for what?
+    # 4: CELERY FUNCTION OPERATIONS -------------------------------------------
     def apply_function(
-        self,
-        dataframe_id: UUID,
-        function_name: str,
-        params: Any = None,
+            self,
+            dataframe_id: UUID,
+            function_name: str,
+            params: Any = None,
     ):
-        # TODO: rewrite to optimize
         df = self._read_file_to_df(dataframe_id)
         column_types = self._get_dataframe_column_types(dataframe_id)
-
         function_name = specs.AvailableFunctions(function_name)
-        function_service = DataframeFunctionService(df, column_types)
-        function_service.apply_function(
+
+        function_processor = DataframeFunctionProcessor(df, column_types)
+        function_processor.apply_function(
             function_name=function_name, params=params
         )
-        # errors = function_service.get_errors()
-        # if len(errors) == 0:
-        if function_service.is_pipelined():
+
+        new_df = function_processor.get_df()
+        new_column_types = function_processor.get_column_types()
+        is_pipelined = function_processor.is_pipelined_once()
+
+        if is_pipelined:
             self._update_pipeline(
                 dataframe_id, function_name=function_name, params=params
             )
-        self._set_column_types(
-            dataframe_id, column_types=function_service.get_column_types()
-        )
-        DataFrameFileCRUD().save_csv(
-            dataframe_id, function_service.get_df()
-        )
+        self._set_column_types(dataframe_id, column_types=new_column_types)
+        DataFrameFileCRUD().save_csv(dataframe_id, new_df)
+
+    def copy_pipeline(self, id_from: UUID, id_to: UUID):
+        already_exists = len(self._get_dataframe_pipeline(id_to)) != 0
+        if already_exists:
+            raise CopyPipelineException(
+                f"Pipeline in document with id {id_to} already exists")
+        pipeline = self._get_dataframe_pipeline(id_from)
+        self._apply_pipeline_to_csv(id_to, pipeline)
+
+    def _apply_pipeline_to_csv(
+            self, dataframe_id: UUID, pipeline: List[schemas.PipelineElement]
+    ) -> bool:
+        """Everyone is ok or no one was applied"""
+        df = self._read_file_to_df(dataframe_id)
+        column_types = self._get_dataframe_column_types(dataframe_id)
+        function_processor = DataframeFunctionProcessor(df, column_types)
+        for function in pipeline:
+            function_processor.apply_function(
+                function.function_name, function.params
+            )
+
+        new_column_types = function_processor.get_column_types()
+        new_df = function_processor.get_df()
+        new_pipeline = function_processor.get_pipeline()
+
+        self._set_pipeline(dataframe_id, new_pipeline)
+        self._set_column_types(dataframe_id, column_types=new_column_types)
+        DataFrameFileCRUD().save_csv(dataframe_id, new_df)
+
+    # -------------------------------------------------------------------------

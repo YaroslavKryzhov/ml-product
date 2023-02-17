@@ -14,11 +14,13 @@ class PubSub:
     def _publish(
             self,
             channel_name: str,
+            user_id: str,
             task_id: str,
             status: str,
             message: str = "",
     ) -> None:
-        channel = f"{channel_name}"
+        channel = f"{channel_name}#{user_id}"
+        logger.error(channel)
         data = {"task_id": task_id, "status": status, "message": message}
         try:
             return self.client.publish(channel, data)
@@ -26,10 +28,11 @@ class PubSub:
             logger.error(f"\nError when publishing at channel: {channel}: {e}\n")
 
     def publish_to_channel(
-            self, task_id: str,
+            self, user_id: str, task_id: str,
             status: str, message: Any,  channel_name: str = "INFO") -> None:
         self._publish(
             channel_name=channel_name,
+            user_id=user_id,
             task_id=task_id, status=status,
-            message=message,
+            message=str(message),
         )
