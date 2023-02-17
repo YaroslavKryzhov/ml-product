@@ -7,13 +7,13 @@ up:
 down:
 	docker-compose down
 
+init_env:
+	cp ./.env.example ./.env
+
 data_init:
 	make up sleep_5 && \
 	make migrations sleep_5 && \
 	make migrate sleep_5
-
-init_env:
-	cp ./.env.example ./.env
 
 migrations:
 	echo "poetry run alembic revision --autogenerate" | docker exec -i ml-product-server bash

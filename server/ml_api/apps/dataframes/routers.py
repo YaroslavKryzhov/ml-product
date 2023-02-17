@@ -218,14 +218,6 @@ def dataframe_stat_describe(
 
         Аналогично методу **pandas.describe()**
 
-        * Имя столбца
-        * Тип (численный, категориальный)
-        * Количество непустых значений
-        * Тип данных (int, float64, object, etc.)
-        * Содержание:
-            * для численных – гистограмма распределения (pd.hist())
-            * для категориальных – количество значений (pd.value_counts())
-
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
     return DataframeManagerService(db, user.id
