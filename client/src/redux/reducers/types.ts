@@ -60,13 +60,17 @@ export type Document = {
 
 export type PipelineUnit = { function_name: string; param: string | null };
 
-export type DocumentInfo = DocumentInfoShort & {
+export type DocumentInfo = {
   id: string;
+  filename: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  pipeline: PipelineUnit[];
   column_types: {
     numeric: string[];
     categorical: string[];
     target: string;
-    task_type: TaskType;
   };
 };
 
@@ -80,13 +84,6 @@ export type DFInfo = {
 
 export type DescribeDoc = {
   [key: string]: { [key: string]: number };
-};
-
-export type DocumentInfoShort = {
-  name: string;
-  upload_date: string;
-  change_date: string;
-  pipeline: PipelineUnit[];
 };
 
 export enum CategoryMark {
@@ -462,13 +459,8 @@ export type KNeighborsClassifierParameters = {
   metric: KNeighborsMetric;
 };
 
-export type StandardResponse = {
-  status_code: number;
-  content: string;
-};
-
-export type StandardResponseData = {
-  data: StandardResponse;
+export type ErrorResponse = {
+  detail: string;
 };
 
 export type CompositionInfo = {

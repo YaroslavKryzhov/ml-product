@@ -8,7 +8,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import { ActionIconSx } from "components/Table/components/Body";
 import { useNavigate } from "react-router-dom";
-import { WorkPageHeader } from "app/Workplace/common/WorkPageHeader";
 import DownloadIcon from "@mui/icons-material/Download";
 import {
   useAllCompositionsQuery,
@@ -17,6 +16,7 @@ import {
 } from "ducks/reducers/api/compositions.api";
 import { AppPage, CompositionPage, WorkPage } from "ducks/reducers/types";
 import { resetComposition } from "ducks/reducers/compositions";
+import { WorkPageHeader } from "../Single/WorkPageHeader";
 
 enum Columns {
   create = "create_date",

@@ -5,11 +5,9 @@ import {
   DescribeDoc,
   DFInfo,
   DocumentInfo,
-  DocumentInfoShort,
   DocumentMethod,
-  StandardResponse,
+  ErrorResponse,
   FullDocument,
-  TaskType,
 } from "../types";
 
 const buildFileForm = (file: File) => {
@@ -34,15 +32,18 @@ export const documentsApi = createApi({
   }),
   tagTypes: Object.values(Tags),
   endpoints: (builder) => ({
-    document: builder.query<FullDocument, { filename: string; page: number }>({
-      query: ({ filename, page }) => ({
+    document: builder.query<
+      FullDocument,
+      { dataframe_id: string; page: number }
+    >({
+      query: ({ dataframe_id, page }) => ({
         url: ROUTES.DOCUMENTS.SHOW,
-        params: { filename, page },
+        params: { dataframe_id, page },
       }),
       providesTags: [Tags.singleDocument],
     }),
     postDocument: builder.mutation<
-      string | StandardResponse,
+      string | ErrorResponse,
       { filename: string; file: File }
     >({
       query: ({ filename, file }) => ({
@@ -54,31 +55,31 @@ export const documentsApi = createApi({
       invalidatesTags: [Tags.documents],
     }),
     deleteDocument: builder.mutation<string, string>({
-      query: (filename) => ({
+      query: (dataframe_id) => ({
         url: ROUTES.DOCUMENTS.BASE,
-        params: { filename },
+        params: { dataframe_id },
         method: "DELETE",
       }),
       invalidatesTags: [Tags.documents],
     }),
     infoDocument: builder.query<DocumentInfo, string>({
-      query: (filename) => ({
+      query: (dataframe_id) => ({
         url: ROUTES.DOCUMENTS.INFO,
-        params: { filename },
+        params: { dataframe_id },
       }),
       providesTags: [Tags.singleDocument],
     }),
     infoStatsDocument: builder.query<DFInfo[], string>({
-      query: (filename) => ({
+      query: (dataframe_id) => ({
         url: ROUTES.DOCUMENTS.DF_INFO,
-        params: { filename },
+        params: { dataframe_id },
       }),
       providesTags: [Tags.singleDocument],
     }),
     describeDocument: builder.query<DescribeDoc, string>({
-      query: (filename) => ({
+      query: (dataframe_id) => ({
         url: ROUTES.DOCUMENTS.DESCRIBE,
-        params: { filename },
+        params: { dataframe_id },
       }),
       providesTags: [Tags.singleDocument],
     }),
@@ -92,16 +93,19 @@ export const documentsApi = createApi({
       }),
       providesTags: [Tags.pipeline],
     }),
-    allDocuments: builder.query<DocumentInfoShort[], void>({
+    allDocuments: builder.query<DocumentInfo[], void>({
       query: () => ({
         url: ROUTES.DOCUMENTS.ALL,
       }),
       providesTags: [Tags.documents],
     }),
-    downloadDocument: builder.mutation<null, string>({
-      async queryFn(filename) {
+    downloadDocument: builder.mutation<
+      null,
+      { dataframe_id: string; filename: string }
+    >({
+      async queryFn({ dataframe_id, filename }) {
         const res = await fetch(
-          `${ROUTES.DOCUMENTS.BASE}${ROUTES.DOCUMENTS.DOWNLOAD}?filename=${filename}`,
+          `${ROUTES.DOCUMENTS.BASE}${ROUTES.DOCUMENTS.DOWNLOAD}?dataframe_id=${dataframe_id}`,
           {
             headers: { Authorization: `Bearer ${localStorage.authToken}` },
           }
@@ -126,19 +130,19 @@ export const documentsApi = createApi({
     }),
     renameDocument: builder.mutation<
       string,
-      { filename: string; new_filename: string }
+      { dataframe_id: string; new_filename: string }
     >({
-      query: ({ filename, new_filename }) => ({
+      query: ({ dataframe_id, new_filename }) => ({
         url: ROUTES.DOCUMENTS.RENAME,
-        params: { filename, new_filename },
+        params: { dataframe_id, new_filename },
         method: "PUT",
       }),
       invalidatesTags: [Tags.documents],
     }),
     columnsDocument: builder.query<string[], string>({
-      query: (filename) => ({
+      query: (dataframe_id) => ({
         url: ROUTES.DOCUMENTS.COLUMNS,
-        params: { filename },
+        params: { dataframe_id },
       }),
     }),
     applyDocMethod: builder.mutation<
@@ -154,11 +158,11 @@ export const documentsApi = createApi({
     }),
     selectDocumentTarget: builder.mutation<
       void,
-      { filename: string; targetColumn: string; taskType: TaskType }
+      { dataframe_id: string; target_column: string }
     >({
-      query: ({ targetColumn, filename, taskType }) => ({
+      query: ({ target_column, dataframe_id }) => ({
         url: ROUTES.DOCUMENTS.SELECT_TARGET,
-        params: { filename, target_column: targetColumn, task_type: taskType },
+        params: { dataframe_id, target_column },
         method: "PUT",
       }),
       invalidatesTags: [Tags.singleDocument],
@@ -172,34 +176,34 @@ export const documentsApi = createApi({
       invalidatesTags: [Tags.singleDocument],
     }),
     markAsCategorical: builder.mutation<
-      void | StandardResponse,
-      { filename: string; columnName: string }
+      void | ErrorResponse,
+      { dataframe_id: string; column_name: string }
     >({
-      query: ({ columnName, filename }) => ({
+      query: ({ dataframe_id, column_name }) => ({
         url: ROUTES.DOCUMENTS.MARK_CATEGORICAL,
-        params: { filename, column_name: columnName },
+        params: { dataframe_id, column_name },
         method: "PUT",
       }),
       invalidatesTags: [Tags.singleDocument],
     }),
     markAsNumeric: builder.mutation<
-      void | StandardResponse,
-      { filename: string; columnName: string }
+      void | ErrorResponse,
+      { dataframe_id: string; column_name: string }
     >({
-      query: ({ columnName, filename }) => ({
+      query: ({ column_name, dataframe_id }) => ({
         url: ROUTES.DOCUMENTS.MARK_NUMERIC,
-        params: { filename, column_name: columnName },
+        params: { dataframe_id, column_name },
         method: "PUT",
       }),
       invalidatesTags: [Tags.singleDocument],
     }),
     deleteColumn: builder.mutation<
-      void | StandardResponse,
-      { filename: string; columnName: string }
+      void | ErrorResponse,
+      { dataframe_id: string; column_name: string }
     >({
-      query: ({ columnName, filename }) => ({
+      query: ({ column_name, dataframe_id }) => ({
         url: ROUTES.DOCUMENTS.DELETE_COLUMN,
-        params: { filename, column_name: columnName },
+        params: { dataframe_id, column_name },
         method: "DELETE",
       }),
       invalidatesTags: [Tags.singleDocument],

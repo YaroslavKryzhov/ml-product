@@ -21,17 +21,17 @@ const convertData = (data: Record<string, (string | number)[]>) =>
   );
 
 export const DocumentPreview: React.FC<{
-  docName: string;
+  docId: string;
   isInnerOpened?: boolean;
-}> = ({ docName, isInnerOpened }) => {
+}> = ({ docId, isInnerOpened }) => {
   const dispatch = useDispatch();
   const [page, setPage] = useState<number>(1);
   const { data, isFetching: isDocLoading } = useDocumentQuery({
-    filename: docName,
+    dataframe_id: docId,
     page,
   });
   const { data: infoData, isFetching: isInfoLoading } =
-    useInfoStatsDocumentQuery(docName);
+    useInfoStatsDocumentQuery(docId);
 
   const convertedData = data?.records ? convertData(data.records) : [];
 
@@ -47,7 +47,7 @@ export const DocumentPreview: React.FC<{
     dispatch(
       setDialog({
         title: `Данные`,
-        Content: <DocumentPreview docName={docName} isInnerOpened />,
+        Content: <DocumentPreview docId={docId} isInnerOpened />,
         onDismiss: T,
         dismissText: "Закрыть",
         fullWidth: true,

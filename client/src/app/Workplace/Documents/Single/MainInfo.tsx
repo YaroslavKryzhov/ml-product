@@ -23,9 +23,9 @@ enum DescribeRows {
 const composeAny = compose as any;
 
 export const MainInfo: React.FC = () => {
-  const { docName } = useParams();
+  const { docId } = useParams();
   const { data: describeData, isFetching: describeLoading } =
-    useDescribeDocumentQuery(docName!);
+    useDescribeDocumentQuery(docId!);
 
   const describeColumns = useMemo(
     () =>
@@ -63,7 +63,7 @@ export const MainInfo: React.FC = () => {
         Основное
       </Typography>
       <Box>
-        <DocumentPreview docName={docName!} />
+        <DocumentPreview docId={docId!} />
         <Typography sx={{ mt: theme.spacing(3) }} variant="body1">
           Pandas Description
         </Typography>

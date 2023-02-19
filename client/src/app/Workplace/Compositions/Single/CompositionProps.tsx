@@ -112,9 +112,9 @@ export const CompositionProps: React.FC<{ createMode?: boolean }> = ({
               dispatch(changeDocumentName(event.target.value))
             }
           >
-            {allDocuments?.map(({ name }) => (
-              <MenuItem key={name} value={name}>
-                {name}
+            {allDocuments?.map(({ filename }) => (
+              <MenuItem key={filename} value={filename}>
+                {filename}
               </MenuItem>
             ))}
           </Select>

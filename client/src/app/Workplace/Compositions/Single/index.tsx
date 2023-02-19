@@ -1,5 +1,4 @@
 import { Box, Button, Stack, Tooltip } from "@mui/material";
-import { WorkPageHeader } from "app/Workplace/common/WorkPageHeader";
 import { pathify, useAppDispatch, useSESelector } from "ducks/hooks";
 import { useTrainCompositionMutation } from "ducks/reducers/api/compositions.api";
 import { resetComposition } from "ducks/reducers/compositions";
@@ -11,6 +10,7 @@ import { CompositionMetrics } from "./CompositionMetrics";
 import { CompositionProps } from "./CompositionProps";
 import { Models } from "./Models";
 import { Predict } from "./Predict";
+import { WorkPageHeader } from "./WorkPageHeader";
 
 export const CompositionSingle: React.FC<{ createMode?: boolean }> = ({
   createMode,

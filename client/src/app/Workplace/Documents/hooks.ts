@@ -12,14 +12,14 @@ export const useDeleteFile = (options?: { redirectAfter?: boolean }) => {
   const [deleteDoc] = useDeleteDocumentMutation();
   const dispatch = useAppDispatch();
 
-  return (name: string) =>
+  return (name: string, dataframe_id: string) =>
     dispatch(
       setDialog({
         title: "Удаление",
         text: `Вы действительно хотите удалить файл ${name}?`,
         onAccept: async () => {
           dispatch(setDialogLoading(true));
-          await deleteDoc(name);
+          await deleteDoc(dataframe_id);
           dispatch(setDialogLoading(false));
           if (options?.redirectAfter) {
             navigate(

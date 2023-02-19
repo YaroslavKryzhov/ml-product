@@ -1,4 +1,4 @@
-export const HOST = "http://localhost:8006";
+export const HOST = "http://localhost:6060/api/v1";
 export const BASE_API = HOST;
 
 export const ROUTES = {
@@ -9,10 +9,10 @@ export const ROUTES = {
     LOGOUT: "jwt/logout",
   },
   DOCUMENTS: {
-    BASE: BASE_API + "/document",
+    BASE: BASE_API + "/dataframe",
     SHOW: "/df",
-    INFO: "/info",
-    DF_INFO: "/df/info",
+    INFO: "/",
+    DF_INFO: "/df/statistics",
     DESCRIBE: "/df/describe",
     DOWNLOAD: "/download",
     PIPE: "/pipeline",

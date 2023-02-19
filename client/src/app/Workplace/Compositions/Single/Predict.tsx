@@ -93,9 +93,9 @@ export const Predict: React.FC<{ model_name: string }> = ({ model_name }) => {
               dispatch(changePredictDocumentName(event.target.value))
             }
           >
-            {allDocuments?.map(({ name }) => (
-              <MenuItem key={name} value={name}>
-                {name}
+            {allDocuments?.map(({ filename }) => (
+              <MenuItem key={filename} value={filename}>
+                {filename}
               </MenuItem>
             ))}
           </Select>

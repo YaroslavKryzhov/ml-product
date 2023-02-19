@@ -1,7 +1,7 @@
 import { Breadcrumbs, Divider, Typography } from "@mui/material";
 import React from "react";
 import HomeIcon from "@mui/icons-material/Home";
-import { StyledBreadcrumb } from "./styled";
+import { StyledBreadcrumb } from "../../common/styled";
 import { pathify } from "ducks/hooks";
 import {
   AppPage,
@@ -12,8 +12,7 @@ import {
 import { theme } from "globalStyle/theme";
 import { always } from "ramda";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { CompositionsEntityHeader } from "../Compositions/CompositionsEntityHeader";
-import { DocsEntityHeader } from "../Documents/DocsEntityHeader";
+import { CompositionsEntityHeader } from "../CompositionsEntityHeader";
 
 import { first } from "lodash";
 import { useAllCompositionsQuery } from "ducks/reducers/api/compositions.api";
@@ -35,70 +34,47 @@ const pathItem = (label: () => string, action: () => void) => ({
 
 const definePathMap = (
   navigate: ReturnType<typeof useNavigate>,
-  {
-    docName,
-    compositionName,
-    workPage,
-  }: { docName?: string; compositionName?: string; workPage?: string }
+  { compositionName }: { compositionName?: string; workPage?: string }
 ) => ({
   [AppPage.Workplace]: pathItem(always("Домой"), () => goHome(navigate)),
   [WorkPage.Compositions]: pathItem(always("Композиции"), () =>
     goCompositions(navigate)
   ),
-  [WorkPage.Documents]: pathItem(always("Данные"), () => goHome(navigate)),
-  ...(workPage === WorkPage.Documents
-    ? {
-        [DocumentPage.List]: pathItem(always("Все"), () => goHome(navigate)),
-        [DocumentPage.Single]: pathItem(
-          () => docName || "",
-          () => {
-            navigate(
-              pathify([
-                AppPage.Workplace,
-                WorkPage.Documents,
-                DocumentPage.List,
-                docName || "",
-              ])
-            );
-          }
-        ),
-      }
-    : {
-        [CompositionPage.List]: pathItem(always("Все"), () =>
-          goCompositions(navigate)
-        ),
-        [CompositionPage.Single]: pathItem(
-          () => compositionName || "",
-          () => {
-            navigate(
-              pathify([
-                AppPage.Workplace,
-                WorkPage.Compositions,
-                CompositionPage.Single,
-                compositionName || "",
-              ])
-            );
-          }
-        ),
-        [CompositionPage.Create]: pathItem(
-          () => "Новая",
-          () => {
-            navigate(
-              pathify([
-                AppPage.Workplace,
-                WorkPage.Compositions,
-                CompositionPage.Create,
-              ])
-            );
-          }
-        ),
-      }),
+
+  [CompositionPage.List]: pathItem(always("Все"), () =>
+    goCompositions(navigate)
+  ),
+  [CompositionPage.Single]: pathItem(
+    () => compositionName || "",
+    () => {
+      navigate(
+        pathify([
+          AppPage.Workplace,
+          WorkPage.Compositions,
+          CompositionPage.Single,
+          compositionName || "",
+        ])
+      );
+    }
+  ),
+  [CompositionPage.Create]: pathItem(
+    () => "Новая",
+    () => {
+      navigate(
+        pathify([
+          AppPage.Workplace,
+          WorkPage.Compositions,
+          CompositionPage.Create,
+        ])
+      );
+    }
+  ),
 });
 
 export const WorkPageHeader: React.FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { docName, compositionName } = useParams();
+  const { compositionName } = useParams();
 
   const workPage = first(
     pathname.match(new RegExp(`(?<=${AppPage.Workplace}/)[^/]*`))
@@ -113,13 +89,7 @@ export const WorkPageHeader: React.FC = () => {
     skip: compositionPage !== CompositionPage.Create,
   });
 
-  const docPage = first(
-    pathname.match(
-      new RegExp(`(?<=${AppPage.Workplace}/${WorkPage.Documents}/)[^/]*`)
-    )
-  );
   const PathMap = definePathMap(navigate, {
-    docName,
     compositionName,
     workPage,
   });
@@ -127,17 +97,12 @@ export const WorkPageHeader: React.FC = () => {
   const path: (keyof typeof PathMap)[] = pathname
     .split("/")
     .filter((x) => Object.keys(PathMap).includes(x))
-    .concat(docName ? DocumentPage.Single : [])
     .concat(compositionName ? CompositionPage.Single : []) as any[];
 
   return (
     <>
       <Typography sx={{ mb: theme.spacing(1) }} variant="h5">
-        {docPage === DocumentPage.Single && "Данные"}
         {compositionPage === CompositionPage.Single && "Композиции"}
-        {docName && (
-          <DocsEntityHeader worplacePage={workPage} initName={docName} />
-        )}
 
         {(compositionName || compositionPage === CompositionPage.Create) && (
           <CompositionsEntityHeader

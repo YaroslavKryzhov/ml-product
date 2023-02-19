@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React from "react";
 import { CategoryMark, DFInfo } from "ducks/reducers/types";
 import { theme } from "globalStyle/theme";
 import {
@@ -53,10 +53,10 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
   data_type,
   right,
 }) => {
-  const { docName } = useParams();
+  const { docId } = useParams();
   const dispatch = useAppDispatch();
 
-  const { data: infoDocument } = useInfoDocumentQuery(docName!);
+  const { data: infoDocument } = useInfoDocumentQuery(docId!);
   const [deleteColumn] = useDeleteColumnMutation();
 
   const setDialogProps = () =>
@@ -85,7 +85,7 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
         text: `Вы действительно хотите удалить колонку ${name}?`,
         onAccept: async () => {
           dispatch(setDialogLoading(true));
-          await deleteColumn({ filename: docName!, columnName: name });
+          await deleteColumn({ dataframe_id: docId!, column_name: name });
 
           dispatch(setDialogLoading(false));
         },

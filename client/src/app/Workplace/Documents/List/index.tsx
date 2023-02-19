@@ -13,29 +13,28 @@ import {
 } from "ducks/reducers/documents";
 import { store } from "ducks/store";
 import { theme } from "globalStyle/theme";
-import React, { useCallback, useMemo } from "react";
+import React from "react";
 import { DocumentDrop } from "./DropFileDialog";
 import moment from "moment";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import { ActionIconSx } from "components/Table/components/Body";
 import { useNavigate } from "react-router-dom";
-import { WorkPageHeader } from "app/Workplace/common/WorkPageHeader";
 import DownloadIcon from "@mui/icons-material/Download";
 import { useDeleteFile } from "../hooks";
 import { addNotice, SnackBarType } from "ducks/reducers/notices";
-import { StandardResponseData } from "ducks/reducers/types";
+import { WorkPageHeader } from "../Single/WorkPageHeader";
 
 enum Columns {
   upload = "upload_date",
   change = "change_date",
-  name = "name",
+  filename = "filename",
 }
 
 const columns = [
   {
     Header: "Название",
-    accessor: Columns.name,
+    accessor: Columns.filename,
   },
   {
     Header: "Загружено",
@@ -58,7 +57,7 @@ export const DocumentsList: React.FC = () => {
   const deleteDoc = useDeleteFile();
   const navigate = useNavigate();
 
-  const setDialogProps = useCallback(() => {
+  const setDialogProps = () => {
     dispatch(
       setDialog({
         title: "Загрузка файла",
@@ -67,31 +66,32 @@ export const DocumentsList: React.FC = () => {
           const { customFileName, selectedFile } = store.getState().documents;
           if (!selectedFile) return;
           dispatch(setDialogLoading(true));
-          const res = (await postDoc({
+          postDoc({
             filename: customFileName,
             file: selectedFile,
-          })) as StandardResponseData;
-          dispatch(setDialogLoading(false));
-
-          if (res.data.status_code === 200) {
-            dispatch(
-              addNotice({
-                label: "Файл успешно загружен",
-                type: SnackBarType.success,
-                id: Date.now(),
-              })
-            );
-          }
-
-          if (res.data.status_code === 409) {
-            dispatch(
-              addNotice({
-                label: "Файл с таким именем уже существует",
-                type: SnackBarType.error,
-                id: Date.now(),
-              })
-            );
-          }
+          })
+            .unwrap()
+            .then(() => {
+              dispatch(
+                addNotice({
+                  label: "Файл успешно загружен",
+                  type: SnackBarType.success,
+                  id: Date.now(),
+                })
+              );
+            })
+            .catch(
+              (err) =>
+                err.status === 422 &&
+                dispatch(
+                  addNotice({
+                    label: "Файл с таким именем уже существует.",
+                    type: SnackBarType.error,
+                    id: Date.now(),
+                  })
+                )
+            )
+            .finally(() => dispatch(setDialogLoading(false)));
         },
 
         acceptDisabled: true,
@@ -104,17 +104,14 @@ export const DocumentsList: React.FC = () => {
         dismissText: "Отменить",
       })
     );
-  }, [dispatch, postDoc]);
+  };
 
-  const convertedData = useMemo(
-    () =>
-      allDocuments?.map((x) => ({
-        ...x,
-        upload_date: moment(x.upload_date).format(theme.additional.timeFormat),
-        change_date: moment(x.change_date).format(theme.additional.timeFormat),
-      })) || [],
-    [allDocuments]
-  );
+  const convertedData =
+    allDocuments?.map((x) => ({
+      ...x,
+      upload_date: moment(x.created_at).format(theme.additional.timeFormat),
+      change_date: moment(x.updated_at).format(theme.additional.timeFormat),
+    })) || [];
 
   return (
     <>
@@ -137,20 +134,28 @@ export const DocumentsList: React.FC = () => {
                 name: "Редактировать",
                 icon: <EditIcon sx={ActionIconSx} />,
                 onClick: (row) => {
-                  navigate(pathify([row.values.name], { relative: true }));
+                  navigate(
+                    pathify([(row.original as any).id], { relative: true })
+                  );
                 },
               },
               {
                 name: "Скачать",
                 icon: <DownloadIcon sx={ActionIconSx} />,
-                onClick: (row) => {
-                  downloadDoc(row.values[Columns.name]);
-                },
+                onClick: (row) =>
+                  downloadDoc({
+                    dataframe_id: (row.original as any).id,
+                    filename: row.values[Columns.filename],
+                  }),
               },
               {
                 name: "Удалить",
                 icon: <DeleteIcon sx={{ ActionIconSx }} />,
-                onClick: (row) => deleteDoc(row.values[Columns.name]),
+                onClick: (row) =>
+                  deleteDoc(
+                    row.values[Columns.filename],
+                    (row.original as any).id
+                  ),
               },
             ]}
             rowHoverable

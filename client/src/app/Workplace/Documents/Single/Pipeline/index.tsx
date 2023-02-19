@@ -30,8 +30,8 @@ import {
   PipelinePopper,
 } from "./parts";
 import { BuildLabel } from "./helpers";
-import { DocumentInfoShort } from "ducks/reducers/types";
 import { UnavailableBlock } from "app/Workplace/common/UnavailableBlock";
+import { DocumentInfo } from "ducks/reducers/types";
 
 export const Pipeline: React.FC = () => {
   const { docName } = useParams();
@@ -45,14 +45,14 @@ export const Pipeline: React.FC = () => {
   const filteredDocs = useMemo(
     () =>
       allDocuments?.filter(
-        (doc) => doc.name !== docName && doc.pipeline?.length
+        (doc) => doc.filename !== docName && doc.pipeline?.length
       ),
     [allDocuments, docName]
   );
   const [fromDocumentMenuOpened, setDromDocumentMenuOpened] = useState(false);
   const anchorEl = useRef<HTMLButtonElement>(null);
   const applyPipelineConfirm = useCallback(
-    (fromDoc: DocumentInfoShort) => () => {
+    (fromDoc: DocumentInfo) => () => {
       setDromDocumentMenuOpened(false);
       dispatch(
         setDialog({
@@ -60,13 +60,13 @@ export const Pipeline: React.FC = () => {
           Content: (
             <PipelineDialog
               currentDoc={docName!}
-              targetDoc={fromDoc.name}
+              targetDoc={fromDoc.filename}
               pipeline={fromDoc.pipeline}
             />
           ),
           onAccept: async () => {
             dispatch(setDialogLoading(true));
-            await copyPipeline({ from: fromDoc.name, to: docName! });
+            await copyPipeline({ from: fromDoc.filename, to: docName! });
             dispatch(setDialogLoading(false));
           },
           onDismiss: T,
@@ -111,7 +111,7 @@ export const Pipeline: React.FC = () => {
                 <Tooltip
                   PopperComponent={PipelinePopper as any}
                   PopperProps={{ pipeline: doc.pipeline } as any}
-                  key={doc.name}
+                  key={doc.filename}
                   title="test"
                 >
                   <MenuItem
@@ -120,7 +120,7 @@ export const Pipeline: React.FC = () => {
                       padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
                     }}
                   >
-                    {doc.name}
+                    {doc.filename}
                   </MenuItem>
                 </Tooltip>
               ))}
