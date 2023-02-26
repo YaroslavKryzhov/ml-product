@@ -1,8 +1,8 @@
 import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 import { Authentication } from "./app/Authentication";
-import { Matcher, pathify, useSESelector } from "ducks/hooks";
+import { browserHistory, Matcher, pathify, useSESelector } from "ducks/hooks";
 import { AppPage } from "ducks/reducers/types";
-import React from "react";
+import React, { useLayoutEffect, useState } from "react";
 import { theme } from "./globalStyle/theme";
 import { CenteredContainer } from "components/muiOverride";
 import { Circles } from "react-loader-spinner";
@@ -10,14 +10,19 @@ import { withOpacity } from "./globalStyle/theme";
 import { Workplace } from "./app/Workplace";
 import { DialogCustom } from "components/Dialog";
 import { Route, Routes } from "react-router";
-import { BrowserRouter } from "react-router-dom";
+import { Router } from "react-router-dom";
 import { Notices } from "components/Notice";
 
 const App: React.FC = () => {
   const { isBlockingLoader } = useSESelector((state) => state.main);
+  const [state, setState] = useState({
+    action: browserHistory.action,
+    location: browserHistory.location,
+  });
 
+  useLayoutEffect(() => browserHistory.listen(setState), []);
   return (
-    <BrowserRouter>
+    <Router location={state.location} navigator={browserHistory}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <DialogCustom />
@@ -55,7 +60,7 @@ const App: React.FC = () => {
           </Routes>
         </Box>
       </ThemeProvider>
-    </BrowserRouter>
+    </Router>
   );
 };
 

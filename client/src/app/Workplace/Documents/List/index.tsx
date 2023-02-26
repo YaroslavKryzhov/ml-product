@@ -57,6 +57,15 @@ export const DocumentsList: React.FC = () => {
   const deleteDoc = useDeleteFile();
   const navigate = useNavigate();
 
+  const noticeSuccess = () =>
+    dispatch(
+      addNotice({
+        label: "Файл успешно загружен",
+        type: SnackBarType.success,
+        id: Date.now(),
+      })
+    );
+
   const setDialogProps = () => {
     dispatch(
       setDialog({
@@ -71,26 +80,19 @@ export const DocumentsList: React.FC = () => {
             file: selectedFile,
           })
             .unwrap()
-            .then(() => {
-              dispatch(
-                addNotice({
-                  label: "Файл успешно загружен",
-                  type: SnackBarType.success,
-                  id: Date.now(),
-                })
-              );
-            })
-            .catch(
-              (err) =>
-                err.status === 422 &&
+            .then(noticeSuccess)
+            .catch((err) => {
+              err?.originalStatus === 200 && noticeSuccess();
+
+              err.status === 422 &&
                 dispatch(
                   addNotice({
                     label: "Файл с таким именем уже существует.",
                     type: SnackBarType.error,
                     id: Date.now(),
                   })
-                )
-            )
+                );
+            })
             .finally(() => dispatch(setDialogLoading(false)));
         },
 

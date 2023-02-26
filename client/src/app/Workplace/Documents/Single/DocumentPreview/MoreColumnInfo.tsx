@@ -32,8 +32,8 @@ export const MoreColumnInfo: React.FC<DFInfo> = ({
   not_null_count,
   data_type,
 }) => {
-  const docName = useDocumentNameForce();
-  const { data: describeData } = useDescribeDocumentQuery(docName!);
+  const docId = useDocumentNameForce();
+  const { data: describeData } = useDescribeDocumentQuery(docId!);
   const describeDataMerged = useMemo(
     () =>
       describeData

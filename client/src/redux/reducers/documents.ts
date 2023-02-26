@@ -19,6 +19,7 @@ const documentsSlice = createSlice({
   name: "documents",
   initialState,
   reducers: {
+    resetDocumentsState: () => initialState,
     changeCustomFileName: (state, action: PayloadAction<string>) =>
       void (state.customFileName = action.payload),
     changeSelectedFile: (state, action: PayloadAction<File | null>) =>
@@ -35,6 +36,7 @@ export const {
   changeSelectedFile,
   changeSelectedTarget,
   changeSelectedTaskType,
+  resetDocumentsState,
 } = documentsSlice.actions;
 
 export default documentsSlice.reducer;

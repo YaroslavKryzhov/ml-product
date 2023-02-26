@@ -137,7 +137,7 @@ export const documentsApi = createApi({
         params: { dataframe_id, new_filename },
         method: "PUT",
       }),
-      invalidatesTags: [Tags.documents],
+      invalidatesTags: [Tags.documents, Tags.singleDocument],
     }),
     columnsDocument: builder.query<string[], string>({
       query: (dataframe_id) => ({
@@ -147,11 +147,11 @@ export const documentsApi = createApi({
     }),
     applyDocMethod: builder.mutation<
       string,
-      { filename: string; function_name: DocumentMethod }
+      { dataframe_id: string; function_name: DocumentMethod }
     >({
-      query: ({ filename, function_name }) => ({
+      query: ({ dataframe_id, function_name }) => ({
         url: ROUTES.DOCUMENTS.APPLY_METHOD,
-        params: { filename, function_name },
+        params: { dataframe_id, function_name },
         method: "POST",
       }),
       invalidatesTags: [Tags.pipeline, Tags.singleDocument],
@@ -167,10 +167,13 @@ export const documentsApi = createApi({
       }),
       invalidatesTags: [Tags.singleDocument],
     }),
-    copyPipeline: builder.mutation<void, { from: string; to: string }>({
-      query: ({ from, to }) => ({
+    copyPipeline: builder.mutation<
+      void,
+      { dataframe_id_from: string; dataframe_id_to: string }
+    >({
+      query: ({ dataframe_id_from, dataframe_id_to }) => ({
         url: ROUTES.DOCUMENTS.COPY_PIPELINE,
-        params: { from_document: from, to_document: to },
+        params: { dataframe_id_from, dataframe_id_to },
         method: "POST",
       }),
       invalidatesTags: [Tags.singleDocument],

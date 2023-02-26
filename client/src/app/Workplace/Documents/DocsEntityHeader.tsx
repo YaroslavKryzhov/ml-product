@@ -7,15 +7,12 @@ import {
   useInfoDocumentQuery,
   useRenameDocumentMutation,
 } from "ducks/reducers/api/documents.api";
-import { pathify } from "ducks/hooks";
 import DownloadIcon from "@mui/icons-material/Download";
 import { useDeleteFile } from "./hooks";
 import DeleteIcon from "@mui/icons-material/Delete";
 import moment from "moment";
 import { InfoChip } from "components/infoChip";
 import { Size } from "app/types";
-import { useNavigate } from "react-router-dom";
-import { DocumentPage } from "ducks/reducers/types";
 import { EditableLabel } from "../common/styled";
 
 export const DocsEntityHeader: React.FC<{
@@ -36,7 +33,6 @@ export const DocsEntityHeader: React.FC<{
     setCustomName(documentData?.filename || "");
   }, [documentData?.filename]);
 
-  const navigate = useNavigate();
   const onKeyDown = (e: React.KeyboardEvent<HTMLLabelElement>) => {
     if (e.code === "Enter") {
       e.preventDefault();

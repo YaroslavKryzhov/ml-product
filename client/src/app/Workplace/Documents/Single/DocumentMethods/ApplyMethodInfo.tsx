@@ -13,8 +13,8 @@ const ColumnsTransformInfo: React.FC<{
   type: CategoryMark;
   gapsAnnounce?: boolean;
 }> = ({ type, gapsAnnounce }) => {
-  const docName = useDocumentNameForce();
-  const { data: infoData } = useInfoDocumentQuery(docName!);
+  const docId = useDocumentNameForce();
+  const { data: infoData } = useInfoDocumentQuery(docId!);
   const colNames: string[] | null =
     infoData?.column_types && Array.isArray(infoData?.column_types[type])
       ? (infoData?.column_types[type] as string[])

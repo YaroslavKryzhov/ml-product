@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
@@ -34,47 +34,43 @@ import { UnavailableBlock } from "app/Workplace/common/UnavailableBlock";
 import { DocumentInfo } from "ducks/reducers/types";
 
 export const Pipeline: React.FC = () => {
-  const { docName } = useParams();
+  const { docId } = useParams();
   const { data: docInfo, isFetching: docInfoLoading } = useInfoDocumentQuery(
-    docName!
+    docId!
   );
   const { data: allDocuments } = useAllDocumentsQuery();
   const [copyPipeline] = useCopyPipelineMutation();
   const dispatch = useAppDispatch();
 
-  const filteredDocs = useMemo(
-    () =>
-      allDocuments?.filter(
-        (doc) => doc.filename !== docName && doc.pipeline?.length
-      ),
-    [allDocuments, docName]
+  const filteredDocs = allDocuments?.filter(
+    (doc) => doc.id !== docId && doc.pipeline?.length
   );
   const [fromDocumentMenuOpened, setDromDocumentMenuOpened] = useState(false);
   const anchorEl = useRef<HTMLButtonElement>(null);
-  const applyPipelineConfirm = useCallback(
-    (fromDoc: DocumentInfo) => () => {
-      setDromDocumentMenuOpened(false);
-      dispatch(
-        setDialog({
-          title: "Применить пайплайн",
-          Content: (
-            <PipelineDialog
-              currentDoc={docName!}
-              targetDoc={fromDoc.filename}
-              pipeline={fromDoc.pipeline}
-            />
-          ),
-          onAccept: async () => {
-            dispatch(setDialogLoading(true));
-            await copyPipeline({ from: fromDoc.filename, to: docName! });
-            dispatch(setDialogLoading(false));
-          },
-          onDismiss: T,
-        })
-      );
-    },
-    [docName, copyPipeline, dispatch]
-  );
+  const applyPipelineConfirm = (fromDoc: DocumentInfo) => () => {
+    setDromDocumentMenuOpened(false);
+    dispatch(
+      setDialog({
+        title: "Применить пайплайн",
+        Content: (
+          <PipelineDialog
+            currentDoc={docInfo?.filename!}
+            targetDoc={fromDoc.filename}
+            pipeline={fromDoc.pipeline}
+          />
+        ),
+        onAccept: async () => {
+          dispatch(setDialogLoading(true));
+          await copyPipeline({
+            dataframe_id_from: fromDoc.id,
+            dataframe_id_to: docId!,
+          });
+          dispatch(setDialogLoading(false));
+        },
+        onDismiss: T,
+      })
+    );
+  };
 
   return (
     <Box>

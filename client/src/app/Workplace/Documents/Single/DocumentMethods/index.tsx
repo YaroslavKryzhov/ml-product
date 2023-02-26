@@ -19,11 +19,11 @@ import { BtnGroups } from "./types";
 import { UnavailableBlock } from "app/Workplace/common/UnavailableBlock";
 
 export const DocumentMethods: React.FC = () => {
-  const { docName } = useParams();
+  const { docId } = useParams();
   const dispatch = useAppDispatch();
 
   const { data: infoData, isFetching: docInfoLoading } = useInfoDocumentQuery(
-    docName!
+    docId!
   );
   const [applyMethod, { isLoading }] = useApplyDocMethodMutation();
 
@@ -35,15 +35,17 @@ export const DocumentMethods: React.FC = () => {
           Content: <ApplyMethodInfo method={method} />,
           onAccept: async () => {
             dispatch(setDialogLoading(true));
-            await applyMethod({ filename: docName!, function_name: method });
+            await applyMethod({ dataframe_id: docId!, function_name: method });
             dispatch(setDialogLoading(false));
           },
           onDismiss: T,
         })
       );
     },
-    [dispatch, docName, applyMethod]
+    [dispatch, docId, applyMethod]
   );
+
+  console.log(infoData);
 
   return (
     <Box>
@@ -79,7 +81,7 @@ export const DocumentMethods: React.FC = () => {
         </Stack>
       ) : (
         <>
-          {infoData?.column_types ? (
+          {infoData?.column_types.target ? (
             <Stack
               sx={{
                 columnGap: theme.spacing(2),
