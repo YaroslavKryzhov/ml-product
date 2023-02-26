@@ -45,8 +45,6 @@ export const DocumentMethods: React.FC = () => {
     [dispatch, docId, applyMethod]
   );
 
-  console.log(infoData);
-
   return (
     <Box>
       <Typography sx={{ mb: theme.spacing(3) }} variant="h5">
@@ -81,73 +79,74 @@ export const DocumentMethods: React.FC = () => {
         </Stack>
       ) : (
         <>
-          {infoData?.column_types.target ? (
-            <Stack
-              sx={{
-                columnGap: theme.spacing(2),
-                rowGap: theme.spacing(3),
-                flexWrap: "wrap",
-                justifyContent: "center",
-              }}
-              direction="row"
-            >
-              {Object.values(BtnGroups).map((groupKey) => {
-                const isColumnsSelectForbidden =
-                  groupKey === BtnGroups.group4 &&
-                  !!infoData.column_types[CategoryMark.categorical]?.length;
-
-                return (
-                  <Paper
-                    sx={{
-                      backgroundColor: theme.palette.secondary.light,
-                      padding: theme.spacing(3),
-                      flexGrow: 1,
-                      maxWidth: "33%",
-                    }}
-                    key={groupKey}
-                    elevation={3}
-                  >
-                    <Typography
-                      variant="h6"
-                      sx={{ textAlign: "center", mb: theme.spacing(2) }}
-                    >
-                      {ButtonsGroupsLabels[groupKey]}
-                    </Typography>
-
-                    <Tooltip
-                      followCursor
-                      disableHoverListener={!isColumnsSelectForbidden}
-                      title="Запрещено. Есть категориальные признаки."
-                    >
-                      <Stack
-                        sx={{
-                          gap: theme.spacing(1),
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        {ButtonsData[groupKey].map((act) => (
-                          <LoadingButton
-                            disabled={isColumnsSelectForbidden}
-                            loading={isLoading}
-                            variant="contained"
-                            key={act.value}
-                            sx={{
-                              flexGrow: 1,
-                            }}
-                            onClick={() => setDialogApplyMethod(act.value)}
-                          >
-                            {act.label}
-                          </LoadingButton>
-                        ))}
-                      </Stack>
-                    </Tooltip>
-                  </Paper>
-                );
-              })}
-            </Stack>
-          ) : (
-            <UnavailableBlock label="Методы доступны только после разметки" />
+          {!infoData?.column_types.target && (
+            <Box sx={{ mb: theme.spacing(3) }}>
+              <UnavailableBlock label="Внимание, целевой признак не выбран. Применяйте методы с осторожностью." />
+            </Box>
           )}
+          <Stack
+            sx={{
+              columnGap: theme.spacing(2),
+              rowGap: theme.spacing(3),
+              flexWrap: "wrap",
+              justifyContent: "center",
+            }}
+            direction="row"
+          >
+            {Object.values(BtnGroups).map((groupKey) => {
+              const isColumnsSelectForbidden =
+                groupKey === BtnGroups.group4 &&
+                !!infoData?.column_types[CategoryMark.categorical]?.length;
+
+              return (
+                <Paper
+                  sx={{
+                    backgroundColor: theme.palette.secondary.light,
+                    padding: theme.spacing(3),
+                    flexGrow: 1,
+                    maxWidth: "33%",
+                  }}
+                  key={groupKey}
+                  elevation={3}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{ textAlign: "center", mb: theme.spacing(2) }}
+                  >
+                    {ButtonsGroupsLabels[groupKey]}
+                  </Typography>
+
+                  <Tooltip
+                    followCursor
+                    disableHoverListener={!isColumnsSelectForbidden}
+                    title="Запрещено. Есть категориальные признаки."
+                  >
+                    <Stack
+                      sx={{
+                        gap: theme.spacing(1),
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      {ButtonsData[groupKey].map((act) => (
+                        <LoadingButton
+                          disabled={isColumnsSelectForbidden}
+                          loading={isLoading}
+                          variant="contained"
+                          key={act.value}
+                          sx={{
+                            flexGrow: 1,
+                          }}
+                          onClick={() => setDialogApplyMethod(act.value)}
+                        >
+                          {act.label}
+                        </LoadingButton>
+                      ))}
+                    </Stack>
+                  </Tooltip>
+                </Paper>
+              );
+            })}
+          </Stack>
         </>
       )}
     </Box>

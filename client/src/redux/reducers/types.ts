@@ -519,3 +519,8 @@ export type TrainParamsPayload = {
   model_name: string;
   test_size: number;
 };
+
+export type TaskObservePayload = {
+  task_id: string;
+  jwt_token: string;
+};

@@ -8,7 +8,9 @@ import {
   DocumentMethod,
   ErrorResponse,
   FullDocument,
+  TaskObservePayload,
 } from "../types";
+import { socketManager } from "./socket";
 
 const buildFileForm = (file: File) => {
   const form = new FormData();
@@ -146,14 +148,30 @@ export const documentsApi = createApi({
       }),
     }),
     applyDocMethod: builder.mutation<
-      string,
+      null,
       { dataframe_id: string; function_name: DocumentMethod }
     >({
-      query: ({ dataframe_id, function_name }) => ({
-        url: ROUTES.DOCUMENTS.APPLY_METHOD,
-        params: { dataframe_id, function_name },
-        method: "POST",
-      }),
+      async queryFn({ dataframe_id, function_name }) {
+        const res = await fetch(
+          `${ROUTES.DOCUMENTS.BASE}${ROUTES.DOCUMENTS.APPLY_METHOD}?dataframe_id=${dataframe_id}&function_name=${function_name}`,
+          {
+            headers: { Authorization: `Bearer ${localStorage.authToken}` },
+            method: "POST",
+          }
+        );
+
+        const task = (await res.json()) as TaskObservePayload;
+
+        socketManager.oneTimeSubscription(task, (data) => {
+          console.log(12, data);
+        });
+
+        return {
+          data: null,
+          meta: null,
+        };
+      },
+
       invalidatesTags: [Tags.pipeline, Tags.singleDocument],
     }),
     selectDocumentTarget: builder.mutation<

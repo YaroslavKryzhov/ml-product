@@ -1,5 +1,5 @@
-export const HOST = "http://localhost:6060/api/v1";
-export const BASE_API = HOST;
+export const HOST = "localhost:6060";
+export const BASE_API = `http://${HOST}/api/v1`;
 
 export const ROUTES = {
   AUTH: {
