@@ -153,6 +153,7 @@ export const documentsApi = createApi({
         url: ROUTES.DOCUMENTS.COLUMNS,
         params: { dataframe_id },
       }),
+      providesTags: [Tags.singleDocument],
     }),
     applyDocMethod: builder.mutation<
       null,

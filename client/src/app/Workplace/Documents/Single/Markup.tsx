@@ -63,7 +63,7 @@ export const Markup: React.FC = () => {
       ) : (
         <>
           {!docInfo?.column_types.target && (
-            <UnavailableBlock label=" Внимание, вы сможете произвести разметку только один раз!!! Будьте Внимательны!!!" />
+            <UnavailableBlock label="Внимание, вы сможете произвести разметку только один раз!!! Будьте Внимательны!!!" />
           )}
           <Box
             sx={{

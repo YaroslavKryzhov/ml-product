@@ -85,7 +85,10 @@ export const HeaderCell: React.FC<DFInfo & { right?: boolean }> = ({
         text: `Вы действительно хотите удалить колонку ${name}?`,
         onAccept: async () => {
           dispatch(setDialogLoading(true));
-          await deleteColumn({ dataframe_id: docId!, column_name: name });
+          await deleteColumn({
+            dataframe_id: docId!,
+            column_name: name,
+          });
 
           dispatch(setDialogLoading(false));
         },

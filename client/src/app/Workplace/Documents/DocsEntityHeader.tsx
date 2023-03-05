@@ -56,10 +56,11 @@ export const DocsEntityHeader: React.FC<{
     const newName = e.target.innerText + (matchName && matchName[2]);
     setEditMode(false);
 
-    renameDoc({
-      dataframe_id: docId,
-      new_filename: newName,
-    }).then(() => setCustomName(newName));
+    if (newName !== customName)
+      renameDoc({
+        dataframe_id: docId,
+        new_filename: newName,
+      }).then(() => setCustomName(newName));
   };
 
   return (
