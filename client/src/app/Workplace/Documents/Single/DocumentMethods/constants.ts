@@ -1,4 +1,5 @@
 import { DocumentMethod } from "ducks/reducers/types";
+import { values } from "lodash";
 import { BtnGroups } from "./types";
 
 export const ButtonsGroupsLabels = {
@@ -92,3 +93,5 @@ export const ButtonsData = {
     },
   ],
 };
+
+export const MethodHeaders = values(ButtonsData).flat();

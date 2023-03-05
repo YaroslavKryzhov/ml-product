@@ -1,6 +1,6 @@
 import * as React from "react";
 import Typography from "@mui/material/Typography";
-import { Box, Paper, Skeleton, Stack, Tooltip } from "@mui/material";
+import { Box, Paper, Stack, Tooltip } from "@mui/material";
 import { theme } from "globalStyle/theme";
 import { LoadingButton } from "@mui/lab";
 import { CategoryMark, DocumentMethod } from "ducks/reducers/types";
@@ -11,21 +11,21 @@ import {
 import { useParams } from "react-router-dom";
 import { useCallback } from "react";
 import { setDialog, setDialogLoading } from "ducks/reducers/dialog";
-import { useAppDispatch } from "ducks/hooks";
+import { useAppDispatch, useSESelector } from "ducks/hooks";
 import { T } from "ramda";
 import { ApplyMethodInfo } from "./ApplyMethodInfo";
 import { ButtonsData, ButtonsGroupsLabels } from "./constants";
 import { BtnGroups } from "./types";
 import { UnavailableBlock } from "app/Workplace/common/UnavailableBlock";
+import { addPendingTask } from "ducks/reducers/documents";
 
 export const DocumentMethods: React.FC = () => {
   const { docId } = useParams();
   const dispatch = useAppDispatch();
+  const { pendingTasks } = useSESelector((state) => state.documents);
 
-  const { data: infoData, isFetching: docInfoLoading } = useInfoDocumentQuery(
-    docId!
-  );
-  const [applyMethod, { isLoading }] = useApplyDocMethodMutation();
+  const { data: infoData } = useInfoDocumentQuery(docId!);
+  const [applyMethod] = useApplyDocMethodMutation();
 
   const setDialogApplyMethod = useCallback(
     (method: DocumentMethod) => {
@@ -35,7 +35,8 @@ export const DocumentMethods: React.FC = () => {
           Content: <ApplyMethodInfo method={method} />,
           onAccept: async () => {
             dispatch(setDialogLoading(true));
-            await applyMethod({ dataframe_id: docId!, function_name: method });
+            applyMethod({ dataframe_id: docId!, function_name: method });
+            dispatch(addPendingTask(method));
             dispatch(setDialogLoading(false));
           },
           onDismiss: T,
@@ -51,7 +52,7 @@ export const DocumentMethods: React.FC = () => {
         Методы
       </Typography>
 
-      {docInfoLoading ? (
+      {/* {docInfoLoading ? (
         <Stack
           sx={{
             columnGap: theme.spacing(2),
@@ -77,78 +78,80 @@ export const DocumentMethods: React.FC = () => {
           />
           <Skeleton variant="rectangular" width="25%" height={477} />
         </Stack>
-      ) : (
-        <>
-          {!infoData?.column_types.target && (
-            <Box sx={{ mb: theme.spacing(3) }}>
-              <UnavailableBlock label="Внимание, целевой признак не выбран. Применяйте методы с осторожностью." />
-            </Box>
-          )}
-          <Stack
-            sx={{
-              columnGap: theme.spacing(2),
-              rowGap: theme.spacing(3),
-              flexWrap: "wrap",
-              justifyContent: "center",
-            }}
-            direction="row"
-          >
-            {Object.values(BtnGroups).map((groupKey) => {
-              const isColumnsSelectForbidden =
-                groupKey === BtnGroups.group4 &&
-                !!infoData?.column_types[CategoryMark.categorical]?.length;
+      ) : ( */}
+      <>
+        {!infoData?.column_types.target && (
+          <Box sx={{ mb: theme.spacing(3) }}>
+            <UnavailableBlock label="Внимание, целевой признак не выбран. Применяйте методы с осторожностью." />
+          </Box>
+        )}
+        <Stack
+          sx={{
+            columnGap: theme.spacing(2),
+            rowGap: theme.spacing(3),
+            flexWrap: "wrap",
+            justifyContent: "center",
+          }}
+          direction="row"
+        >
+          {Object.values(BtnGroups).map((groupKey) => {
+            const isColumnsSelectForbidden =
+              groupKey === BtnGroups.group4 &&
+              !!infoData?.column_types[CategoryMark.categorical]?.length;
 
-              return (
-                <Paper
-                  sx={{
-                    backgroundColor: theme.palette.secondary.light,
-                    padding: theme.spacing(3),
-                    flexGrow: 1,
-                    maxWidth: "33%",
-                  }}
-                  key={groupKey}
-                  elevation={3}
+            return (
+              <Paper
+                sx={{
+                  backgroundColor: theme.palette.secondary.light,
+                  padding: theme.spacing(3),
+                  flexGrow: 1,
+                  maxWidth: "33%",
+                }}
+                key={groupKey}
+                elevation={3}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{ textAlign: "center", mb: theme.spacing(2) }}
                 >
-                  <Typography
-                    variant="h6"
-                    sx={{ textAlign: "center", mb: theme.spacing(2) }}
-                  >
-                    {ButtonsGroupsLabels[groupKey]}
-                  </Typography>
+                  {ButtonsGroupsLabels[groupKey]}
+                </Typography>
 
-                  <Tooltip
-                    followCursor
-                    disableHoverListener={!isColumnsSelectForbidden}
-                    title="Запрещено. Есть категориальные признаки."
+                <Tooltip
+                  followCursor
+                  disableHoverListener={!isColumnsSelectForbidden}
+                  title="Запрещено. Есть категориальные признаки."
+                >
+                  <Stack
+                    sx={{
+                      gap: theme.spacing(1),
+                      flexWrap: "wrap",
+                    }}
                   >
-                    <Stack
-                      sx={{
-                        gap: theme.spacing(1),
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      {ButtonsData[groupKey].map((act) => (
-                        <LoadingButton
-                          disabled={isColumnsSelectForbidden}
-                          loading={isLoading}
-                          variant="contained"
-                          key={act.value}
-                          sx={{
-                            flexGrow: 1,
-                          }}
-                          onClick={() => setDialogApplyMethod(act.value)}
-                        >
-                          {act.label}
-                        </LoadingButton>
-                      ))}
-                    </Stack>
-                  </Tooltip>
-                </Paper>
-              );
-            })}
-          </Stack>
-        </>
-      )}
+                    {ButtonsData[groupKey].map((act) => (
+                      <LoadingButton
+                        disabled={isColumnsSelectForbidden}
+                        loading={Boolean(
+                          pendingTasks.find((x) => x === act.value)
+                        )}
+                        variant="contained"
+                        key={act.value}
+                        sx={{
+                          flexGrow: 1,
+                        }}
+                        onClick={() => setDialogApplyMethod(act.value)}
+                      >
+                        {act.label}
+                      </LoadingButton>
+                    ))}
+                  </Stack>
+                </Tooltip>
+              </Paper>
+            );
+          })}
+        </Stack>
+      </>
+      {/* )} */}
     </Box>
   );
 };

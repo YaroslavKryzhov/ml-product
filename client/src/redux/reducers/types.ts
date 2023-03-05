@@ -524,3 +524,14 @@ export type TaskObservePayload = {
   task_id: string;
   jwt_token: string;
 };
+
+export enum TaskStatus {
+  success = "SUCCESS",
+  failure = "FAILURE",
+}
+
+export type TaskResponseData = {
+  task_id: string;
+  status: TaskStatus;
+  message: string;
+};

@@ -9,8 +9,14 @@ import {
   ErrorResponse,
   FullDocument,
   TaskObservePayload,
+  TaskResponseData,
+  TaskStatus,
 } from "../types";
 import { socketManager } from "./socket";
+import { store } from "ducks/store";
+import { addNotice, SnackBarType } from "../notices";
+import { MethodHeaders } from "app/Workplace/Documents/Single/DocumentMethods/constants";
+import { removePendingTask } from "../documents";
 
 const buildFileForm = (file: File) => {
   const form = new FormData();
@@ -161,9 +167,42 @@ export const documentsApi = createApi({
         );
 
         const task = (await res.json()) as TaskObservePayload;
+        const methodLabel = MethodHeaders.find(
+          (x) => x.value === function_name
+        )?.label;
 
-        socketManager.oneTimeSubscription(task, (data) => {
-          console.log(12, data);
+        if (!res.ok) {
+          store.dispatch(
+            addNotice({
+              label: `Метод '${methodLabel}' не выполнен. Ошибка запроса. ${
+                res.statusText || ""
+              }`,
+              type: SnackBarType.error,
+              id: Date.now(),
+            })
+          );
+          store.dispatch(removePendingTask(function_name));
+        }
+
+        socketManager.taskSubscription(task, (data: TaskResponseData) => {
+          store.dispatch(removePendingTask(function_name));
+          if (data.status === TaskStatus.success) {
+            store.dispatch(
+              addNotice({
+                label: `Метод '${methodLabel}' успешно выполнен`,
+                type: SnackBarType.success,
+                id: Date.now(),
+              })
+            );
+          } else {
+            store.dispatch(
+              addNotice({
+                label: `Метод '${methodLabel}' не выполнен. Ошибка. ${data.message}`,
+                type: SnackBarType.error,
+                id: Date.now(),
+              })
+            );
+          }
         });
 
         return {

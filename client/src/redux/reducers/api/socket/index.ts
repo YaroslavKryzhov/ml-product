@@ -1,27 +1,35 @@
 import Centrifuge from "centrifuge";
 import { HOST } from "ducks/constants";
-import { TaskObservePayload } from "ducks/reducers/types";
+import { TaskObservePayload, TaskResponseData } from "ducks/reducers/types";
+import jwtDecode from "jwt-decode";
 
 class SocketManager {
   private socket: Centrifuge | null = null;
-  createSocket(token: string) {
-    this.socket = new Centrifuge(
+  private taskCallbacks: Record<string, (data: TaskResponseData) => void> = {};
+  private createSocket(token: string) {
+    const centrifuge = new Centrifuge(
       `ws://${HOST}/centrifugo/connection/websocket`
     );
 
-    this.socket.setToken(token);
-    this.socket.connect();
+    centrifuge.setToken(token);
+    centrifuge.connect();
+
+    const userId = (jwtDecode(token) as any).sub;
+    centrifuge.subscribe(`INFO#${userId}`, (ctx) => {
+      this.taskCallbacks[ctx.data.task_id]?.(ctx.data);
+
+      delete this.taskCallbacks[ctx.data.task_id];
+    });
+
+    this.socket = centrifuge;
   }
-  oneTimeSubscription<T = unknown>(
+  taskSubscription(
     payload: TaskObservePayload,
-    callback: (data: T) => void
+    callback: (data: TaskResponseData) => void
   ) {
     if (!this.socket) this.createSocket(payload.jwt_token);
 
-    const sub = this.socket!.subscribe(`${payload.task_id}`, (ctx) => {
-      callback(ctx.data);
-      sub.unsubscribe();
-    });
+    this.taskCallbacks[payload.task_id] = callback;
   }
 }
 
