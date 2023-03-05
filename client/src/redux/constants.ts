@@ -37,3 +37,5 @@ export const ROUTES = {
     INFO: "/info",
   },
 };
+
+export const COPY_PIPELINE_ID = "copy_pipe";

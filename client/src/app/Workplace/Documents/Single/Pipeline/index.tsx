@@ -20,7 +20,7 @@ import {
   useCopyPipelineMutation,
   useInfoDocumentQuery,
 } from "ducks/reducers/api/documents.api";
-import { useAppDispatch } from "ducks/hooks";
+import { useAppDispatch, useSESelector } from "ducks/hooks";
 import { setDialog, setDialogLoading } from "ducks/reducers/dialog";
 import { T } from "ramda";
 import {
@@ -32,6 +32,9 @@ import {
 import { BuildLabel } from "./helpers";
 import { UnavailableBlock } from "app/Workplace/common/UnavailableBlock";
 import { DocumentInfo } from "ducks/reducers/types";
+import { addPendingTask } from "ducks/reducers/documents";
+import { COPY_PIPELINE_ID } from "ducks/constants";
+import { LoadingButton } from "@mui/lab";
 
 export const Pipeline: React.FC = () => {
   const { docId } = useParams();
@@ -41,6 +44,7 @@ export const Pipeline: React.FC = () => {
   const { data: allDocuments } = useAllDocumentsQuery();
   const [copyPipeline] = useCopyPipelineMutation();
   const dispatch = useAppDispatch();
+  const { pendingTasks } = useSESelector((state) => state.documents);
 
   const filteredDocs = allDocuments?.filter(
     (doc) => doc.id !== docId && doc.pipeline?.length
@@ -66,6 +70,7 @@ export const Pipeline: React.FC = () => {
             dataframe_id_to: docId!,
           });
           dispatch(setDialogLoading(false));
+          dispatch(addPendingTask(COPY_PIPELINE_ID));
         },
         onDismiss: T,
       })
@@ -83,7 +88,10 @@ export const Pipeline: React.FC = () => {
               disableHoverListener={!!filteredDocs?.length}
               title="Не найдено документов с непустым пайплайном"
             >
-              <Button
+              <LoadingButton
+                loading={Boolean(
+                  pendingTasks.find((x) => x === COPY_PIPELINE_ID)
+                )}
                 disabled={!filteredDocs?.length}
                 ref={anchorEl}
                 sx={{ ml: theme.spacing(3) }}
@@ -93,7 +101,7 @@ export const Pipeline: React.FC = () => {
                 onClick={() => setDromDocumentMenuOpened(true)}
               >
                 Применить из
-              </Button>
+              </LoadingButton>
             </Tooltip>
             <Menu
               PaperProps={{ sx: { mt: theme.spacing(1) } }}

@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { ROUTES } from "../../constants";
+import { COPY_PIPELINE_ID, ROUTES } from "../../constants";
 import { addAuthHeader } from "./helpers";
 import {
   DescribeDoc,
@@ -17,6 +17,7 @@ import { store } from "ducks/store";
 import { addNotice, SnackBarType } from "../notices";
 import { MethodHeaders } from "app/Workplace/Documents/Single/DocumentMethods/constants";
 import { removePendingTask } from "../documents";
+import { nanoid } from "@reduxjs/toolkit";
 
 const buildFileForm = (file: File) => {
   const form = new FormData();
@@ -194,6 +195,13 @@ export const documentsApi = createApi({
                 id: Date.now(),
               })
             );
+
+            store.dispatch(
+              documentsApi.util.invalidateTags([
+                Tags.singleDocument,
+                Tags.pipeline,
+              ])
+            );
           } else {
             store.dispatch(
               addNotice({
@@ -210,8 +218,6 @@ export const documentsApi = createApi({
           meta: null,
         };
       },
-
-      invalidatesTags: [Tags.pipeline, Tags.singleDocument],
     }),
     selectDocumentTarget: builder.mutation<
       void,
@@ -225,15 +231,65 @@ export const documentsApi = createApi({
       invalidatesTags: [Tags.singleDocument],
     }),
     copyPipeline: builder.mutation<
-      void,
+      null,
       { dataframe_id_from: string; dataframe_id_to: string }
     >({
-      query: ({ dataframe_id_from, dataframe_id_to }) => ({
-        url: ROUTES.DOCUMENTS.COPY_PIPELINE,
-        params: { dataframe_id_from, dataframe_id_to },
-        method: "POST",
-      }),
-      invalidatesTags: [Tags.singleDocument],
+      async queryFn({ dataframe_id_to, dataframe_id_from }) {
+        const res = await fetch(
+          `${ROUTES.DOCUMENTS.BASE}${ROUTES.DOCUMENTS.COPY_PIPELINE}?dataframe_id_from=${dataframe_id_from}&dataframe_id_to=${dataframe_id_to}`,
+          {
+            headers: { Authorization: `Bearer ${localStorage.authToken}` },
+            method: "POST",
+          }
+        );
+
+        const task = (await res.json()) as TaskObservePayload;
+
+        if (!res.ok) {
+          store.dispatch(
+            addNotice({
+              label: `Копирование пайплайна не выполнено. Ошибка запроса. ${
+                res.statusText || ""
+              }`,
+              type: SnackBarType.error,
+              id: Date.now(),
+            })
+          );
+          store.dispatch(removePendingTask(COPY_PIPELINE_ID));
+        }
+
+        socketManager.taskSubscription(task, (data: TaskResponseData) => {
+          store.dispatch(removePendingTask(COPY_PIPELINE_ID));
+          if (data.status === TaskStatus.success) {
+            store.dispatch(
+              addNotice({
+                label: `Копирование пайплайна успешно выполнено`,
+                type: SnackBarType.success,
+                id: Date.now(),
+              })
+            );
+            store.dispatch(
+              documentsApi.util.invalidateTags([
+                Tags.singleDocument,
+                Tags.pipeline,
+              ])
+            );
+          } else {
+            store.dispatch(
+              addNotice({
+                label: `Копирование пайплайна не выполнено. Ошибка. ${data.message}`,
+                type: SnackBarType.error,
+                id: Date.now(),
+              })
+            );
+          }
+        });
+
+        return {
+          data: null,
+          meta: null,
+        };
+      },
     }),
     markAsCategorical: builder.mutation<
       void | ErrorResponse,
