@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 
 from ml_api.common.models.base import Base
-from ml_api.apps.users.models import User
+from ml_api.apps.users.models import User  # noqa
 
 
 class DataFrame(Base):

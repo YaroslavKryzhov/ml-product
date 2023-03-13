@@ -8,9 +8,9 @@ from ml_api.apps.dataframes.routers import (
     dataframes_df_router,
     dataframes_method_router,
 )
-from ml_api.apps.dataframes.utils.df_worker import ApplyFunctionException
+from ml_api.apps.dataframes.services.df_worker import ApplyFunctionException
 from ml_api.apps.users.routers import users_router
-# from ml_api.apps.ml_models.controller.routers import models_router
+from ml_api.apps.ml_models.routers import models_router
 
 if config.STAGE.upper() == 'PRODUCTION':
     docs_url = None
@@ -48,5 +48,5 @@ api_router.include_router(dataframes_file_router)
 api_router.include_router(dataframes_df_router)
 api_router.include_router(dataframes_method_router)
 api_router.include_router(users_router)
-# api_router.include_router(models_router)
+api_router.include_router(models_router)
 app.include_router(api_router)

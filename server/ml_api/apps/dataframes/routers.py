@@ -6,9 +6,8 @@ from fastapi import APIRouter, Depends, UploadFile, File, status, Response
 from ml_api.common.dependencies.db_deps import get_db
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.models import User
-from ml_api.apps.dataframes.services import DataframeManagerService
-from ml_api.apps.dataframes import schemas
-from ml_api.apps.dataframes.specs import specs
+from ml_api.apps.dataframes.services.services import DataframeManagerService
+from ml_api.apps.dataframes import schemas, specs
 from ml_api.common.celery_tasks.celery_tasks import apply_function_celery, \
     copy_pipeline_celery
 from ml_api.common.celery_tasks.schemas import TaskJwtResponse
@@ -310,7 +309,7 @@ def delete_column(
 ):
     """
         Удаляет столбец из датафрейма.
-        *То же самое, что /apply_method?function_name="delete_column"*
+        *То же самое, что /apply_method?function_name="drop_column"*
 
         - **dataframe_id**: ID csv-файла(датафрейма)
         - **column_name**: имя столбца

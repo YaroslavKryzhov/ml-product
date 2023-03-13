@@ -5,7 +5,7 @@ from sklearn import feature_selection, preprocessing, ensemble, covariance, \
     linear_model, svm, neighbors
 
 import ml_api.apps.dataframes.schemas as schemas
-import ml_api.apps.dataframes.specs.specs as specs
+import ml_api.apps.dataframes.specs as specs
 
 
 class ApplyFunctionException(Exception):

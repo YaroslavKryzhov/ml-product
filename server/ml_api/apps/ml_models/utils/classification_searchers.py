@@ -1,7 +1,7 @@
 from hyperopt import hp
 import numpy as np
 
-CLASSIFICATION_SEARCHERS_CONFIG = {
+CLASSIFICATION_CONFIG = {
     'DecisionTreeClassifier': {
         'criterion': hp.choice(label='criterion', options=['gini', 'entropy']),
         'max_depth': hp.randint(label='max_depth', low=3, high=30),

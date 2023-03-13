@@ -1,6 +1,5 @@
-import os
 from uuid import UUID
-from typing import List, Any, Union
+from typing import List, Any
 from datetime import datetime
 
 from fastapi.responses import FileResponse
@@ -8,11 +7,11 @@ from fastapi import HTTPException, status
 import pandas as pd
 
 import ml_api.apps.dataframes.schemas as schemas
-import ml_api.apps.dataframes.specs.specs as specs
+import ml_api.apps.dataframes.specs as specs
 from ml_api.apps.dataframes.repository import DataFrameInfoCRUD, \
     DataFrameFileCRUD
-import ml_api.apps.dataframes.utils.utils as utils
-from ml_api.apps.dataframes.utils.df_worker import DataframeFunctionProcessor
+import ml_api.apps.dataframes.utils as utils
+from ml_api.apps.dataframes.services.df_worker import DataframeFunctionProcessor
 
 
 class CopyPipelineException(Exception):
@@ -121,6 +120,49 @@ class DataframeManagerService:
                           (df=df, column_name=column_name))
         return result
 
+    def get_feature_target_df(self, dataframe_id: UUID):
+        df = self._read_file_to_df(dataframe_id)
+        feature_columns, target_column = self.get_feature_target_column_names(
+            dataframe_id=dataframe_id)
+        if target_column is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Dataframe with id {dataframe_id} has no target column"
+            )
+        features = df.drop(target_column, axis=1)
+        target = df[target_column]
+        if features.columns.tolist().sort() != feature_columns.sort():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Feature columns in dataframe info with id "
+                       f"{dataframe_id} not equal to real in Dataframe"
+            )
+        return features, target
+
+    def get_feature_df(self, dataframe_id: UUID):
+        df = self._read_file_to_df(dataframe_id)
+        feature_columns, target_column = self.get_feature_target_column_names(
+            dataframe_id=dataframe_id)
+
+        if df.columns.tolist().sort() != feature_columns.sort():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Feature columns in dataframe info with id "
+                       f"{dataframe_id} not equal to real in Dataframe"
+            )
+        return df
+
+    def get_feature_target_column_names(self, dataframe_id: UUID
+                                        ) -> (List, str):
+        column_types = self._get_dataframe_column_types(dataframe_id)
+        target_column = column_types.target
+
+        feature_columns = column_types.categorical + column_types.numeric
+        # TODO: think about categorical (catboost only, i think)
+        if target_column is not None:
+            feature_columns.remove(target_column)
+        return feature_columns, target_column
+
     # 3: SET OPERATIONS -------------------------------------------------------
     def _define_column_types(self, dataframe_id: UUID) -> schemas.ColumnTypes:
         df = self._read_file_to_df(dataframe_id)
@@ -142,7 +184,7 @@ class DataframeManagerService:
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Column {target_column} not found in df.columns."
+                detail=f"Column {target_column} not found in df.columns"
             )
         self._set_column_types(dataframe_id, column_types)
 
@@ -180,9 +222,7 @@ class DataframeManagerService:
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"Column {column_name} can't be parsed like numeric."
             )
-
         self._set_column_types(dataframe_id, column_types)
-        return True
 
     def _set_pipeline(self, dataframe_id: UUID,
                       pipeline: List[schemas.PipelineElement]):
@@ -203,12 +243,11 @@ class DataframeManagerService:
     def apply_function(
             self,
             dataframe_id: UUID,
-            function_name: str,
+            function_name: specs.AvailableFunctions,
             params: Any = None,
     ):
         df = self._read_file_to_df(dataframe_id)
         column_types = self._get_dataframe_column_types(dataframe_id)
-        function_name = specs.AvailableFunctions(function_name)
 
         function_processor = DataframeFunctionProcessor(df, column_types)
         function_processor.apply_function(

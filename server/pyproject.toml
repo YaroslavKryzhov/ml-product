@@ -25,6 +25,9 @@ pickleshare = "0.7.5"
 sympy = "1.10.1"
 hyperopt = "0.2.7"
 cent = "^4.1.0"
+starlette = "^0.16.0"
+skl2onnx = "^1.13"
+onnxruntime = "^1.14.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

@@ -1,27 +1,8 @@
 from typing import Union, Literal, Optional, Tuple
-from enum import Enum
 
 from pydantic import BaseModel, validator
 
 N_JOBS = 4
-
-
-class AvailableModels(Enum):
-    decision_tree = 'DecisionTreeClassifier'
-    random_forest = 'RandomForestClassifier'
-    # catboost = 'CatBoostClassifier'
-    adaboost = 'AdaBoostClassifier'
-    gradient_boosting = 'GradientBoostingClassifier'
-    bagging = "BaggingClassifier"
-    extra_trees = "ExtraTreesClassifier"
-    SGD = "SGDClassifier"
-    linear_SVC = "LinearSVC"
-    SVC = "SVC"
-    logistic_regression = 'LogisticRegression'
-    perceptron = 'MLPClassifier'
-    k_neighbors = 'KNeighborsClassifier'
-    # xgboost = 'XGBClassifier'
-    # lightgbm = 'LGBMClassifier'
 
 
 class DecisionTreeClassifierParameters(BaseModel):  # ready

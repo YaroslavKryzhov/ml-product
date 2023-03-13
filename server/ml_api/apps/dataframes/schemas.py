@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from ml_api.apps.dataframes.specs.specs import AvailableFunctions
+from ml_api.apps.dataframes.specs import AvailableFunctions
 
 
 class ColumnDescription(BaseModel):

@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 from datetime import datetime
 from uuid import UUID
 
@@ -6,17 +6,19 @@ from sqlalchemy.orm import Session
 from fastapi.responses import FileResponse
 from sqlalchemy import exc as sql_exceptions
 from onnxruntime import InferenceSession
-from google.protobuf.message import Message
+
 from fastapi import HTTPException, status
+import pickle
 
 from ml_api.common.file_manager.base import FileCRUD
 from ml_api.apps.ml_models.models import Model
+from ml_api.apps.ml_models.schemas import CompositionInfo, CompositionParams
 
 
 class ModelInfoCRUD:
-    def __init__(self, session: Session, user):
+    def __init__(self, session: Session, user_id):
         self.session = session
-        self.user_id = str(user.id)
+        self.user_id = user_id
 
     # READ
     def get(self, model_id: UUID) -> CompositionInfo:
@@ -43,34 +45,47 @@ class ModelInfoCRUD:
 
     # CREATE
     def create(
-        #     TODO: rewrite
-        self,
-        model_name: str,
-        csv_id: UUID,
-        task_type: str,
-        target: str,
-        features: List,
-        composition_type: str,
-        composition_params: List,
-        stage: str,
-        report: Dict,
-    ):
+            self,
+            filename: str,
+            dataframe_id: UUID,
+            features: List,
+            target: str,
+            task_type: str,
+            composition_type: str,
+            composition_params: List[CompositionParams],
+            model_status: Optional[str],
+            save_format: str,
+            report: Optional[Dict] = None,
+    ) -> CompositionInfo:
         new_obj = Model(
-            name=model_name,
-            filepath=self.file_path(model_name),
+            filename=filename,
             user_id=self.user_id,
-            csv_id=csv_id,
+            dataframe_id=dataframe_id,
             features=features,
             target=target,
-            create_date=str(datetime.now()),
+            created_at=str(datetime.now()),
             task_type=task_type,
             composition_type=composition_type,
             composition_params=composition_params,
-            stage=stage,
+            status=model_status,
             report=report,
+            save_format=save_format
         )
         self.session.add(new_obj)
-        self.session.commit()
+        try:
+            self.session.commit()
+        except sql_exceptions.IntegrityError as err:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=str(err)
+            )
+        except sql_exceptions.SQLAlchemyError as err:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=str(err)
+            )
+        self.session.refresh(new_obj)
+        return CompositionInfo.from_orm(new_obj)
 
     def update(self, model_id: UUID, query: Dict):
         try:
@@ -114,33 +129,37 @@ class ModelFileCRUD(FileCRUD):
         except FileNotFoundError:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Model with id {model_uuid} not found."
+                detail=f"Saved model with id {model_uuid} not found."
             )
         return model
 
-    def download_onnx(self, model_uuid: UUID, filename: str) -> FileResponse:
+    def download_model(self, model_uuid: UUID, filename: str) -> FileResponse:
         file_response = self.download(file_uuid=model_uuid, filename=filename)
         return file_response
 
-    def save_onnx(self, model_uuid: UUID, model: Message):
+    def save_onnx(self, model_uuid: UUID, model):
         """Save model in the ONNX format"""
         model_path = self._get_path(model_uuid)
         with open(f"{model_path}.onnx", "wb") as f:
             f.write(model.SerializeToString())
 
     """
-    DEPRECATED: if you want to return PICKLE format,
-    you need to write new predict methods, because of different ONNX logic:
-    https://onnx.ai/sklearn-onnx/introduction.html#
+    Some pickled models (like catboost) don't work properly after saving and load.
     """
-    # def read_pickle(self, model_uuid: UUID):
-    #     model_path = self._get_path(model_uuid)
-    #     with open(f"{model_path}.pickle", 'rb') as f:
-    #         model = pickle.load(f)
-    #     return model
+    def read_pickle(self, model_uuid: UUID):
+        model_path = self._get_path(model_uuid)
+        try:
+            with open(f"{model_path}.pickle", 'rb') as f:
+                model = pickle.load(f)
+        except FileNotFoundError:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Saved model with id {model_uuid} not found."
+            )
+        return model
 
-    # def save_pickle(self, model_uuid: UUID, model):
-    #     """Save model in the pickle format"""
-    #     model_path = self._get_path(model_uuid)
-    #     with open(f"{model_path}.pickle", "wb") as f:
-    #         pickle.dump(model, f, protocol=pickle.HIGHEST_PROTOCOL)
+    def save_pickle(self, model_uuid: UUID, model):
+        """Save model in the pickle format"""
+        model_path = self._get_path(model_uuid)
+        with open(f"{model_path}.pickle", "wb") as f:
+            pickle.dump(model, f, protocol=pickle.HIGHEST_PROTOCOL)
