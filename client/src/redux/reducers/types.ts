@@ -480,42 +480,29 @@ export type CompositionInfo = {
   }[];
   stage: CompositionStatus;
   report: {
-    csv_name: string;
-    metrics: {
-      accuracy: number;
-      recall: number;
-      precision: number;
-      f1: number;
-      roc_auc: number;
-      fpr: null | number[];
-      tpr: null | number[];
-      roc_auc_weighted: null;
-      roc_auc_micro: null;
-      roc_auc_macro: null;
-      fpr_micro: number[] | null;
-      tpr_micro: number[] | null;
-      fpr_macro: number[] | null;
-      tpr_macro: number[] | null;
-    };
+    accuracy: number;
+    recall: number;
+    precision: number;
+    f1: number;
+    roc_auc: number;
+    fpr: null | number[];
+    tpr: null | number[];
+    roc_auc_weighted: null;
+    roc_auc_micro: null;
+    roc_auc_macro: null;
+    fpr_micro: number[] | null;
+    tpr_micro: number[] | null;
+    fpr_macro: number[] | null;
+    tpr_macro: number[] | null;
   };
   csv_name: string;
-};
-
-export type CompositionInfoShort = {
-  name: string;
-  csv_id: string;
-  features: string[];
-  target: string;
-  create_date: string;
-  task_type: TaskType;
-  composition_type: CompositionType;
-  stage: CompositionStatus;
 };
 
 export type TrainParamsPayload = {
   composition_type: CompositionType;
   params_type: ParamsCompositionType;
-  document_name: string;
+  dataframe_id: string;
+  task_type: TaskType;
   model_name: string;
   test_size: number;
 };

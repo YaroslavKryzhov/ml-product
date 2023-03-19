@@ -14,7 +14,7 @@ import {
   changeTaskType,
   changeCompositionType,
   changeParamsType,
-  changeDocumentName,
+  changeDataframeId,
   changeTestSize,
 } from "ducks/reducers/compositions";
 import {
@@ -30,7 +30,7 @@ import { SELECTORS_WIDTH } from "./constants";
 export const CompositionProps: React.FC<{ createMode?: boolean }> = ({
   createMode,
 }) => {
-  const { taskType, compositionType, paramsType, documentName, testSize } =
+  const { taskType, compositionType, paramsType, dataframeId, testSize } =
     useSESelector((state) => state.compositions);
   const dispatch = useAppDispatch();
   const { data: allDocuments, isFetching } = useAllDocumentsQuery();
@@ -106,14 +106,14 @@ export const CompositionProps: React.FC<{ createMode?: boolean }> = ({
           <InputLabel>Document</InputLabel>
           <Select
             disabled={!createMode || isFetching}
-            value={documentName}
+            value={allDocuments?.find((x) => x.id === dataframeId)?.filename}
             label="Document"
             onChange={(event) =>
-              dispatch(changeDocumentName(event.target.value))
+              dispatch(changeDataframeId(event.target.value))
             }
           >
-            {allDocuments?.map(({ filename }) => (
-              <MenuItem key={filename} value={filename}>
+            {allDocuments?.map(({ filename, id }) => (
+              <MenuItem key={filename} value={id}>
                 {filename}
               </MenuItem>
             ))}

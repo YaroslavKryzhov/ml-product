@@ -1,5 +1,4 @@
 import { pathify, useAppDispatch } from "ducks/hooks";
-import { useDeleteCompositionMutation } from "ducks/reducers/api/compositions.api";
 import { useDeleteDocumentMutation } from "ducks/reducers/api/documents.api";
 import { setDialog, setDialogLoading } from "ducks/reducers/dialog";
 import { AppPage, DocumentPage, WorkPage } from "ducks/reducers/types";
@@ -36,7 +35,7 @@ export const useDeleteFile = (options?: { redirectAfter?: boolean }) => {
     );
 };
 
-export const useDocumentNameForce = (): string | null =>
+export const useDocumentIdForce = (): string | null =>
   decodeURI(
     first(window.location.pathname.match(/(?<=documents\/list\/).*$/g)) || ""
   ) || null;

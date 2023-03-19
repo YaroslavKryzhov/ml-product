@@ -16,11 +16,12 @@ import { TableFix } from "components/Table";
 import { Fixed } from "components/Table/types";
 import { useAppDispatch, useSESelector } from "ducks/hooks";
 import {
+  useAllCompositionsQuery,
   useCompositionInfoQuery,
   usePredictCompositionMutation,
 } from "ducks/reducers/api/compositions.api";
 import { useAllDocumentsQuery } from "ducks/reducers/api/documents.api";
-import { changePredictDocumentName } from "ducks/reducers/compositions";
+import { changePredictDataframeId } from "ducks/reducers/compositions";
 import { addNotice, SnackBarType } from "ducks/reducers/notices";
 import { theme } from "globalStyle/theme";
 import { unzip, values, zipObject, keys } from "lodash";
@@ -42,14 +43,15 @@ const convertToCSV = (arr: any[]) => {
     .join("\n");
 };
 
-export const Predict: React.FC<{ model_name: string }> = ({ model_name }) => {
-  const { predictDocumentName } = useSESelector((state) => state.compositions);
+export const Predict: React.FC<{ model_id: string }> = ({ model_id }) => {
+  const { predictDataframeId } = useSESelector((state) => state.compositions);
   const [predict, { data }] = usePredictCompositionMutation();
   const [page, setPage] = useState<number>(1);
   const { data: allDocuments, isFetching } = useAllDocumentsQuery();
+  const { data: allCompositions } = useAllCompositionsQuery();
 
   const { data: modelData } = useCompositionInfoQuery({
-    model_name,
+    model_id,
   });
 
   const dispatch = useAppDispatch();
@@ -87,14 +89,16 @@ export const Predict: React.FC<{ model_name: string }> = ({ model_name }) => {
         <FormControl sx={{ width: SELECTORS_WIDTH }}>
           <InputLabel>Document</InputLabel>
           <Select
-            value={predictDocumentName}
+            value={
+              allDocuments?.find((x) => x.id === predictDataframeId)?.filename
+            }
             label="Document"
             onChange={(event) =>
-              dispatch(changePredictDocumentName(event.target.value))
+              dispatch(changePredictDataframeId(event.target.value))
             }
           >
-            {allDocuments?.map(({ filename }) => (
-              <MenuItem key={filename} value={filename}>
+            {allDocuments?.map(({ filename, id }) => (
+              <MenuItem key={filename} value={id}>
                 {filename}
               </MenuItem>
             ))}
@@ -104,11 +108,11 @@ export const Predict: React.FC<{ model_name: string }> = ({ model_name }) => {
         <LoadingButton
           loading={isFetching}
           variant="contained"
-          disabled={!predictDocumentName}
+          disabled={!predictDataframeId}
           onClick={() =>
             predict({
-              model_name,
-              document_name: predictDocumentName,
+              model_id,
+              dataframe_id: predictDataframeId!,
             }).then(
               (res) =>
                 (res as any).error &&
@@ -137,7 +141,10 @@ export const Predict: React.FC<{ model_name: string }> = ({ model_name }) => {
               );
               element.setAttribute(
                 "download",
-                `${model_name}_${predictDocumentName}_predict.csv`
+                `${allCompositions?.find((x) => x.id === model_id)}_${
+                  allDocuments?.find((x) => x.id === predictDataframeId)
+                    ?.filename
+                }_predict.csv`
               );
 
               element.style.display = "none";

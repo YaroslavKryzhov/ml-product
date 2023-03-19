@@ -10,14 +10,14 @@ export const useDeleteComposition = (options?: { redirectAfter?: boolean }) => {
   const [deleteComp] = useDeleteCompositionMutation();
   const dispatch = useAppDispatch();
 
-  return (name: string) =>
+  return (name: string, id: string) =>
     dispatch(
       setDialog({
         title: "Удаление",
         text: `Вы действительно хотите удалить композицию ${name}?`,
         onAccept: async () => {
           dispatch(setDialogLoading(true));
-          await deleteComp({ model_name: name });
+          await deleteComp({ model_id: id });
           dispatch(setDialogLoading(false));
           if (options?.redirectAfter) {
             navigate(

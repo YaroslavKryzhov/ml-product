@@ -5,12 +5,13 @@ import { resetComposition } from "ducks/reducers/compositions";
 import { AppPage, WorkPage, DocumentPage } from "ducks/reducers/types";
 import { entries, isEmpty } from "lodash";
 import React from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { CompositionMetrics } from "./CompositionMetrics";
 import { CompositionProps } from "./CompositionProps";
 import { Models } from "./Models";
 import { Predict } from "./Predict";
 import { WorkPageHeader } from "./WorkPageHeader";
+import { addPendingTask } from "ducks/reducers/documents";
 
 export const CompositionSingle: React.FC<{ createMode?: boolean }> = ({
   createMode,
@@ -20,10 +21,12 @@ export const CompositionSingle: React.FC<{ createMode?: boolean }> = ({
     testSize,
     compositionType,
     paramsType,
-    documentName,
+    dataframeId,
     models,
     customCompositionName,
   } = useSESelector((state) => state.compositions);
+
+  const { compositionId } = useParams();
 
   const dispatch = useAppDispatch();
   const [train] = useTrainCompositionMutation();
@@ -33,22 +36,27 @@ export const CompositionSingle: React.FC<{ createMode?: boolean }> = ({
     taskType &&
     compositionType &&
     paramsType &&
-    documentName &&
+    dataframeId &&
     !isEmpty(models);
 
   const trainClick = () => {
     const convertedModels = entries(models).map(([_, model]) => model);
 
+    const params = {
+      task_type: taskType!,
+      composition_type: compositionType!,
+      params_type: paramsType!,
+      dataframe_id: dataframeId!,
+      model_name: customCompositionName,
+      test_size: testSize,
+    };
+
     train({
       body: convertedModels,
-      params: {
-        composition_type: compositionType!,
-        params_type: paramsType!,
-        document_name: documentName,
-        model_name: customCompositionName,
-        test_size: testSize,
-      },
+      params,
     });
+
+    dispatch(addPendingTask(JSON.stringify(params)));
 
     navigate(
       pathify([AppPage.Workplace, WorkPage.Compositions, DocumentPage.List])
@@ -62,9 +70,9 @@ export const CompositionSingle: React.FC<{ createMode?: boolean }> = ({
       <WorkPageHeader />
       <Stack sx={{ flexGrow: 1 }}>
         <CompositionProps createMode={createMode} />
-        {!createMode && <Predict model_name={customCompositionName} />}
-        {!createMode && customCompositionName && (
-          <CompositionMetrics model_name={customCompositionName} />
+        {!createMode && <Predict model_id={compositionId!} />}
+        {!createMode && compositionId && (
+          <CompositionMetrics compositionId={compositionId} />
         )}
         <Models createMode={createMode} />
         {createMode && (

@@ -14,7 +14,7 @@ export const Compositions: React.FC = () => (
       element={<CompositionsList />}
     />
     <Route
-      path={pathify([CompositionPage.List, ":compositionName"])}
+      path={pathify([CompositionPage.List, ":compositionId"])}
       element={<CompositionSingle />}
     />
     <Route

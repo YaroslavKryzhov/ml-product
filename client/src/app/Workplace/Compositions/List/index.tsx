@@ -11,17 +11,17 @@ import { useNavigate } from "react-router-dom";
 import DownloadIcon from "@mui/icons-material/Download";
 import {
   useAllCompositionsQuery,
-  useDeleteCompositionMutation,
   useDownloadCompositionMutation,
 } from "ducks/reducers/api/compositions.api";
 import { AppPage, CompositionPage, WorkPage } from "ducks/reducers/types";
 import { resetComposition } from "ducks/reducers/compositions";
 import { WorkPageHeader } from "../Single/WorkPageHeader";
+import { useDeleteComposition } from "../hooks";
 
 enum Columns {
   create = "create_date",
-  stage = "stage",
-  name = "name",
+  status = "status",
+  filename = "filename",
   taskType = "task_type",
   compositionType = "composition_type",
 }
@@ -29,7 +29,7 @@ enum Columns {
 const columns = [
   {
     Header: "Название",
-    accessor: Columns.name,
+    accessor: Columns.filename,
   },
   {
     Header: "Загружено",
@@ -38,7 +38,7 @@ const columns = [
   },
   {
     Header: "Статус",
-    accessor: Columns.stage,
+    accessor: Columns.status,
   },
   {
     Header: "Задача",
@@ -54,7 +54,8 @@ export const CompositionsList: React.FC = () => {
   const { data: allCompositions, isFetching } = useAllCompositionsQuery();
 
   const [downloadCompositions] = useDownloadCompositionMutation();
-  const [deleteComp] = useDeleteCompositionMutation();
+  const deleteComp = useDeleteComposition({ redirectAfter: true });
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
@@ -99,7 +100,9 @@ export const CompositionsList: React.FC = () => {
                 name: "Редактировать",
                 icon: <EditIcon sx={ActionIconSx} />,
                 onClick: (row) => {
-                  navigate(pathify([row.values.name], { relative: true }));
+                  navigate(
+                    pathify([(row.original as any).id], { relative: true })
+                  );
                 },
               },
               {
@@ -107,7 +110,8 @@ export const CompositionsList: React.FC = () => {
                 icon: <DownloadIcon sx={ActionIconSx} />,
                 onClick: (row) => {
                   downloadCompositions({
-                    model_name: row.values[Columns.name],
+                    model_name: row.values[Columns.filename],
+                    model_id: (row.original as any).id,
                   });
                 },
               },
@@ -115,7 +119,10 @@ export const CompositionsList: React.FC = () => {
                 name: "Удалить",
                 icon: <DeleteIcon sx={{ ActionIconSx }} />,
                 onClick: (row) =>
-                  deleteComp({ model_name: row.values[Columns.name] }),
+                  deleteComp(
+                    row.values[Columns.filename],
+                    (row.original as any).id
+                  ),
               },
             ]}
             rowHoverable

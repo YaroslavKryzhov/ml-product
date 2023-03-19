@@ -9,7 +9,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import moment from "moment";
 import { InfoChip } from "components/infoChip";
 import { Size } from "app/types";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { CompositionPage } from "ducks/reducers/types";
 import { EditableLabel } from "../common/styled";
 import {
@@ -28,6 +28,8 @@ export const CompositionsEntityHeader: React.FC<{
   const [customName, setCustomName] = useState(initName || "");
   const inputRef = useRef<HTMLLabelElement | null>(null);
   const [renameComposition] = useRenameCompositionMutation();
+
+  const { compositionId } = useParams();
 
   const [downloadComp] = useDownloadCompositionMutation();
   const deleteComp = useDeleteComposition({ redirectAfter: true });
@@ -51,7 +53,10 @@ export const CompositionsEntityHeader: React.FC<{
   };
 
   const { data: compData, isFetching: compInfoLoading } =
-    useCompositionInfoQuery({ model_name: customName });
+    useCompositionInfoQuery(
+      { model_id: compositionId! },
+      { skip: !compositionId }
+    );
 
   useEffect(() => {
     editMode && inputRef.current?.focus();
@@ -142,14 +147,19 @@ export const CompositionsEntityHeader: React.FC<{
             sx={{ gap: theme.spacing(1), height: "min-content" }}
           >
             <Button
-              onClick={() => downloadComp({ model_name: customName })}
+              onClick={() =>
+                downloadComp({
+                  model_name: customName,
+                  model_id: compositionId!,
+                })
+              }
               variant="outlined"
               startIcon={<DownloadIcon />}
             >
               Скачать
             </Button>
             <Button
-              onClick={() => deleteComp(customName)}
+              onClick={() => deleteComp(customName, compositionId!)}
               variant="outlined"
               startIcon={<DeleteIcon />}
             >

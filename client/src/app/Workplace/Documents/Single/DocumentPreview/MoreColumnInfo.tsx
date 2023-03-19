@@ -6,7 +6,7 @@ import { StatsGraph } from "./statGraph";
 import { isNil, keys } from "ramda";
 import { TableFix } from "components/Table";
 import { useDescribeDocumentQuery } from "ducks/reducers/api/documents.api";
-import { useDocumentNameForce } from "../../hooks";
+import { useDocumentIdForce } from "../../hooks";
 import { INFO_WIDTH } from "./contants";
 import { CellProps } from "react-table";
 import { OverflowText } from "components/styles";
@@ -32,7 +32,7 @@ export const MoreColumnInfo: React.FC<DFInfo> = ({
   not_null_count,
   data_type,
 }) => {
-  const docId = useDocumentNameForce();
+  const docId = useDocumentIdForce();
   const { data: describeData } = useDescribeDocumentQuery(docId!);
   const describeDataMerged = useMemo(
     () =>
