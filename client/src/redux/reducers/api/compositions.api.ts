@@ -45,7 +45,7 @@ export const compositionsApi = createApi({
     }),
     renameComposition: builder.mutation<
       string,
-      { model_name: string; new_model_name: string }
+      { model_id: string; new_model_name: string }
     >({
       query: (params) => ({
         url: ROUTES.COMPOSITIONS.RENAME,

@@ -465,7 +465,7 @@ export type ErrorResponse = {
 
 export type CompositionInfo = {
   id: string;
-  name: string;
+  filename: string;
   csv_id: string;
   features: string[];
   target: string;

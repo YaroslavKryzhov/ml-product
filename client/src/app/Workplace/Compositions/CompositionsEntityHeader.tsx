@@ -72,16 +72,9 @@ export const CompositionsEntityHeader: React.FC<{
 
     if (compositionPage === CompositionPage.Single) {
       renameComposition({
-        model_name: customName,
+        model_id: compositionId!,
         new_model_name: newName,
-      }).then(() => {
-        setCustomName(newName);
-        navigate(
-          pathify([CompositionPage.List, newName], {
-            changeLast: true,
-          })
-        );
-      });
+      }).then(() => setCustomName(newName));
     }
 
     if (compositionPage === CompositionPage.Create) {

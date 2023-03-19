@@ -27,7 +27,7 @@ const goCompositions = (navigate: ReturnType<typeof useNavigate>) => {
   );
 };
 
-const pathItem = (label: () => string, action: () => void) => ({
+const pathItem = (label: () => string, action?: () => void) => ({
   label,
   action,
 });
@@ -44,37 +44,14 @@ const definePathMap = (
   [CompositionPage.List]: pathItem(always("Все"), () =>
     goCompositions(navigate)
   ),
-  [CompositionPage.Single]: pathItem(
-    () => compositionName || "",
-    () => {
-      navigate(
-        pathify([
-          AppPage.Workplace,
-          WorkPage.Compositions,
-          CompositionPage.Single,
-          compositionName || "",
-        ])
-      );
-    }
-  ),
-  [CompositionPage.Create]: pathItem(
-    () => "Новая",
-    () => {
-      navigate(
-        pathify([
-          AppPage.Workplace,
-          WorkPage.Compositions,
-          CompositionPage.Create,
-        ])
-      );
-    }
-  ),
+  [CompositionPage.Single]: pathItem(() => compositionName || ""),
+  [CompositionPage.Create]: pathItem(() => "Новая"),
 });
 
 export const WorkPageHeader: React.FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { compositionName } = useParams();
+  const { compositionId } = useParams();
 
   const workPage = first(
     pathname.match(new RegExp(`(?<=${AppPage.Workplace}/)[^/]*`))
@@ -85,9 +62,11 @@ export const WorkPageHeader: React.FC = () => {
     )
   );
 
-  const { data: allCompositions } = useAllCompositionsQuery(undefined, {
-    skip: compositionPage !== CompositionPage.Create,
-  });
+  const { data: allCompositions } = useAllCompositionsQuery();
+
+  const compositionName = allCompositions?.find(
+    (x) => x.id === compositionId
+  )?.filename;
 
   const PathMap = definePathMap(navigate, {
     compositionName,

@@ -24,7 +24,7 @@ import { useAllDocumentsQuery } from "ducks/reducers/api/documents.api";
 import { changePredictDataframeId } from "ducks/reducers/compositions";
 import { addNotice, SnackBarType } from "ducks/reducers/notices";
 import { theme } from "globalStyle/theme";
-import { unzip, values, zipObject, keys } from "lodash";
+import { unzip, values, zipObject, keys, entries } from "lodash";
 import React, { useState } from "react";
 import { SELECTORS_WIDTH } from "./constants";
 
@@ -50,25 +50,16 @@ export const Predict: React.FC<{ model_id: string }> = ({ model_id }) => {
   const { data: allDocuments, isFetching } = useAllDocumentsQuery();
   const { data: allCompositions } = useAllCompositionsQuery();
 
-  const { data: modelData } = useCompositionInfoQuery({
-    model_id,
-  });
-
   const dispatch = useAppDispatch();
 
   const convertedData = data ? convertData(data) : [];
 
   const columns = data
-    ? [
-        ...keys(data).map((x) =>
-          x === "predictions" ? modelData?.target! : x
-        ),
-      ].map((x, inx, arr) => ({
-        accessor: x === modelData?.target ? "predictions" : x,
-        fixed: inx === arr.length - 1 ? Fixed.right : Fixed.left,
+    ? keys(data).map((key) => ({
+        accessor: key,
         Header: (
-          <Tooltip followCursor title={x}>
-            <Box sx={{ ...OverflowText }}>{x}</Box>
+          <Tooltip followCursor title={key}>
+            <Box sx={{ ...OverflowText }}>{key}</Box>
           </Tooltip>
         ),
       }))
@@ -141,7 +132,7 @@ export const Predict: React.FC<{ model_id: string }> = ({ model_id }) => {
               );
               element.setAttribute(
                 "download",
-                `${allCompositions?.find((x) => x.id === model_id)}_${
+                `${allCompositions?.find((x) => x.id === model_id)?.filename}_${
                   allDocuments?.find((x) => x.id === predictDataframeId)
                     ?.filename
                 }_predict.csv`
@@ -175,7 +166,7 @@ export const Predict: React.FC<{ model_id: string }> = ({ model_id }) => {
             sx={{ mt: theme.spacing(2) }}
             page={page}
             onChange={(_, page) => setPage(page)}
-            count={Math.ceil(data.predictions.length / 50)}
+            count={Math.ceil(convertedData.length / 50)}
             variant="outlined"
             shape="rounded"
           />
