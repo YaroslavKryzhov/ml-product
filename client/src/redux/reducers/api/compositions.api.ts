@@ -4,7 +4,6 @@ import { addAuthHeader } from "./helpers";
 import {
   CompositionInfo,
   Model,
-  TaskObservePayload,
   TaskResponseData,
   TaskStatus,
   TrainParamsPayload,
@@ -79,7 +78,7 @@ export const compositionsApi = createApi({
         const a = document.createElement("a");
         a.style.display = "none";
         a.href = url;
-        a.download = model_name + ".pickle";
+        a.download = model_name;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -121,7 +120,7 @@ export const compositionsApi = createApi({
           }
         );
 
-        const task = (await res.json()) as TaskObservePayload;
+        const task = (await res.json()) as string;
         const taskId = JSON.stringify(params);
 
         if (!res.ok) {
@@ -162,6 +161,13 @@ export const compositionsApi = createApi({
             );
           }
         });
+
+        store.dispatch(
+          compositionsApi.util.invalidateTags([
+            Tags.compositions,
+            Tags.singleComposition,
+          ])
+        );
 
         return {
           data: null,

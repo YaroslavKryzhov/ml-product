@@ -2,7 +2,7 @@ import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 import { Authentication } from "./app/Authentication";
 import { browserHistory, Matcher, pathify, useSESelector } from "ducks/hooks";
 import { AppPage } from "ducks/reducers/types";
-import React, { useLayoutEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import { theme } from "./globalStyle/theme";
 import { CenteredContainer } from "components/muiOverride";
 import { Circles } from "react-loader-spinner";
@@ -12,8 +12,19 @@ import { DialogCustom } from "components/Dialog";
 import { Route, Routes } from "react-router";
 import { Router } from "react-router-dom";
 import { Notices } from "components/Notice";
+import { useCentrifugoSocketQuery } from "ducks/reducers/api/auth.api";
+import { socketManager } from "ducks/reducers/api/socket";
 
 const App: React.FC = () => {
+  const { data: socketToken } = useCentrifugoSocketQuery(undefined, {
+    skip: !localStorage.authToken,
+  });
+
+  useEffect(() => {
+    if (!socketManager.isCreated && socketToken)
+      socketManager.createSocket(socketToken);
+  }, [socketToken]);
+
   const { isBlockingLoader } = useSESelector((state) => state.main);
   const [state, setState] = useState({
     action: browserHistory.action,

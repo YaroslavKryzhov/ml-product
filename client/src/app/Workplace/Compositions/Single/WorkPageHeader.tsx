@@ -88,7 +88,7 @@ export const WorkPageHeader: React.FC = () => {
             worplacePage={workPage}
             initName={
               compositionName ||
-              `Новая композиция (${allCompositions?.length || 0 + 1})`
+              `Новая композиция (${(allCompositions?.length || 0) + 1})`
             }
           />
         )}

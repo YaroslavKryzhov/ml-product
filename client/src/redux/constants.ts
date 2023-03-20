@@ -7,6 +7,7 @@ export const ROUTES = {
     LOGIN: "jwt/login",
     REGISTER: "register",
     LOGOUT: "jwt/logout",
+    CENTRIFUGO: "centrifugo_token",
   },
   DOCUMENTS: {
     BASE: BASE_API + "/dataframe",

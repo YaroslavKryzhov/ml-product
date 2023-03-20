@@ -1,12 +1,13 @@
 import Centrifuge from "centrifuge";
 import { HOST } from "ducks/constants";
-import { TaskObservePayload, TaskResponseData } from "ducks/reducers/types";
+import { TaskResponseData } from "ducks/reducers/types";
 import jwtDecode from "jwt-decode";
 
 class SocketManager {
+  isCreated: boolean = false;
   private socket: Centrifuge | null = null;
   private taskCallbacks: Record<string, (data: TaskResponseData) => void> = {};
-  private createSocket(token: string) {
+  createSocket(token: string) {
     const centrifuge = new Centrifuge(
       `ws://${HOST}/centrifugo/connection/websocket`
     );
@@ -22,14 +23,10 @@ class SocketManager {
     });
 
     this.socket = centrifuge;
+    this.isCreated = true;
   }
-  taskSubscription(
-    payload: TaskObservePayload,
-    callback: (data: TaskResponseData) => void
-  ) {
-    if (!this.socket) this.createSocket(payload.jwt_token);
-
-    this.taskCallbacks[payload.task_id] = callback;
+  taskSubscription(taskId: string, callback: (data: TaskResponseData) => void) {
+    this.taskCallbacks[taskId] = callback;
   }
 }
 

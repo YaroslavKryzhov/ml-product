@@ -507,11 +507,6 @@ export type TrainParamsPayload = {
   test_size: number;
 };
 
-export type TaskObservePayload = {
-  task_id: string;
-  jwt_token: string;
-};
-
 export enum TaskStatus {
   success = "SUCCESS",
   failure = "FAILURE",

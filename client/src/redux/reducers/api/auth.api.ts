@@ -20,6 +20,11 @@ export const authApi = createApi({
         }),
       }),
     }),
+    centrifugoSocket: builder.query<string, void>({
+      query: () => ({
+        url: ROUTES.AUTH.CENTRIFUGO,
+      }),
+    }),
     // TODO: unsafe register, rework after back ready
     register: builder.mutation<EmittedToken, RegisterPayload>({
       query: (body) => ({
@@ -36,5 +41,9 @@ export const authApi = createApi({
   }),
 });
 
-export const { useAuthMutation, useRegisterMutation } = authApi;
+export const {
+  useAuthMutation,
+  useRegisterMutation,
+  useCentrifugoSocketQuery,
+} = authApi;
 export default authApi.reducer;

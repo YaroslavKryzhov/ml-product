@@ -8,7 +8,6 @@ import {
   DocumentMethod,
   ErrorResponse,
   FullDocument,
-  TaskObservePayload,
   TaskResponseData,
   TaskStatus,
 } from "../types";
@@ -17,7 +16,6 @@ import { store } from "ducks/store";
 import { addNotice, SnackBarType } from "../notices";
 import { MethodHeaders } from "app/Workplace/Documents/Single/DocumentMethods/constants";
 import { removePendingTask } from "../documents";
-import { nanoid } from "@reduxjs/toolkit";
 
 const buildFileForm = (file: File) => {
   const form = new FormData();
@@ -168,7 +166,7 @@ export const documentsApi = createApi({
           }
         );
 
-        const task = (await res.json()) as TaskObservePayload;
+        const task = (await res.json()) as string;
         const methodLabel = MethodHeaders.find(
           (x) => x.value === function_name
         )?.label;
@@ -244,7 +242,7 @@ export const documentsApi = createApi({
           }
         );
 
-        const task = (await res.json()) as TaskObservePayload;
+        const task = (await res.json()) as string;
 
         if (!res.ok) {
           store.dispatch(
