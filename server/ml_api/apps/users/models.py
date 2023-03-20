@@ -1,10 +1,22 @@
-from fastapi_users.db import SQLAlchemyBaseUserTableUUID
-from ml_api.common.models.base import Base
+import uuid
+
+from fastapi_users.db import SQLAlchemyBaseUserTable
+from sqlalchemy import Column
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
 
 
-class User(SQLAlchemyBaseUserTableUUID, Base):
-    pass
+from ml_api.common.models.base import Base
+
+
+class User(SQLAlchemyBaseUserTable[UUID], Base):
+    id = Column(
+        UUID(as_uuid=True),
+        index=True,
+        primary_key=True,
+        default=uuid.uuid4,
+        unique=True,
+    )
     #
     # __tablename__ = "user"
     #

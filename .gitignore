@@ -20,5 +20,5 @@ server/catboost_info/
 
 volumes/*
 !volumes/Readme.md
-server/migrations/versions/*
+/server/ml_api/common/db/migrations/versions/
 !server/ml_api/common/db/migrations/versions/Readme.md

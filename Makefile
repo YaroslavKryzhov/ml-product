@@ -13,7 +13,7 @@ init_env:
 data_init:
 	make up sleep_5 && \
 	make migrations sleep_5 && \
-	make migrate sleep_5
+	make migrate
 
 migrations:
 	echo "poetry run alembic revision --autogenerate" | docker exec -i ml-product-server bash

@@ -10,8 +10,6 @@ from ml_api.apps.dataframes.services.services import DataframeManagerService
 from ml_api.apps.dataframes import schemas, specs
 from ml_api.common.celery_tasks.celery_tasks import apply_function_celery, \
     copy_pipeline_celery
-from ml_api.common.celery_tasks.schemas import TaskJwtResponse
-from ml_api.common.security.token_utils import create_centrifugo_token
 
 dataframes_file_router = APIRouter(
     prefix="/dataframe",
@@ -326,7 +324,7 @@ def delete_column(
     )
 
 
-@dataframes_method_router.post("/apply_method", response_model=TaskJwtResponse)
+@dataframes_method_router.post("/apply_method")
 def apply_method(
     dataframe_id: UUID,
     function_name: specs.AvailableFunctions,
@@ -370,14 +368,10 @@ def apply_method(
     #                                         function_name.value, params)
     task = apply_function_celery.delay(str(user.id),
         str(dataframe_id), function_name.value, params)
-    jwt_token = create_centrifugo_token(str(user.id))
-    return TaskJwtResponse(
-        task_id=task.id,
-        jwt_token=jwt_token,
-    )
+    return task.id
 
 
-@dataframes_method_router.post("/copy_pipeline", response_model=TaskJwtResponse)
+@dataframes_method_router.post("/copy_pipeline")
 def copy_pipeline(
     dataframe_id_from: UUID,
     dataframe_id_to: UUID,
@@ -406,8 +400,4 @@ def copy_pipeline(
     # DataframeManagerService(db, user.id).copy_pipeline(dataframe_id_from, dataframe_id_to)
     task = copy_pipeline_celery.delay(str(user.id),
                                       dataframe_id_from, dataframe_id_to)
-    jwt_token = create_centrifugo_token(str(user.id))
-    return TaskJwtResponse(
-        task_id=task.id,
-        jwt_token=jwt_token,
-    )
+    return task.id

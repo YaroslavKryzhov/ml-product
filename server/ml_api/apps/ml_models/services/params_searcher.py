@@ -87,14 +87,6 @@ class AutoParamsSearch:
                 f'Unknown task type: {self.task_type}')
 
     def _objective_binary(self, params, model_type: AvailableModelTypes):
-        """
-        Auxiliary function for scoring of checking iterating parameters.
-        Binary classification task type.
-
-        :param params: checking parameters;
-        :param model_type: AvailableModels type string model name;
-        :return: dict(loss, params, status)
-        """
         model = ModelConstructor(
             task_type=self.task_type, model_type=model_type, params=params
         ).get_model()
@@ -111,14 +103,6 @@ class AutoParamsSearch:
         return {'loss': -score.mean(), 'params': params, 'status': STATUS_OK}
 
     def _objective_multiclass(self, params, model_type: AvailableModelTypes):
-        """
-        Auxiliary function for scoring of checking iterating parameters.
-        Multiclass classification task type.
-
-        :param params: checking parameters;
-        :param model_type: AvailableModels type string model name;
-        :return: dict(loss, params, status)
-        """
         model = ModelConstructor(
             task_type=self.task_type, model_type=model_type, params=params
         ).get_model()

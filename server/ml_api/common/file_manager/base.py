@@ -9,10 +9,14 @@ import ml_api.config as config
 
 
 class FileCRUD:
+    def __init__(self, user_id):
+        self.user_id = user_id
 
-    @staticmethod
-    def _get_path(file_uuid: UUID):
-        return os.path.join(config.ROOT_DIR, str(file_uuid))
+    def _get_path(self, file_uuid: UUID):
+        user_path = os.path.join(config.ROOT_DIR, str(self.user_id))
+        if not os.path.exists(user_path):
+            os.makedirs(user_path)
+        return os.path.join(user_path, str(file_uuid))
 
     def upload(self, file_uuid: UUID, file: tempfile.SpooledTemporaryFile) -> str:
         path = self._get_path(file_uuid)
