@@ -1,4 +1,4 @@
-export const HOST = "localhost:8006";
+export const HOST = "localhost:6060";
 export const BASE_API = `http://${HOST}/api/v1`;
 
 export const ROUTES = {

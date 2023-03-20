@@ -8,7 +8,7 @@ class SocketManager {
   private taskCallbacks: Record<string, (data: TaskResponseData) => void> = {};
   private createSocket(token: string) {
     const centrifuge = new Centrifuge(
-      `ws://localhost:6060/centrifugo/connection/websocket`
+      `ws://${HOST}/centrifugo/connection/websocket`
     );
 
     centrifuge.setToken(token);
