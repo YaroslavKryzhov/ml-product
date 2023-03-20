@@ -9,8 +9,6 @@ from ml_api.apps.users.models import User
 from ml_api.apps.ml_models.services.services import ModelManagerService
 from ml_api.apps.ml_models import schemas, specs
 from ml_api.common.celery_tasks.celery_tasks import train_composition_celery
-from ml_api.common.celery_tasks.schemas import TaskJwtResponse
-from ml_api.common.security.token_utils import create_centrifugo_token
 
 models_router = APIRouter(
     prefix="/composition",
@@ -74,7 +72,7 @@ def read_all_user_compositions(
     return ModelManagerService(db, user.id).get_all_models_info()
 
 
-@models_router.post("/train", response_model=TaskJwtResponse)
+@models_router.post("/train")
 def train_composition(
     task_type: specs.AvailableTaskTypes,
     composition_type: specs.AvailableCompositionTypes,
@@ -106,11 +104,7 @@ def train_composition(
     # )
     task = train_composition_celery.delay(
         str(user.id), str(model_info.id), params_type.value, test_size)
-    jwt_token = create_centrifugo_token(str(user.id))
-    return TaskJwtResponse(
-        task_id=task.id,
-        jwt_token=jwt_token,
-    )
+    return task.id
 
 
 @models_router.get("/predict")

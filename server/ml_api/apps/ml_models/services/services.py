@@ -24,17 +24,18 @@ class ModelManagerService:
     # 1: FILE MANAGEMENT OPERATIONS -------------------------------------------
     def download_model(self, model_id: UUID):
         model_info = ModelInfoCRUD(self._db, self._user_id).get(model_id)
-        response = ModelFileCRUD().download_model(
-            model_uuid=model_id, filename=model_info.filename + '.onnx')
+        response = ModelFileCRUD(self._user_id).download_model(
+            model_uuid=model_id, filename=model_info.filename)
         return response
 
     def rename_model(self, model_id: UUID, new_filename: str):
-        query = {'filename': new_filename}
+        model_info = ModelInfoCRUD(self._db, self._user_id).get(model_id)
+        query = {'filename': f"{new_filename}.{model_info.save_format.value}"}
         ModelInfoCRUD(self._db, self._user_id).update(model_id, query)
 
     def delete_model(self, model_id: str):
         ModelInfoCRUD(self._db, self._user_id).delete(model_id)
-        ModelFileCRUD().delete(model_id)
+        ModelFileCRUD(self._user_id).delete(model_id)
 
     # 2: GET OPERATIONS -------------------------------------------------------
     def get_model_info(self, model_id: str) -> schemas.CompositionInfo:
@@ -64,7 +65,7 @@ class ModelManagerService:
             dataframe_id=dataframe_id)
 
         model_info = ModelInfoCRUD(self._db, self._user_id).create(
-            filename=model_name,
+            filename=f"{model_name}.{save_format.value}",
             dataframe_id=dataframe_id,
             features=feature_columns,
             target=target_column,
@@ -150,9 +151,9 @@ class ModelManagerService:
         try:
             if save_format == specs.ModelSaveFormats.ONNX:
                 onx = to_onnx(model, feature_example)
-                ModelFileCRUD().save_onnx(model_uuid=model_id, model=onx)
-            if save_format == specs.ModelSaveFormats.PICKLE:
-                ModelFileCRUD().save_pickle(model_uuid=model_id, model=model)
+                ModelFileCRUD(self._user_id).save_onnx(model_uuid=model_id, model=onx)
+            elif save_format == specs.ModelSaveFormats.PICKLE:
+                ModelFileCRUD(self._user_id).save_pickle(model_uuid=model_id, model=model)
         except Exception as e:
             query = {'status': specs.CompositionStatuses.PROBLEM.value}
             ModelInfoCRUD(self._db, self._user_id).update(
@@ -170,11 +171,11 @@ class ModelManagerService:
                         "different",
             )
         if model_info.save_format == specs.ModelSaveFormats.ONNX:
-            onnx_model = ModelFileCRUD().read_onnx(model_id)
+            onnx_model = ModelFileCRUD(self._user_id).read_onnx(model_id)
             predictions = onnx_model.run(None,
                                 {'X': features.astype(np.float32).values})[0]
         elif model_info.save_format == specs.ModelSaveFormats.PICKLE:
-            model = ModelFileCRUD().read_pickle(model_id)
+            model = ModelFileCRUD(self._user_id).read_pickle(model_id)
             predictions = model.predict(features)
         features[model_info.target] = predictions.tolist()
         return features.to_dict('list')

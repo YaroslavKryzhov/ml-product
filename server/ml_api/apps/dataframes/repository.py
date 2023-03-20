@@ -1,6 +1,7 @@
 from typing import Dict, List
 from datetime import datetime
 from uuid import UUID
+import tempfile
 
 import pandas as pd
 from sqlalchemy.orm import Session
@@ -90,8 +91,14 @@ class DataFrameInfoCRUD:
 
     # DELETE
     def delete(self, dataframe_id: UUID):
-        res = self.session.query(DataFrame).filter(DataFrame.id == dataframe_id
-                                             ).delete()
+        try:
+            res = self.session.query(DataFrame).filter(DataFrame.id == dataframe_id
+                                                 ).delete()
+        except sql_exceptions.IntegrityError:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Dataframe with id {dataframe_id} used in some model."
+            )
         if res == 0:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

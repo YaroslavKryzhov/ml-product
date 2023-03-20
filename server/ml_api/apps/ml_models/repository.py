@@ -125,7 +125,7 @@ class ModelFileCRUD(FileCRUD):
     def read_onnx(self, model_uuid: UUID):
         model_path = self._get_path(model_uuid)
         try:
-            model = InferenceSession(f"{model_path}.onnx")
+            model = InferenceSession(model_path)
         except FileNotFoundError:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -140,7 +140,7 @@ class ModelFileCRUD(FileCRUD):
     def save_onnx(self, model_uuid: UUID, model):
         """Save model in the ONNX format"""
         model_path = self._get_path(model_uuid)
-        with open(f"{model_path}.onnx", "wb") as f:
+        with open(model_path, "wb") as f:
             f.write(model.SerializeToString())
 
     """
@@ -149,7 +149,7 @@ class ModelFileCRUD(FileCRUD):
     def read_pickle(self, model_uuid: UUID):
         model_path = self._get_path(model_uuid)
         try:
-            with open(f"{model_path}.pickle", 'rb') as f:
+            with open(model_path, 'rb') as f:
                 model = pickle.load(f)
         except FileNotFoundError:
             raise HTTPException(
@@ -161,5 +161,5 @@ class ModelFileCRUD(FileCRUD):
     def save_pickle(self, model_uuid: UUID, model):
         """Save model in the pickle format"""
         model_path = self._get_path(model_uuid)
-        with open(f"{model_path}.pickle", "wb") as f:
+        with open(model_path, "wb") as f:
             pickle.dump(model, f, protocol=pickle.HIGHEST_PROTOCOL)

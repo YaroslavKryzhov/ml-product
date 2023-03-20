@@ -27,8 +27,8 @@ class CompositionStatuses(Enum):
 
 
 class ModelSaveFormats(Enum):
-    ONNX = 'Onnx'
-    PICKLE = 'Pickle'
+    ONNX = 'onnx'
+    PICKLE = 'pickle'
 
 
 class AvailableModelTypes(Enum):

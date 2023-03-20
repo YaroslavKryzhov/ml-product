@@ -26,7 +26,7 @@ class DataframeManagerService:
     # 1: FILE MANAGEMENT OPERATIONS -------------------------------------------
     def upload_file(self, file, filename: str) -> str:
         dataframe = DataFrameInfoCRUD(self._db, self._user_id).create(filename)
-        DataFrameFileCRUD().upload(file_uuid=dataframe.id, file=file)
+        DataFrameFileCRUD(self._user_id).upload(file_uuid=dataframe.id, file=file)
         column_types = self._define_column_types(dataframe.id)
         self._set_column_types(dataframe.id, column_types)
         return str(dataframe.id)
@@ -34,7 +34,7 @@ class DataframeManagerService:
     def download_file(self, dataframe_id: UUID) -> FileResponse:
         dataframe_info = DataFrameInfoCRUD(self._db, self._user_id).get(
             dataframe_id)
-        response = DataFrameFileCRUD().download_csv(
+        response = DataFrameFileCRUD(self._user_id).download_csv(
             file_uuid=dataframe_id, filename=dataframe_info.filename)
         return response
 
@@ -44,13 +44,13 @@ class DataframeManagerService:
 
     def delete_file(self, dataframe_id: UUID):
         DataFrameInfoCRUD(self._db, self._user_id).delete(dataframe_id)
-        DataFrameFileCRUD().delete(dataframe_id)
+        DataFrameFileCRUD(self._user_id).delete(dataframe_id)
 
     def _read_file_to_df(self, dataframe_id: UUID) -> pd.DataFrame:
-        return DataFrameFileCRUD().read_csv(dataframe_id)
+        return DataFrameFileCRUD(self._user_id).read_csv(dataframe_id)
 
     def _save_df_to_file(self, dataframe_id: UUID, df: pd.DataFrame):
-        DataFrameFileCRUD().save_csv(dataframe_id=dataframe_id, data=df)
+        DataFrameFileCRUD(self._user_id).save_csv(dataframe_id=dataframe_id, data=df)
 
     # 2: GET OPERATIONS -------------------------------------------------------
     def get_dataframe_info(self, dataframe_id: UUID) -> schemas.DataFrameInfo:
@@ -216,7 +216,7 @@ class DataframeManagerService:
 
         try:
             df[column_name] = pd.to_numeric(df[column_name])
-            DataFrameFileCRUD().save_csv(dataframe_id, df)
+            DataFrameFileCRUD(self._user_id).save_csv(dataframe_id, df)
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -263,7 +263,7 @@ class DataframeManagerService:
                 dataframe_id, function_name=function_name, params=params
             )
         self._set_column_types(dataframe_id, column_types=new_column_types)
-        DataFrameFileCRUD().save_csv(dataframe_id, new_df)
+        DataFrameFileCRUD(self._user_id).save_csv(dataframe_id, new_df)
 
     def copy_pipeline(self, id_from: UUID, id_to: UUID):
         already_exists = len(self._get_dataframe_pipeline(id_to)) != 0
@@ -291,6 +291,6 @@ class DataframeManagerService:
 
         self._set_pipeline(dataframe_id, new_pipeline)
         self._set_column_types(dataframe_id, column_types=new_column_types)
-        DataFrameFileCRUD().save_csv(dataframe_id, new_df)
+        DataFrameFileCRUD(self._user_id).save_csv(dataframe_id, new_df)
 
     # -------------------------------------------------------------------------
