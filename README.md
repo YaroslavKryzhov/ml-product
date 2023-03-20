@@ -12,18 +12,6 @@ make data_init
 
 Выполняется один раз перед первой сборкой
 
-### Возможные ошибки:
-
-```bash
-NameError: name 'fastapi_users_db_sqlalchemy' is not defined
-```
-
-Добавить строку в файл миграции **ml_api/common/bd/migration/versions/_some_version_** 
-
-```python
-import fastapi_users_db_sqlalchemy
-```
-
 ---
 ## Для запуска:
 
