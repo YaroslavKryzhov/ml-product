@@ -17,16 +17,19 @@ import {
   ScatterChart,
 } from "recharts";
 
-export const CompositionMetrics: React.FC<{ model_name: string }> = ({
-  model_name,
+export const CompositionMetrics: React.FC<{ compositionId: string }> = ({
+  compositionId,
 }) => {
-  const { data: modelData } = useCompositionInfoQuery({
-    model_name,
-  });
+  const { data: modelData } = useCompositionInfoQuery(
+    { model_id: compositionId! },
+    { skip: !compositionId }
+  );
 
-  const describeDataMerged = modelData
+  console.log(modelData);
+
+  const describeDataMerged = modelData?.report
     ? Object.fromEntries(
-        Object.entries(modelData.report.metrics).filter(
+        Object.entries(modelData.report).filter(
           ([key, val]) =>
             !isNil(val) &&
             ![
@@ -51,27 +54,27 @@ export const CompositionMetrics: React.FC<{ model_name: string }> = ({
     : [];
 
   const chartData =
-    modelData &&
-    !isEmpty(modelData.report.metrics.fpr) &&
-    modelData.report.metrics.fpr?.map((fprVal, inx, arr) => ({
+    modelData?.report &&
+    !isEmpty(modelData.report.fpr) &&
+    modelData.report.fpr?.map((fprVal, inx, arr) => ({
       fpr: fprVal,
-      tpr: modelData.report.metrics.tpr![inx],
+      tpr: modelData.report.tpr![inx],
     }));
 
   const chartDataMacro =
-    modelData &&
-    !isEmpty(modelData.report.metrics.fpr_macro) &&
-    modelData.report.metrics.fpr_macro?.map((fprVal, inx, arr) => ({
+    modelData?.report &&
+    !isEmpty(modelData.report.fpr_macro) &&
+    modelData.report.fpr_macro?.map((fprVal, inx, arr) => ({
       fpr_macro: fprVal,
-      tpr_macro: modelData.report.metrics.tpr_macro![inx],
+      tpr_macro: modelData.report.tpr_macro![inx],
     }));
 
   const chartDataMicro =
-    modelData &&
-    !isEmpty(modelData.report.metrics.fpr_micro) &&
-    modelData.report.metrics.fpr_micro?.map((fprVal, inx, arr) => ({
+    modelData?.report &&
+    !isEmpty(modelData.report.fpr_micro) &&
+    modelData.report.fpr_micro?.map((fprVal, inx, arr) => ({
       fpr_micro: fprVal,
-      tpr_micro: modelData.report.metrics.tpr_micro![inx],
+      tpr_micro: modelData.report.tpr_micro![inx],
     }));
 
   return (

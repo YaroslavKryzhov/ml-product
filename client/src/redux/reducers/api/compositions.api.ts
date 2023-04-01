@@ -3,10 +3,16 @@ import { ROUTES } from "../../constants";
 import { addAuthHeader } from "./helpers";
 import {
   CompositionInfo,
-  CompositionInfoShort,
   Model,
+  TaskResponseData,
+  TaskStatus,
   TrainParamsPayload,
 } from "../types";
+import { entries } from "lodash";
+import { store } from "ducks/store";
+import { SnackBarType, addNotice } from "../notices";
+import { removePendingTask } from "../documents";
+import { socketManager } from "./socket";
 
 enum Tags {
   compositions = "compositions",
@@ -21,14 +27,14 @@ export const compositionsApi = createApi({
   }),
   tagTypes: Object.values(Tags),
   endpoints: (builder) => ({
-    compositionInfo: builder.query<CompositionInfo, { model_name: string }>({
+    compositionInfo: builder.query<CompositionInfo, { model_id: string }>({
       query: (params) => ({
-        url: ROUTES.COMPOSITIONS.INFO,
+        url: ROUTES.COMPOSITIONS.BASE,
         params,
       }),
       providesTags: [Tags.singleComposition],
     }),
-    deleteComposition: builder.mutation<string, { model_name: string }>({
+    deleteComposition: builder.mutation<string, { model_id: string }>({
       query: (params) => ({
         url: ROUTES.COMPOSITIONS.BASE,
         params,
@@ -38,7 +44,7 @@ export const compositionsApi = createApi({
     }),
     renameComposition: builder.mutation<
       string,
-      { model_name: string; new_model_name: string }
+      { model_id: string; new_model_name: string }
     >({
       query: (params) => ({
         url: ROUTES.COMPOSITIONS.RENAME,
@@ -47,17 +53,20 @@ export const compositionsApi = createApi({
       }),
       invalidatesTags: [Tags.compositions],
     }),
-    allCompositions: builder.query<CompositionInfoShort[], void>({
+    allCompositions: builder.query<CompositionInfo[], void>({
       query: () => ({
         url: ROUTES.COMPOSITIONS.ALL,
       }),
       providesTags: [Tags.compositions],
     }),
 
-    downloadComposition: builder.mutation<null, { model_name: string }>({
-      async queryFn({ model_name }) {
+    downloadComposition: builder.mutation<
+      null,
+      { model_id: string; model_name: string }
+    >({
+      async queryFn({ model_id, model_name }) {
         const res = await fetch(
-          `${ROUTES.COMPOSITIONS.BASE}${ROUTES.COMPOSITIONS.DOWNLOAD}?model_name=${model_name}`,
+          `${ROUTES.COMPOSITIONS.BASE}${ROUTES.COMPOSITIONS.DOWNLOAD}?model_id=${model_id}`,
           {
             headers: { Authorization: `Bearer ${localStorage.authToken}` },
           }
@@ -69,7 +78,7 @@ export const compositionsApi = createApi({
         const a = document.createElement("a");
         a.style.display = "none";
         a.href = url;
-        a.download = model_name + ".pickle";
+        a.download = model_name;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -82,7 +91,7 @@ export const compositionsApi = createApi({
     }),
     predictComposition: builder.mutation<
       { predictions: string[]; [key: string]: Array<string | number> },
-      { model_name: string; document_name: string }
+      { model_id: string; dataframe_id: string }
     >({
       query: (params) => ({
         url: ROUTES.COMPOSITIONS.PREDICT,
@@ -91,19 +100,80 @@ export const compositionsApi = createApi({
       }),
     }),
     trainComposition: builder.mutation<
-      string,
+      null,
       { body: Model[]; params: TrainParamsPayload }
     >({
-      query: (payload) => ({
-        url: ROUTES.COMPOSITIONS.TRAIN,
-        params: payload.params,
-        method: "POST",
-        body: payload.body.map((model) => ({
-          type: model.type,
-          params: model.isDefaultParams ? {} : model.params,
-        })),
-      }),
-      invalidatesTags: [Tags.compositions],
+      async queryFn({ body, params }) {
+        const res = await fetch(
+          `${ROUTES.COMPOSITIONS.BASE}${ROUTES.COMPOSITIONS.TRAIN}?${entries(
+            params
+          )
+            .map(([key, val]) => `${key}=${val}`)
+            .join("&")}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.authToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(body),
+            method: "POST",
+          }
+        );
+
+        const task = (await res.json()) as string;
+        const taskId = JSON.stringify(params);
+
+        if (!res.ok) {
+          store.dispatch(
+            addNotice({
+              label: `Не удалось натренировать модель '${params.model_name}'`,
+              type: SnackBarType.error,
+              id: Date.now(),
+            })
+          );
+          store.dispatch(removePendingTask(taskId));
+        }
+
+        socketManager.taskSubscription(task, (data: TaskResponseData) => {
+          store.dispatch(removePendingTask(taskId));
+          if (data.status === TaskStatus.success) {
+            store.dispatch(
+              addNotice({
+                label: `Модель '${params.model_name}' успешно натренирована`,
+                type: SnackBarType.success,
+                id: Date.now(),
+              })
+            );
+
+            store.dispatch(
+              compositionsApi.util.invalidateTags([
+                Tags.compositions,
+                Tags.singleComposition,
+              ])
+            );
+          } else {
+            store.dispatch(
+              addNotice({
+                label: `Не удалось натренировать модель '${params.model_name}'`,
+                type: SnackBarType.error,
+                id: Date.now(),
+              })
+            );
+          }
+        });
+
+        store.dispatch(
+          compositionsApi.util.invalidateTags([
+            Tags.compositions,
+            Tags.singleComposition,
+          ])
+        );
+
+        return {
+          data: null,
+          meta: null,
+        };
+      },
     }),
   }),
 });

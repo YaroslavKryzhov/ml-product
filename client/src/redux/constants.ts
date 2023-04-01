@@ -1,5 +1,5 @@
-export const HOST = "http://localhost:8006";
-export const BASE_API = HOST;
+export const HOST = "localhost:6060";
+export const BASE_API = `http://${HOST}/api/v1`;
 
 export const ROUTES = {
   AUTH: {
@@ -7,12 +7,13 @@ export const ROUTES = {
     LOGIN: "jwt/login",
     REGISTER: "register",
     LOGOUT: "jwt/logout",
+    CENTRIFUGO: "centrifugo_token",
   },
   DOCUMENTS: {
-    BASE: BASE_API + "/document",
+    BASE: BASE_API + "/dataframe",
     SHOW: "/df",
-    INFO: "/info",
-    DF_INFO: "/df/info",
+    INFO: "/",
+    DF_INFO: "/df/statistics",
     DESCRIBE: "/df/describe",
     DOWNLOAD: "/download",
     PIPE: "/pipeline",
@@ -34,6 +35,7 @@ export const ROUTES = {
     DOWNLOAD: "/download",
     RENAME: "/rename",
     ALL: "/all",
-    INFO: "/info",
   },
 };
+
+export const COPY_PIPELINE_ID = "copy_pipe";

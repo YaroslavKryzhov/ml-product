@@ -17,40 +17,34 @@ import {
   useSelectDocumentTargetMutation,
   useInfoDocumentQuery,
 } from "ducks/reducers/api/documents.api";
-import {
-  changeSelectedTarget,
-  changeSelectedTaskType,
-} from "ducks/reducers/documents";
-import { TaskType } from "ducks/reducers/types";
+import { changeSelectedTarget } from "ducks/reducers/documents";
 import { theme } from "globalStyle/theme";
-import React, { useCallback } from "react";
+import React from "react";
 import { useParams } from "react-router-dom";
-import { TASK_TYPE_LABEL } from "../List/constants";
 
 export const Markup: React.FC = () => {
-  const { docName } = useParams();
+  const { docId } = useParams();
   const { selectedTargetColumn, selectedTaskType } = useSESelector(
     (state) => state.documents
   );
   const [saveMarkup, { isLoading: isSaving }] =
     useSelectDocumentTargetMutation();
   const { data: columns, isFetching: columnsLoading } = useColumnsDocumentQuery(
-    docName!
+    docId!
   );
   const { data: docInfo, isFetching: docInfoLoading } = useInfoDocumentQuery(
-    docName!
+    docId!
   );
 
   const dispatch = useAppDispatch();
 
-  const onSaveClick = useCallback(() => {
-    if (docName && selectedTargetColumn && selectedTaskType)
+  const onSaveClick = () => {
+    if (docId && selectedTargetColumn && selectedTaskType)
       saveMarkup({
-        filename: docName,
-        targetColumn: selectedTargetColumn,
-        taskType: selectedTaskType,
+        dataframe_id: docId,
+        target_column: selectedTargetColumn,
       });
-  }, [selectedTargetColumn, selectedTaskType, docName, saveMarkup]);
+  };
 
   return (
     <Box>
@@ -68,8 +62,8 @@ export const Markup: React.FC = () => {
         </Stack>
       ) : (
         <>
-          {!docInfo?.column_types && (
-            <UnavailableBlock label=" Внимание, вы сможете произвести разметку только один раз!!! Будьте Внимательны!!!" />
+          {!docInfo?.column_types.target && (
+            <UnavailableBlock label="Внимание, вы сможете произвести разметку только один раз!!! Будьте Внимательны!!!" />
           )}
           <Box
             sx={{
@@ -81,7 +75,7 @@ export const Markup: React.FC = () => {
             <FormControl sx={{ width: "400px" }}>
               <InputLabel>Target</InputLabel>
               <Select
-                disabled={!!docInfo?.column_types}
+                disabled={Boolean(docInfo?.column_types.target)}
                 value={
                   docInfo?.column_types?.target || selectedTargetColumn || ""
                 }
@@ -97,7 +91,7 @@ export const Markup: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
-            <FormControl disabled sx={{ width: "400px" }}>
+            {/* <FormControl disabled sx={{ width: "400px" }}>
               <InputLabel>Task Type</InputLabel>
               <Select
                 disabled={true || !!docInfo?.column_types}
@@ -118,8 +112,8 @@ export const Markup: React.FC = () => {
                   {TASK_TYPE_LABEL.regression}
                 </MenuItem>
               </Select>
-            </FormControl>
-            {!docInfo?.column_types && (
+            </FormControl> */}
+            {!docInfo?.column_types.target && (
               <LoadingButton
                 disabled={!selectedTargetColumn || !selectedTaskType}
                 onClick={onSaveClick}

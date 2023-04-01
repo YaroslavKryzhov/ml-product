@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
@@ -20,7 +20,7 @@ import {
   useCopyPipelineMutation,
   useInfoDocumentQuery,
 } from "ducks/reducers/api/documents.api";
-import { useAppDispatch } from "ducks/hooks";
+import { useAppDispatch, useSESelector } from "ducks/hooks";
 import { setDialog, setDialogLoading } from "ducks/reducers/dialog";
 import { T } from "ramda";
 import {
@@ -30,51 +30,52 @@ import {
   PipelinePopper,
 } from "./parts";
 import { BuildLabel } from "./helpers";
-import { DocumentInfoShort } from "ducks/reducers/types";
 import { UnavailableBlock } from "app/Workplace/common/UnavailableBlock";
+import { DocumentInfo } from "ducks/reducers/types";
+import { addPendingTask } from "ducks/reducers/documents";
+import { COPY_PIPELINE_ID } from "ducks/constants";
+import { LoadingButton } from "@mui/lab";
 
 export const Pipeline: React.FC = () => {
-  const { docName } = useParams();
+  const { docId } = useParams();
   const { data: docInfo, isFetching: docInfoLoading } = useInfoDocumentQuery(
-    docName!
+    docId!
   );
   const { data: allDocuments } = useAllDocumentsQuery();
   const [copyPipeline] = useCopyPipelineMutation();
   const dispatch = useAppDispatch();
+  const { pendingTasks } = useSESelector((state) => state.documents);
 
-  const filteredDocs = useMemo(
-    () =>
-      allDocuments?.filter(
-        (doc) => doc.name !== docName && doc.pipeline?.length
-      ),
-    [allDocuments, docName]
+  const filteredDocs = allDocuments?.filter(
+    (doc) => doc.id !== docId && doc.pipeline?.length
   );
   const [fromDocumentMenuOpened, setDromDocumentMenuOpened] = useState(false);
   const anchorEl = useRef<HTMLButtonElement>(null);
-  const applyPipelineConfirm = useCallback(
-    (fromDoc: DocumentInfoShort) => () => {
-      setDromDocumentMenuOpened(false);
-      dispatch(
-        setDialog({
-          title: "Применить пайплайн",
-          Content: (
-            <PipelineDialog
-              currentDoc={docName!}
-              targetDoc={fromDoc.name}
-              pipeline={fromDoc.pipeline}
-            />
-          ),
-          onAccept: async () => {
-            dispatch(setDialogLoading(true));
-            await copyPipeline({ from: fromDoc.name, to: docName! });
-            dispatch(setDialogLoading(false));
-          },
-          onDismiss: T,
-        })
-      );
-    },
-    [docName, copyPipeline, dispatch]
-  );
+  const applyPipelineConfirm = (fromDoc: DocumentInfo) => () => {
+    setDromDocumentMenuOpened(false);
+    dispatch(
+      setDialog({
+        title: "Применить пайплайн",
+        Content: (
+          <PipelineDialog
+            currentDoc={docInfo?.filename!}
+            targetDoc={fromDoc.filename}
+            pipeline={fromDoc.pipeline}
+          />
+        ),
+        onAccept: async () => {
+          dispatch(setDialogLoading(true));
+          await copyPipeline({
+            dataframe_id_from: fromDoc.id,
+            dataframe_id_to: docId!,
+          });
+          dispatch(setDialogLoading(false));
+          dispatch(addPendingTask(COPY_PIPELINE_ID));
+        },
+        onDismiss: T,
+      })
+    );
+  };
 
   return (
     <Box>
@@ -87,7 +88,10 @@ export const Pipeline: React.FC = () => {
               disableHoverListener={!!filteredDocs?.length}
               title="Не найдено документов с непустым пайплайном"
             >
-              <Button
+              <LoadingButton
+                loading={Boolean(
+                  pendingTasks.find((x) => x === COPY_PIPELINE_ID)
+                )}
                 disabled={!filteredDocs?.length}
                 ref={anchorEl}
                 sx={{ ml: theme.spacing(3) }}
@@ -97,7 +101,7 @@ export const Pipeline: React.FC = () => {
                 onClick={() => setDromDocumentMenuOpened(true)}
               >
                 Применить из
-              </Button>
+              </LoadingButton>
             </Tooltip>
             <Menu
               PaperProps={{ sx: { mt: theme.spacing(1) } }}
@@ -111,7 +115,7 @@ export const Pipeline: React.FC = () => {
                 <Tooltip
                   PopperComponent={PipelinePopper as any}
                   PopperProps={{ pipeline: doc.pipeline } as any}
-                  key={doc.name}
+                  key={doc.filename}
                   title="test"
                 >
                   <MenuItem
@@ -120,7 +124,7 @@ export const Pipeline: React.FC = () => {
                       padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
                     }}
                   >
-                    {doc.name}
+                    {doc.filename}
                   </MenuItem>
                 </Tooltip>
               ))}

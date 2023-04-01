@@ -14,7 +14,7 @@ export const Documents: React.FC = () => (
       element={<DocumentsList />}
     />
     <Route
-      path={pathify([DocumentPage.List, ":docName"])}
+      path={pathify([DocumentPage.List, ":docId"])}
       element={<DocumentSingle />}
     />
   </Routes>

@@ -5,7 +5,7 @@ import { theme } from "globalStyle/theme";
 import { CategoryMark, DocumentMethod } from "ducks/reducers/types";
 import { useInfoDocumentQuery } from "ducks/reducers/api/documents.api";
 import { always, cond, equals, T } from "ramda";
-import { useDocumentNameForce } from "../../hooks";
+import { useDocumentIdForce } from "../../hooks";
 import { OverflowText } from "components/styles";
 import { ElementWithTooltip } from "components/ElementWithTooltip";
 
@@ -13,8 +13,8 @@ const ColumnsTransformInfo: React.FC<{
   type: CategoryMark;
   gapsAnnounce?: boolean;
 }> = ({ type, gapsAnnounce }) => {
-  const docName = useDocumentNameForce();
-  const { data: infoData } = useInfoDocumentQuery(docName!);
+  const docId = useDocumentIdForce();
+  const { data: infoData } = useInfoDocumentQuery(docId!);
   const colNames: string[] | null =
     infoData?.column_types && Array.isArray(infoData?.column_types[type])
       ? (infoData?.column_types[type] as string[])

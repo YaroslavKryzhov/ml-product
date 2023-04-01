@@ -1,10 +1,10 @@
 import { Stack } from "@mui/material";
-import { WorkPageHeader } from "app/Workplace/common/WorkPageHeader";
 import React from "react";
 import { Markup } from "./Markup";
 import { DocumentMethods } from "./DocumentMethods";
 import { MainInfo } from "./MainInfo";
 import { Pipeline } from "./Pipeline";
+import { WorkPageHeader } from "./WorkPageHeader";
 
 export const DocumentSingle: React.FC = () => {
   return (

@@ -1,5 +1,5 @@
 import { Box, Button, Skeleton, Stack } from "@mui/material";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import { theme } from "globalStyle/theme";
 import {
@@ -7,48 +7,46 @@ import {
   useInfoDocumentQuery,
   useRenameDocumentMutation,
 } from "ducks/reducers/api/documents.api";
-import { pathify } from "ducks/hooks";
 import DownloadIcon from "@mui/icons-material/Download";
 import { useDeleteFile } from "./hooks";
 import DeleteIcon from "@mui/icons-material/Delete";
 import moment from "moment";
 import { InfoChip } from "components/infoChip";
 import { Size } from "app/types";
-import { useNavigate } from "react-router-dom";
-import { DocumentPage } from "ducks/reducers/types";
 import { EditableLabel } from "../common/styled";
 
 export const DocsEntityHeader: React.FC<{
-  initName?: string;
+  docId: string;
   worplacePage?: string;
-}> = ({ initName }) => {
+}> = ({ docId }) => {
   const [editMode, setEditMode] = useState(false);
-  const [customName, setCustomName] = useState(initName || "");
+  const [customName, setCustomName] = useState("");
   const inputRef = useRef<HTMLLabelElement | null>(null);
+  const { data: documentData } = useInfoDocumentQuery(docId);
   const [renameDoc] = useRenameDocumentMutation();
 
   const [downloadDoc] = useDownloadDocumentMutation();
   const deleteDoc = useDeleteFile({ redirectAfter: true });
   const matchName = customName.match(/(.*)(\.csv)/);
 
-  const navigate = useNavigate();
-  const onKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLLabelElement>) => {
-      if (e.code === "Enter") {
-        e.preventDefault();
-        (e.target as HTMLLabelElement).blur();
-      }
-      if (e.code === "Escape") {
-        e.preventDefault();
-        if (matchName) (e.target as HTMLLabelElement).innerText = matchName[1];
-        (e.target as HTMLLabelElement).blur();
-      }
-    },
-    [matchName]
-  );
+  useEffect(() => {
+    setCustomName(documentData?.filename || "");
+  }, [documentData?.filename]);
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLLabelElement>) => {
+    if (e.code === "Enter") {
+      e.preventDefault();
+      (e.target as HTMLLabelElement).blur();
+    }
+    if (e.code === "Escape") {
+      e.preventDefault();
+      if (matchName) (e.target as HTMLLabelElement).innerText = matchName[1];
+      (e.target as HTMLLabelElement).blur();
+    }
+  };
 
   const { data: docData, isFetching: docInfoLoading } =
-    useInfoDocumentQuery(customName);
+    useInfoDocumentQuery(docId);
 
   useEffect(() => {
     editMode && inputRef.current?.focus();
@@ -58,17 +56,11 @@ export const DocsEntityHeader: React.FC<{
     const newName = e.target.innerText + (matchName && matchName[2]);
     setEditMode(false);
 
-    renameDoc({
-      filename: customName,
-      new_filename: newName,
-    }).then(() => {
-      setCustomName(newName);
-      navigate(
-        pathify([DocumentPage.List, newName], {
-          changeLast: true,
-        })
-      );
-    });
+    if (newName !== customName)
+      renameDoc({
+        dataframe_id: docId,
+        new_filename: newName,
+      }).then(() => setCustomName(newName));
   };
 
   return (
@@ -86,7 +78,7 @@ export const DocsEntityHeader: React.FC<{
               label="Загружено"
               info={
                 docData &&
-                moment(docData.upload_date).format(theme.additional.timeFormat)
+                moment(docData.created_at).format(theme.additional.timeFormat)
               }
             />
             <InfoChip
@@ -94,7 +86,7 @@ export const DocsEntityHeader: React.FC<{
               label="Изменено"
               info={
                 docData &&
-                moment(docData.change_date).format(theme.additional.timeFormat)
+                moment(docData.updated_at).format(theme.additional.timeFormat)
               }
             />
           </>
@@ -140,14 +132,19 @@ export const DocsEntityHeader: React.FC<{
           sx={{ gap: theme.spacing(1), height: "min-content" }}
         >
           <Button
-            onClick={() => downloadDoc(customName)}
+            onClick={() =>
+              downloadDoc({
+                dataframe_id: docId,
+                filename: customName,
+              })
+            }
             variant="outlined"
             startIcon={<DownloadIcon />}
           >
             Скачать
           </Button>
           <Button
-            onClick={() => deleteDoc(customName)}
+            onClick={() => deleteDoc(customName, docId)}
             variant="outlined"
             startIcon={<DeleteIcon />}
           >

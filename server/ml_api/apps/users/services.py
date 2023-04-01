@@ -11,11 +11,11 @@ from fastapi_users.authentication import (
 from fastapi_users.db import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
+from ml_api import config
 from ml_api.apps.users.models import User
-from ml_api.common.database.db_deps import get_async_db
+from ml_api.common.dependencies.db_deps import get_async_db
 
-SECRET = "dfgb34gb3obdjkfgb983bkjfdg"
+SECRET = config.USER_SECRET
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
@@ -67,4 +67,3 @@ auth_backend = AuthenticationBackend(
 
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 
-current_active_user = fastapi_users.current_user(active=True)

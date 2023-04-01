@@ -1,39 +1,43 @@
-# ml-product v1
+# ml-product v0.2.1
 
 ## Для деплоя:
 
-### Первоначальная сборка проекта:
+### Первоначальная сборка проекта: инциализация окружения и базы данных
 ```bash
-make build_server
+make init_env
+make data_init
 ```
-Запускает: 
-- make start_server 
-- make migrations 
-- make migrate
+`init_env` создает файл `.env` с переменными окружения.
+`data_init` запускает миграции базы данных, что позволяет создать нужные таблицы.
 
-**Выполняется один раз для создания структуры базы данных**
+Выполняется один раз перед первой сборкой
 
 ---
+## Для запуска:
+
 ### Для запуска в dev-режиме (с отображением логов в консоль)
 ```bash
 make try
 ```
-### В обычном режиме:
+### В фоновом режиме:
 ```bash
-make start_server
+make up
 ```
 ### Остановка контейнеров:
 ```bash
-make stop_server
+make down
 ```
 
 ---
 ## После запуска сервисы доступны по:
 
-### API Swagger: localhost:8006/docs
+### API Swagger: http://localhost:6060/api/v1/docs
 
-### Интерфейс: localhost:3036
+### Интерфейс: http://localhost:6060
+
+### Канал для вебсокета: ws://localhost:6060/centrifugo/connection/websocket
 
 ---
 
 Contacts: https://github.com/KirillKosvintsev
+

@@ -12,16 +12,16 @@ export type CompositionsSlice = {
   taskType?: TaskType;
   compositionType?: CompositionType;
   paramsType?: ParamsCompositionType;
-  documentName: string;
-  predictDocumentName: string;
+  dataframeId: string | null;
+  predictDataframeId: string | null;
   testSize: number;
 };
 
 const initialState: CompositionsSlice = {
   customCompositionName: "",
   models: {},
-  documentName: "",
-  predictDocumentName: "",
+  dataframeId: null,
+  predictDataframeId: null,
   testSize: 0.2,
   taskType: TaskType.classification,
   compositionType: CompositionType.none,
@@ -40,10 +40,10 @@ const compositionsSlice = createSlice({
       void (state.compositionType = action.payload),
     changeParamsType: (state, action: PayloadAction<ParamsCompositionType>) =>
       void (state.paramsType = action.payload),
-    changeDocumentName: (state, action: PayloadAction<string>) =>
-      void (state.documentName = action.payload),
-    changePredictDocumentName: (state, action: PayloadAction<string>) =>
-      void (state.predictDocumentName = action.payload),
+    changeDataframeId: (state, action: PayloadAction<string>) =>
+      void (state.dataframeId = action.payload),
+    changePredictDataframeId: (state, action: PayloadAction<string>) =>
+      void (state.predictDataframeId = action.payload),
     changeTestSize: (state, action: PayloadAction<number>) =>
       void (state.testSize = action.payload),
     addModel: (state) =>
@@ -67,8 +67,8 @@ export const {
   changeTaskType,
   changeCompositionType,
   changeParamsType,
-  changeDocumentName,
-  changePredictDocumentName,
+  changeDataframeId,
+  changePredictDataframeId,
   changeTestSize,
   addModel,
   deleteModel,

@@ -5,7 +5,7 @@ import { useCompositionInfoQuery } from "ducks/reducers/api/compositions.api";
 import {
   addModel,
   changeCompositionType,
-  changeDocumentName,
+  changeDataframeId,
   changeParamsType,
   changeTestSize,
   setModels,
@@ -15,6 +15,7 @@ import { isEmpty, keys } from "lodash";
 import { useEffect } from "react";
 import { batch } from "react-redux";
 import { ModelProps } from "./ModelProps";
+import { useParams } from "react-router-dom";
 
 export const Models: React.FC<{ createMode?: boolean }> = ({ createMode }) => {
   const { models, customCompositionName } = useSESelector(
@@ -22,12 +23,13 @@ export const Models: React.FC<{ createMode?: boolean }> = ({ createMode }) => {
   );
 
   const dispatch = useAppDispatch();
+  const { compositionId } = useParams();
 
   const { data: modelData } = useCompositionInfoQuery(
     {
-      model_name: customCompositionName,
+      model_id: compositionId!,
     },
-    { skip: createMode || !customCompositionName }
+    { skip: createMode || !compositionId }
   );
 
   useEffect(() => {
@@ -38,7 +40,7 @@ export const Models: React.FC<{ createMode?: boolean }> = ({ createMode }) => {
       modelData?.composition_type &&
         dispatch(changeCompositionType("none" as any));
 
-      modelData?.csv_name && dispatch(changeDocumentName(modelData.csv_name));
+      modelData?.csv_name && dispatch(changeDataframeId(modelData.csv_id));
 
       modelData?.test_size && dispatch(changeTestSize(modelData.test_size));
 
