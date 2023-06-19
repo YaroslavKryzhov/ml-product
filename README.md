@@ -39,5 +39,8 @@ make down
 
 ---
 
+FastApiUsers: https://fastapi-users.github.io/fastapi-users/11.0/
+Beanie: https://beanie-odm.dev/tutorial/indexes/
+
 Contacts: https://github.com/KirillKosvintsev
 

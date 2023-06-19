@@ -1,30 +1,31 @@
-import uuid
+from datetime import datetime
+from typing import List, Any, Optional
 
-from sqlalchemy import Column, String, DateTime, ForeignKey, PickleType
-from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID
+from pydantic import BaseModel, Field
+from beanie import Document
+from beanie.odm.fields import PydanticObjectId
 
-from ml_api.common.models.base import Base
-from ml_api.apps.users.models import User  # noqa
+from ml_api.apps.dataframes.specs import AvailableFunctions
 
 
-class DataFrame(Base):
-    __tablename__ = 'dataframe'
-    __table_args__ = {'extend_existing': True}
+class ColumnTypes(BaseModel):
+    numeric: List[str]
+    categorical: List[str]
 
-    id = Column(
-        UUID(as_uuid=True),
-        index=True,
-        primary_key=True,
-        default=uuid.uuid4,
-        unique=True,
-    )
-    filename = Column(String, unique=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"))
-    created_at = Column(DateTime)
-    updated_at = Column(DateTime)
-    pipeline = Column(PickleType)
-    column_types = Column(PickleType)
 
-    user = relationship('User')  # , back_populates='dataframes')
-    # used_in_model = relationship('Model', back_populates='used_csv')
+class PipelineElement(BaseModel):
+    function_name: AvailableFunctions
+    params: Any = None
+
+
+class DataFrameMetadata(Document):
+    parent_id: Optional[PydanticObjectId] = None
+    filename: str
+    user_id: PydanticObjectId
+    feature_columns_types: Optional[ColumnTypes] = None
+    target_feature: Optional[str] = None
+    pipeline: Optional[List[PipelineElement]] = []
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
+
+    class Settings:
+        collection = "dataframe_collection"

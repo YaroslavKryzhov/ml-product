@@ -7,6 +7,9 @@ PROJECT_NAME = 'ML Project'
 VERSION = '0.0.1'
 API_PREFIX = "/api/v1"
 
+MONGO_DATABASE_URI = config('MONGO_DATABASE_URI', cast=str, default='mongodb://zfCxePvYBPHa3w:jV9xRs8tZ@mongo_db:27017/think_mongo')
+MONGO_DEFAULT_DB_NAME = config('MONGO_DEFAULT_DB_NAME', cast=str, default='think_mongo')
+
 
 POSTGRES_USER = config('POSTGRES_USER', cast=str)
 POSTGRES_PASSWORD = config('POSTGRES_PASSWORD', cast=Secret)

@@ -6,101 +6,119 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    command: "poetry run uvicorn ml_api.main:app --host 0.0.0.0 --port 8989 --reload"
+    command: "poetry run uvicorn ml_api.main:app --host 0.0.0.0 --port 8006 --reload"
     env_file:
       - .env
     ports:
-      - "8006:8989"
+      - "8006:8006"
     volumes:
       - ./volumes/server_data:/data/
       - ./server:/server
     depends_on:
-      - postgres_db
+      - mongo_db
     networks:
       - ml-net
     restart: unless-stopped
 
-  worker:
-    container_name: "ml-product-celery-worker"
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    command: "poetry run celery -A ml_api.celery_worker.app_celery worker --loglevel=info"
-    env_file:
-      - .env
+#  worker:
+#    container_name: "ml-product-celery-worker"
+#    build:
+#      context: ./server
+#      dockerfile: Dockerfile
+#    command: "poetry run celery -A ml_api.celery_worker.app_celery worker --loglevel=info"
+#    env_file:
+#      - .env
+#    volumes:
+#      - ./volumes/server_data:/data/
+#      - ./server:/server
+#    networks:
+#      - ml-net
+#    restart: unless-stopped
+#
+#  centrifugo:
+#    container_name: "ml-product-centrifugo"
+#    image: centrifugo/centrifugo:v2.8.7
+#    volumes:
+#      - ./deploy/centrifugo/config.json:/centrifugo/config.json
+#    command: centrifugo -c config.json
+#    ports:
+#      - "8086:8000"
+#    ulimits:
+#      nofile:
+#        soft: 65535
+#        hard: 65535
+#    networks:
+#      - ml-net
+
+#  postgres_db:
+#    container_name: "ml-product-postgres"
+#    image: postgres:13-alpine
+#    env_file:
+#      - .env
+#    ports:
+#      - "5432:5432"
+#    volumes:
+#      - ./volumes/postgres_data:/var/lib/postgresql/data/
+#    networks:
+#      - ml-net
+#    restart: unless-stopped
+
+  mongo_db:
+    image: mongo:5.0.3-focal
+    container_name: "ml-product-mongo"
+    environment:
+      - MONGO_INITDB_db=think_mongo
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=Abrakadabrasdhjbvnse
+#    env_file:
+#      - .env # TODO: убрать энвы из репозитория
     volumes:
-      - ./volumes/server_data:/data/
-      - ./server:/server
+      - ./deploy/mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      - ./volumes/mongo_data:/data/db
+    ports:
+      - "27017:27017"
     networks:
       - ml-net
     restart: unless-stopped
 
-  centrifugo:
-    container_name: "ml-product-centrifugo"
-    image: centrifugo/centrifugo:v2.8.7
-    volumes:
-      - ./deploy/centrifugo/config.json:/centrifugo/config.json
-    command: centrifugo -c config.json
-    ports:
-      - "8086:8000"
-    ulimits:
-      nofile:
-        soft: 65535
-        hard: 65535
-    networks:
-      - ml-net
-
-  postgres_db:
-    container_name: "ml-product-postgres"
-    image: postgres:13-alpine
-    env_file:
-      - .env
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./volumes/postgres_data:/var/lib/postgresql/data/
-    networks:
-      - ml-net
-    restart: unless-stopped
-
-  redis:
-    container_name: "ml-product-redis"
-    image: redis:6-alpine
-    env_file:
-      - .env
-    ports:
-      - "6379:6379"
-    networks:
-      - ml-net
-    restart: unless-stopped
-
-  client:
-    container_name: "ml-product-client"
-    build:
-      context: ./client
-      dockerfile: Dockerfile
-    volumes:
-      - ./volumes/client:/build_results/build/
-    command: "/bin/sh -c 'cp -r /app/build /build_results/'"
-    networks:
-      - ml-net
-
-  nginx:
-    build:
-      context: ./deploy/nginx
-      dockerfile: Dockerfile
-    container_name: "ml-product-nginx"
-    depends_on:
-      - server
-      - client
-    volumes:
-      - ./deploy/nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf
-      - ./volumes/client:/usr/share/nginx/html:ro
-    command: "/bin/sh -c 'while :; do sleep 5h & wait $${!}; nginx -s reload; done & nginx-debug -g \"daemon off;\"'"
-    ports:
-      - "6060:80"
-    networks:
-      - ml-net
+#  redis:
+#    container_name: "ml-product-redis"
+#    image: redis:6-alpine
+#    env_file:
+#      - .env
+#    ports:
+#      - "6379:6379"
+#    networks:
+#      - ml-net
+#    restart: unless-stopped
+#
+#  client:
+#    container_name: "ml-product-client"
+#    build:
+#      context: ./client
+#      dockerfile: Dockerfile
+#    volumes:
+#      - ./volumes/client:/build_results/build/
+#    command: "/bin/sh -c 'cp -r /app/build /build_results/'"
+#    networks:
+#      - ml-net
+#
+#  nginx:
+#    build:
+#      context: ./deploy/nginx
+#      dockerfile: Dockerfile
+#    container_name: "ml-product-nginx"
+#    depends_on:
+#      - server
+#      - client
+#    volumes:
+#      - ./deploy/nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf
+#      - ./volumes/client:/usr/share/nginx/html:ro
+#    command: "/bin/sh -c 'while :; do sleep 5h & wait $${!}; nginx -s reload; done & nginx-debug -g \"daemon off;\"'"
+#    ports:
+#      - "6060:80"
+#    networks:
+#      - ml-net
 
 networks:
   ml-net:
