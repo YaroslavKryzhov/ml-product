@@ -3,12 +3,14 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo.errors import ServerSelectionTimeoutError
 
 from ml_api import config
 from ml_api.apps.dataframes.routers import (
     dataframes_file_router,
-    # dataframes_df_router,
-    # dataframes_method_router,
+    dataframes_metadata_router,
+    dataframes_content_router,
+    dataframes_methods_router
 )
 from ml_api.apps.dataframes.services.methods_processor import ApplyFunctionException
 from ml_api.apps.users.routers import users_router
@@ -53,13 +55,17 @@ async def app_init():
     """Initialize application services"""
     app.db = AsyncIOMotorClient(config.MONGO_DATABASE_URI,
                                 uuidRepresentation="standard")[config.MONGO_DEFAULT_DB_NAME]
-    await init_beanie(app.db, document_models=[User, DataFrameMetadata])
+    try:
+        await init_beanie(app.db, document_models=[User, DataFrameMetadata])
+    except ServerSelectionTimeoutError as sste:
+        print(sste)
 
 
 api_router = APIRouter(prefix=config.API_PREFIX)
 api_router.include_router(dataframes_file_router)
-# api_router.include_router(dataframes_df_router)
-# api_router.include_router(dataframes_method_router)
+api_router.include_router(dataframes_metadata_router)
+api_router.include_router(dataframes_content_router)
+api_router.include_router(dataframes_methods_router)
 api_router.include_router(users_router)
 # api_router.include_router(models_router)
 app.include_router(api_router)

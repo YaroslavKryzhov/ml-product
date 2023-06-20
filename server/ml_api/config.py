@@ -1,5 +1,4 @@
 from starlette.config import Config
-from starlette.datastructures import Secret
 
 config = Config('.env')
 
@@ -10,27 +9,17 @@ API_PREFIX = "/api/v1"
 MONGO_DATABASE_URI = config('MONGO_DATABASE_URI', cast=str, default='mongodb://zfCxePvYBPHa3w:jV9xRs8tZ@mongo_db:27017/think_mongo')
 MONGO_DEFAULT_DB_NAME = config('MONGO_DEFAULT_DB_NAME', cast=str, default='think_mongo')
 
-
-POSTGRES_USER = config('POSTGRES_USER', cast=str)
-POSTGRES_PASSWORD = config('POSTGRES_PASSWORD', cast=Secret)
-POSTGRES_SERVER = config('POSTGRES_SERVER', cast=str, default='db')
-POSTGRES_PORT = config('POSTGRES_PORT', cast=str, default='5432')
-POSTGRES_DB = config('POSTGRES_DB', cast=str)
-
-DATABASE_URL = f'postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}:{POSTGRES_PORT}/{POSTGRES_DB}'
-DATABASE_ASYNC_URL = f'postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}:{POSTGRES_PORT}/{POSTGRES_DB}'
-
-BROKER_URI = config('BROKER_URI', cast=str)
-BACKEND_URI = config('BACKEND_URI', cast=str)
+BROKER_URI = config('BROKER_URI', cast=str, default="redis://redis:6379/0")
+BACKEND_URI = config('BACKEND_URI', cast=str, default="redis://redis:6379/0")
 
 # JSON_LOGS = True if config("JSON_LOGS", default="0", cast=str) == "1" else False
 # LOG_LEVEL = config("LOG_LEVEL", default="INFO", cast=str)
 #
-CENTRIFUGO_PUB_API = config("CENTRIFUGO_PUB_API", cast=str)
-CENTRIFUDO_API_KEY = config("CENTRIFUDO_API_KEY", cast=str)
-CENTRIFUGO_HMAC = config("CENTRIFUGO_HMAC", cast=str)
+CENTRIFUGO_PUB_API = config("CENTRIFUGO_PUB_API", cast=str, default="http://centrifugo:8000/api")
+CENTRIFUDO_API_KEY = config("CENTRIFUDO_API_KEY", cast=str, default="9o_XDiSJpYPi11k4P90hoWTWZz2_nTNAkxB4gRgnZbg")
+CENTRIFUGO_HMAC = config("CENTRIFUGO_HMAC", cast=str, default="46b38493-147e-4e3f-86e0-dc5ec54f5133")
 
-USER_SECRET = config("USER_SECRET", cast=str)
+USER_SECRET = config("USER_SECRET", cast=str, default="dfgb34g37obdjkfgb983bkjfdg")
 
 STAGE = config('STAGE', cast=str, default='DEVELOPMENT')
 

@@ -4,8 +4,7 @@ import pandas as pd
 from sklearn import feature_selection, preprocessing, ensemble, covariance, \
     linear_model, svm, neighbors
 
-import ml_api.apps.dataframes.schemas as schemas
-import ml_api.apps.dataframes.specs as specs
+from ml_api.apps.dataframes import specs, models
 
 
 class ApplyFunctionException(Exception):
@@ -13,11 +12,10 @@ class ApplyFunctionException(Exception):
 
 
 class DataframeFunctionProcessor:
-    def __init__(self, dataframe: pd.DataFrame,
-                 column_types: schemas.ColumnTypes):
+    def __init__(self, dataframe: pd.DataFrame, column_types: models.ColumnTypes):
         self._df: pd.DataFrame = dataframe
-        self._column_types: schemas.ColumnTypes = column_types
-        self._pipeline: List[schemas.PipelineElement] = []
+        self._column_types: models.ColumnTypes = column_types
+        self._pipeline: List[models.PipelineElement] = []
         self._functions_map: Dict[specs.AvailableFunctions, Callable] = {
             specs.AvailableFunctions.remove_duplicates: self._remove_duplicates,
             specs.AvailableFunctions.drop_na: self._drop_na,
@@ -46,15 +44,15 @@ class DataframeFunctionProcessor:
     def get_df(self) -> pd.DataFrame:
         return self._df
 
-    def get_column_types(self) -> schemas.ColumnTypes:
+    def get_column_types(self) -> models.ColumnTypes:
         return self._column_types
 
-    def get_pipeline(self) -> List[schemas.PipelineElement]:
+    def get_pipeline(self) -> List[models.PipelineElement]:
         return self._pipeline
 
     def _update_pipeline(self, function_name: specs.AvailableFunctions,
                          params: Any = None):
-        self._pipeline.append(schemas.PipelineElement(
+        self._pipeline.append(models.PipelineElement(
             function_name=function_name, params=params))
 
     def is_pipelined_once(self) -> bool:
