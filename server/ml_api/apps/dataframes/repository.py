@@ -1,5 +1,4 @@
 from typing import List
-from uuid import UUID
 from typing import Dict
 
 import pandas as pd
@@ -11,6 +10,14 @@ from ml_api.common.file_manager.base import FileCRUD
 from ml_api.apps.dataframes.models import DataFrameMetadata
 
 
+class DataFrameNotFoundError(HTTPException):
+    def __init__(self, dataframe_id: PydanticObjectId):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Dataframe with id {dataframe_id} not found."
+        )
+
+
 class DataFrameInfoCRUD:
     def __init__(self, user_id: PydanticObjectId):
         self.user_id = user_id
@@ -18,10 +25,7 @@ class DataFrameInfoCRUD:
     async def get(self, dataframe_id: PydanticObjectId) -> DataFrameMetadata:
         dataframe_meta = await DataFrameMetadata.get(dataframe_id)
         if dataframe_meta is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Dataframe with id {dataframe_id} not found."
-            )
+            raise DataFrameNotFoundError(dataframe_id)
         return dataframe_meta
 
     async def get_all(self) -> List[DataFrameMetadata]:
@@ -36,19 +40,13 @@ class DataFrameInfoCRUD:
     async def update(self, dataframe_id: PydanticObjectId, query: Dict) -> DataFrameMetadata:
         dataframe_meta = await DataFrameMetadata.get(dataframe_id)
         if not dataframe_meta:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Dataframe with id {dataframe_id} not found."
-            )
+            raise DataFrameNotFoundError(dataframe_id)
         return await dataframe_meta.update(query)
 
     async def delete(self, dataframe_id: PydanticObjectId):
         dataframe_meta = await DataFrameMetadata.get(dataframe_id)
         if not dataframe_meta:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Dataframe with id {dataframe_id} not found."
-            )
+            raise DataFrameNotFoundError(dataframe_id)
         await dataframe_meta.delete()
 
 
@@ -61,7 +59,7 @@ class DataFrameFileCRUD(FileCRUD):
         except FileNotFoundError:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Dataframe with id {file_id} not found."
+                detail=f"File with ID {file_id} not found"
             )
         return data
 

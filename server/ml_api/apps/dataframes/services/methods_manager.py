@@ -23,9 +23,9 @@ class DataframeMethodsManagerService:
     async def apply_function(self, dataframe_id: PydanticObjectId,
                        function_name: specs.AvailableFunctions,
                        params: Any = None):
-        if True: return True
+        # if True: return True
         df = await self.file_service.read_df_from_file(dataframe_id)
-        column_types = await self.metadata_service.get_dataframe_column_types(dataframe_id)
+        column_types = await self.metadata_service.get_column_types(dataframe_id)
 
         function_processor = DataframeFunctionProcessor(df, column_types)
         function_processor.apply_function(
@@ -44,18 +44,18 @@ class DataframeMethodsManagerService:
         await self.file_service.write_df_to_file(dataframe_id, new_df)
 
     async def copy_pipeline(self, id_from: PydanticObjectId, id_to: PydanticObjectId):
-        if True: return True
-        check_pipeline = await self.metadata_service.get_dataframe_pipeline(id_to)
+        # if True: return True
+        check_pipeline = await self.metadata_service.get_pipeline(id_to)
         if len(check_pipeline) != 0:
             raise CopyPipelineException(
                 f"Pipeline in document with id {id_to} already exists")
-        pipeline_from = await self.metadata_service.get_dataframe_pipeline(id_from)
+        pipeline_from = await self.metadata_service.get_pipeline(id_from)
         await self._apply_pipeline_to_csv(id_to, pipeline_from)
 
     async def _apply_pipeline_to_csv(self, dataframe_id: PydanticObjectId,
                                pipeline: List[PipelineElement]) -> bool:
         """Применяет либо все либо ничего"""
-        column_types = await self.metadata_service.get_dataframe_column_types(
+        column_types = await self.metadata_service.get_column_types(
             dataframe_id)
         df = await self.file_service.read_df_from_file(dataframe_id)
         function_processor = DataframeFunctionProcessor(df, column_types)

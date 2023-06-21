@@ -1,17 +1,6 @@
 import pandas as pd
 
-from ml_api.apps.dataframes import schemas, models
-
-
-def _define_column_types(df: pd.DataFrame) -> models.ColumnTypes:
-    numeric_columns = df.select_dtypes('number').columns.to_list()
-    categorical_columns = df.select_dtypes(
-        include=['object', 'category']
-    ).columns.to_list()
-    return models.ColumnTypes(
-            numeric=numeric_columns,
-            categorical=categorical_columns
-    )
+from ml_api.apps.dataframes import schemas
 
 
 def _get_dataframe_with_pagination(df, page, rows_on_page):
@@ -104,3 +93,12 @@ def _get_categorical_column_statistic_params(column: pd.Series) -> schemas.Numer
     result = {'nunique': column.nunique(),
               'most_frequent': column.value_counts().iloc[:5].to_dict()}
     return schemas.CategoricalColumnDescription(**result)
+
+
+def _convert_column_to_categorical(series: pd.Series) -> pd.Series:
+    series = series.astype(str)
+    return series
+
+
+def _convert_column_to_numeric(series: pd.Series) -> pd.Series:
+    return pd.to_numeric(series)

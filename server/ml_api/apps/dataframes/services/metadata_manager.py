@@ -1,4 +1,4 @@
-from typing import List, Union, Any
+from typing import List, Any, Optional
 
 from fastapi import HTTPException, status
 from beanie import PydanticObjectId
@@ -6,6 +6,14 @@ from beanie import PydanticObjectId
 from ml_api.apps.dataframes.repository import DataFrameInfoCRUD
 from ml_api.apps.dataframes.models import DataFrameMetadata, ColumnTypes, PipelineElement
 from ml_api.apps.dataframes import specs
+
+
+class ColumnNotFoundError(HTTPException):
+    def __init__(self, column_name: str):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Column {column_name} not found in df.columns"
+        )
 
 
 class DataframeMetadataManagerService:
@@ -25,12 +33,12 @@ class DataframeMetadataManagerService:
     async def get_all_dataframes_meta(self) -> List[DataFrameMetadata]:
         return await self.info_repository.get_all()
 
-    async def get_dataframe_column_types(self, dataframe_id: PydanticObjectId) -> ColumnTypes:
+    async def get_column_types(self, dataframe_id: PydanticObjectId) -> ColumnTypes:
         dataframe_meta = await self.get_dataframe_meta(dataframe_id)
         return dataframe_meta.feature_columns_types
 
     async def get_feature_target_column_names(self, dataframe_id: PydanticObjectId
-                                        ) -> (List[str], Union[str, None]):
+                                        ) -> (List[str], Optional[str]):
         dataframe_meta = await self.get_dataframe_meta(dataframe_id)
         column_types = dataframe_meta.feature_columns_types
         target_column = dataframe_meta.target
@@ -39,7 +47,7 @@ class DataframeMetadataManagerService:
             feature_columns.remove(target_column)
         return feature_columns, target_column
 
-    async def get_dataframe_pipeline(self, dataframe_id: PydanticObjectId) -> List[PipelineElement]:
+    async def get_pipeline(self, dataframe_id: PydanticObjectId) -> List[PipelineElement]:
         dataframe_meta = await self.get_dataframe_meta(dataframe_id)
         return dataframe_meta.pipeline
 
@@ -57,18 +65,13 @@ class DataframeMetadataManagerService:
 
     async def add_method_to_pipeline(self, dataframe_id: PydanticObjectId,
                          function_name: specs.AvailableFunctions, params: Any = None):
-        pipeline = await self.get_dataframe_pipeline(dataframe_id)
+        pipeline = await self.get_pipeline(dataframe_id)
         pipeline.append(PipelineElement(function_name=function_name, params=params))
         return await self.set_pipeline(dataframe_id, pipeline)
 
     async def set_target_feature(self, dataframe_id: PydanticObjectId, target_feature: str):
-        column_types = await self.get_dataframe_column_types(dataframe_id)
-        if (target_feature in column_types.numeric or
-                target_feature in column_types.categorical):
-            query = {"$set": {'target_feature': target_feature}}
-            return await self.info_repository.update(dataframe_id, query)
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Column {target_feature} not found in df.columns"
-            )
+        column_types = await self.get_column_types(dataframe_id)
+        if not (target_feature in column_types.numeric or target_feature in column_types.categorical):
+            raise ColumnNotFoundError(target_feature)
+        query = {"$set": {'target_feature': target_feature}}
+        return await self.info_repository.update(dataframe_id, query)

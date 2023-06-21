@@ -6,6 +6,11 @@ class TaskType(Enum):
     regression = 'regression'
 
 
+class ColumnType(Enum):
+    numeric = 'numeric'
+    categorical = 'categorical'
+
+
 class AvailableFunctions(Enum):
     # GROUP 1: Обработка данных------------------------------------------------
     remove_duplicates = 'remove_duplicates'  # Удаление дубликатов

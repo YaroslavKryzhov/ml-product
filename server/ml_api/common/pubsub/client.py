@@ -1,7 +1,9 @@
 import logging
-from typing import Any
+from typing import Any, Generator
 
 from cent import Client
+
+from ml_api import config
 
 logger = logging.getLogger(__name__)
 
@@ -36,3 +38,10 @@ class PubSub:
             task_id=task_id, status=status,
             message=str(message),
         )
+
+
+def get_pubsub_client() -> Generator[None, None, PubSub]:
+    """
+    Dependency function that yields pubsub client
+    """
+    yield PubSub(api_url=config.CENTRIFUGO_PUB_API, api_key=str(config.CENTRIFUDO_API_KEY))

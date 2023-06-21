@@ -1,6 +1,7 @@
 import tempfile
-import os
-from uuid import UUID
+from pathlib import Path
+
+from beanie import PydanticObjectId
 
 from fastapi.responses import FileResponse
 from fastapi import HTTPException, status
@@ -12,35 +13,32 @@ class FileCRUD:
     def __init__(self, user_id):
         self.user_id = user_id
 
-    def _get_path(self, file_id: UUID):
-        user_path = os.path.join(config.ROOT_DIR, str(self.user_id))
-        if not os.path.exists(user_path):
-            os.makedirs(user_path)
-        return os.path.join(user_path, str(file_id))
+    def _get_path(self, file_id: PydanticObjectId):
+        user_path = Path(config.ROOT_DIR) / str(self.user_id)
+        user_path.mkdir(parents=True, exist_ok=True)
+        return user_path / str(file_id)
 
-    def upload(self, file_id: UUID, file: tempfile.SpooledTemporaryFile) -> str:
+    def upload(self, file_id: PydanticObjectId, file: tempfile.SpooledTemporaryFile) -> str:
         path = self._get_path(file_id)
         context = file.read()
-        with open(path, 'wb') as f:
-            f.write(context)
-        return file_id
+        path.write_bytes(context)
 
-    def download(self, file_id: UUID, filename: str) -> FileResponse:
+    def download(self, file_id: PydanticObjectId, filename: str) -> FileResponse:
         path = self._get_path(file_id)
-        return FileResponse(path=path, filename=filename)
-
-    def replace(self, file_id: UUID, file: tempfile.SpooledTemporaryFile) -> str:
-        path = self._get_path(file_id)
-        context = file.read()
-        with open(path, 'wb') as f:
-            f.write(context)
-        return file_id
-
-    def delete(self, file_id: UUID):
-        try:
-            os.remove(self._get_path(file_id))
-        except Exception as err:
+        if path.exists():
+            return FileResponse(path=path, filename=filename)
+        else:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=str(err)
+                detail=f"File with ID {file_id} not found"
+            )
+
+    def delete(self, file_id: PydanticObjectId):
+        path = self._get_path(file_id)
+        if path.exists():
+            path.unlink()
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"File with ID {file_id} not found"
             )

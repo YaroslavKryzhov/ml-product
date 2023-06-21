@@ -178,7 +178,7 @@ async def get_column_names(dataframe_id: PydanticObjectId, user: User = Depends(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeMetadataManagerService(user.id).get_dataframe_column_types(dataframe_id)
+    return await DataframeMetadataManagerService(user.id).get_column_types(dataframe_id)
 
 
 @dataframes_content_router.get("/corr_matrix", response_model=Dict[str, Dict[str, float]],
@@ -218,40 +218,23 @@ async def set_target_feature(dataframe_id: PydanticObjectId, target_column: str,
     )
 
 
-@dataframes_methods_router.put("/to_categorical",
-                               summary="Сменить тип столбца на категориальный")
+@dataframes_methods_router.put("/change_type",
+                               summary="Сменить тип столбца")
 async def set_column_as_categorical(dataframe_id: PydanticObjectId, column_name: str,
-                              user: User = Depends(current_active_user)):
+                                    new_type: specs.ColumnType,
+                                    user: User = Depends(current_active_user)):
     """
-        Изменяет тип численного столбца на категориальный.
+        Изменяет тип столбца на заданный (числовой/категориальный).
 
         - **dataframe_id**: ID csv-файла(датафрейма)
         - **column_name**: имя численного столбца
+        - **type**: тип столбца (числовой/категориальный)
     """
     await DataframeManagerService(user.id
-        ).change_column_type_to_categorical(dataframe_id, column_name)
+        ).convert_column_to_new_type(dataframe_id, column_name, new_type)
     return Response(
         status_code=status.HTTP_200_OK,
-        content=f"The column '{column_name}' is set as categorical",
-        media_type='text/plain',
-    )
-
-
-@dataframes_methods_router.put("/to_numeric",
-                               summary="Сменить тип столбца на численный")
-async def set_column_as_numeric(dataframe_id: PydanticObjectId, column_name: str,
-                          user: User = Depends(current_active_user)):
-    """
-        Изменяет тип категориального столбца на численный.
-
-        - **dataframe_id**: ID csv-файла(датафрейма)
-        - **column_name**: имя категориального столбца
-    """
-    await DataframeManagerService(user.id
-        ).change_column_type_to_numeric(dataframe_id, column_name)
-    return Response(
-        status_code=status.HTTP_200_OK,
-        content=f"The column '{column_name}' is set as numeric",
+        content=f"Changed type of column '{column_name}' to '{new_type}'.",
         media_type='text/plain',
     )
 
