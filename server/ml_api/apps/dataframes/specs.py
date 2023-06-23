@@ -11,6 +11,25 @@ class ColumnType(Enum):
     categorical = 'categorical'
 
 
+class ScoreFunc(Enum):
+    chi2 = 'chi2'
+    f_classif = 'f_classif'
+    f_regression = 'f_regression'
+
+
+class FeatureSelectionMethods(Enum):
+    variance_threshold = 'variance_threshold'
+    select_k_best = 'select_k_best'
+    select_percentile = 'select_percentile'
+    select_fpr = 'select_fpr'
+    select_fdr = 'select_fdr'
+    select_fwe = 'select_fwe'
+    recursive_feature_elimination = 'recursive_feature_elimination'
+    sequential_forward_selection = 'sequential_forward_selection'
+    sequential_backward_selection = 'sequential_backward_selection'
+    select_from_model = 'select_from_model'
+
+
 class AvailableFunctions(Enum):
     # GROUP 1: Обработка данных------------------------------------------------
     remove_duplicates = 'remove_duplicates'  # Удаление дубликатов

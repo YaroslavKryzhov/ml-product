@@ -24,6 +24,12 @@ class DataframeFileManagerService:
         self.file_repository.upload(file_id=dataframe_meta.id, file=file)
         return dataframe_meta
 
+    async def create_file(self, df: pd.DataFrame, filename: str, parent_id: PydanticObjectId = None
+                          ) -> DataFrameMetadata:
+        dataframe_meta = await self.info_repository.create(filename, parent_id)
+        self.file_repository.save_csv(dataframe_meta.id, df)
+        return dataframe_meta
+
     async def download_file(self, dataframe_id: PydanticObjectId) -> FileResponse:
         dataframe_meta = await self.info_repository.get(dataframe_id)
         response = self.file_repository.download_csv(

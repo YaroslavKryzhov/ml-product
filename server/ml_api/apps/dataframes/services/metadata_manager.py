@@ -1,19 +1,11 @@
 from typing import List, Any, Optional
 
-from fastapi import HTTPException, status
 from beanie import PydanticObjectId
 
 from ml_api.apps.dataframes.repository import DataFrameInfoCRUD
 from ml_api.apps.dataframes.models import DataFrameMetadata, ColumnTypes, PipelineElement
 from ml_api.apps.dataframes import specs
-
-
-class ColumnNotFoundError(HTTPException):
-    def __init__(self, column_name: str):
-        super().__init__(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Column {column_name} not found in df.columns"
-        )
+from ml_api.apps.dataframes.errors import ColumnNotFoundMetadataError
 
 
 class DataframeMetadataManagerService:
@@ -36,6 +28,14 @@ class DataframeMetadataManagerService:
     async def get_column_types(self, dataframe_id: PydanticObjectId) -> ColumnTypes:
         dataframe_meta = await self.get_dataframe_meta(dataframe_id)
         return dataframe_meta.feature_columns_types
+
+    async def get_filename(self, dataframe_id: PydanticObjectId) -> ColumnTypes:
+        dataframe_meta = await self.get_dataframe_meta(dataframe_id)
+        return dataframe_meta.filename
+
+    async def get_parent_id(self, dataframe_id: PydanticObjectId) -> Optional[PydanticObjectId]:
+        dataframe_meta = await self.get_dataframe_meta(dataframe_id)
+        return dataframe_meta.parent_id
 
     async def get_feature_target_column_names(self, dataframe_id: PydanticObjectId
                                         ) -> (List[str], Optional[str]):
@@ -72,6 +72,10 @@ class DataframeMetadataManagerService:
     async def set_target_feature(self, dataframe_id: PydanticObjectId, target_feature: str):
         column_types = await self.get_column_types(dataframe_id)
         if not (target_feature in column_types.numeric or target_feature in column_types.categorical):
-            raise ColumnNotFoundError(target_feature)
+            raise ColumnNotFoundMetadataError(target_feature)
         query = {"$set": {'target_feature': target_feature}}
+        return await self.info_repository.update(dataframe_id, query)
+
+    async def set_parent_id(self, dataframe_id, new_parent_id: Optional[PydanticObjectId]):
+        query = {"$set": {'parent_id': new_parent_id}}
         return await self.info_repository.update(dataframe_id, query)

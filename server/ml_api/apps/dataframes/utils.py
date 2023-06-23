@@ -1,9 +1,12 @@
+import random
+
 import pandas as pd
 
 from ml_api.apps.dataframes import schemas
 
 
 def _get_dataframe_with_pagination(df, page, rows_on_page):
+    """Returns dataframe with pagination."""
     length = len(df)
     pages_count = (length - 1) // rows_on_page + 1
     start_index = (page - 1) * rows_on_page
@@ -31,6 +34,7 @@ def _get_dataframe_with_pagination(df, page, rows_on_page):
 
 def _get_numeric_column_statistics(df: pd.DataFrame, column_name: str, bins: int
                                    ) -> schemas.ColumnDescription:
+    """Returns statistics for numeric column."""
     ints = (
         df[column_name].value_counts(bins=bins).sort_index().reset_index()
     )
@@ -56,6 +60,7 @@ def _get_numeric_column_statistics(df: pd.DataFrame, column_name: str, bins: int
 
 def _get_categorical_column_statistics(
         df: pd.DataFrame, column_name: str) -> schemas.ColumnDescription:
+    """Returns statistics for categorical column."""
     ints = df[column_name].value_counts(normalize=True).reset_index()
     ints.columns = ['name', 'value']
     data = list(ints.to_dict('index').values())
@@ -75,6 +80,7 @@ def _get_categorical_column_statistics(
 
 
 def _get_numeric_column_statistic_params(column: pd.Series) -> schemas.NumericColumnDescription:
+    """Returns statistics for numeric column."""
     result = column.describe()
     result.index = [
         "count",
@@ -90,15 +96,23 @@ def _get_numeric_column_statistic_params(column: pd.Series) -> schemas.NumericCo
 
 
 def _get_categorical_column_statistic_params(column: pd.Series) -> schemas.NumericColumnDescription:
+    """Returns statistics for categorical column."""
     result = {'nunique': column.nunique(),
               'most_frequent': column.value_counts().iloc[:5].to_dict()}
     return schemas.CategoricalColumnDescription(**result)
 
 
 def _convert_column_to_categorical(series: pd.Series) -> pd.Series:
+    """Converts column to categorical type."""
     series = series.astype(str)
     return series
 
 
 def _convert_column_to_numeric(series: pd.Series) -> pd.Series:
+    """Converts column to numeric type."""
     return pd.to_numeric(series)
+
+
+def get_random_number():
+    """Returns a random number between 1 and 10 (inclusive)."""
+    return random.randint(1, 10)

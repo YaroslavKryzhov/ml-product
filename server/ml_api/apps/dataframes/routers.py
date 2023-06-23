@@ -35,7 +35,7 @@ async def upload_dataframe(
         - **filename**: сохраняемое имя файла
         - **file**: csv-файл
     """
-    return await DataframeManagerService(user.id).add_dataframe(
+    return await DataframeManagerService(user.id).add_new_dataframe(
         file=file.file, filename=filename)
 
 
@@ -257,6 +257,21 @@ async def delete_column(dataframe_id: PydanticObjectId, column_name: str,
         content=f"The column '{column_name}' successfully deleted",
         media_type='text/plain',
     )
+
+
+@dataframes_methods_router.post("/feature_selection",
+                                summary="Провести отбор признаков",
+                                response_model=List[schemas.FeatureSelectionSummary])
+async def feature_selection(dataframe_id: PydanticObjectId,
+                            selection_params: List[schemas.SelectorMethodParams],
+                            user: User = Depends(current_active_user)):
+    """
+        Применяет методы отбора признаков к датафрейму. Возвращает таблицу результатов.
+        На основе её, пользователь может выбрать какие признаки стоит удалять
+    """
+    # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id)
+    return await DataframeMethodsManagerService(user.id).get_feature_selection_summary(
+        dataframe_id, selection_params)
 
 
 @dataframes_methods_router.post("/apply_method")

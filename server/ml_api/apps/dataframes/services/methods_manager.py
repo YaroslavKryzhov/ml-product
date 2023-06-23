@@ -2,10 +2,13 @@ from typing import List, Any
 
 from beanie import PydanticObjectId
 
-import ml_api.apps.dataframes.specs as specs
+from ml_api.apps.dataframes import specs
+from ml_api.apps.dataframes import schemas
 from ml_api.apps.dataframes.services.methods_processor import DataframeFunctionProcessor
 from ml_api.apps.dataframes.services.file_manager import DataframeFileManagerService
 from ml_api.apps.dataframes.services.metadata_manager import DataframeMetadataManagerService
+from ml_api.apps.dataframes.services.dataframe_manager import DataframeManagerService
+from ml_api.apps.dataframes.services.feature_selector import FeatureSelector
 from ml_api.apps.dataframes.models import PipelineElement
 
 
@@ -18,8 +21,17 @@ class DataframeMethodsManagerService:
         self._user_id = user_id
         self.file_service = DataframeFileManagerService(self._user_id)
         self.metadata_service = DataframeMetadataManagerService(self._user_id)
+        self.dataframe_service = DataframeManagerService(self._user_id)
 
     # 4: CELERY FUNCTION OPERATIONS -------------------------------------------
+    async def get_feature_selection_summary(self, dataframe_id: PydanticObjectId,
+            feature_selection_params: List[schemas.SelectorMethodParams]
+                                    ) -> schemas.FeatureSelectionSummary:
+        features, target = self.dataframe_service.get_feature_target_df(dataframe_id)
+        selector = FeatureSelector(features, target, feature_selection_params)
+        summary = selector.get_summary()
+        return summary
+
     async def apply_function(self, dataframe_id: PydanticObjectId,
                        function_name: specs.AvailableFunctions,
                        params: Any = None):

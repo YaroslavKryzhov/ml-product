@@ -5,17 +5,11 @@ import pandas as pd
 from fastapi.responses import FileResponse
 from fastapi import HTTPException, status
 from beanie import PydanticObjectId
+from pymongo.errors import DuplicateKeyError
 
 from ml_api.common.file_manager.base import FileCRUD
 from ml_api.apps.dataframes.models import DataFrameMetadata
-
-
-class DataFrameNotFoundError(HTTPException):
-    def __init__(self, dataframe_id: PydanticObjectId):
-        super().__init__(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Dataframe with id {dataframe_id} not found."
-        )
+from ml_api.apps.dataframes.errors import FilenameExistsUserError, DataFrameNotFoundError
 
 
 class DataFrameInfoCRUD:
@@ -32,9 +26,14 @@ class DataFrameInfoCRUD:
         dataframe_metas = await DataFrameMetadata.find(DataFrameMetadata.user_id == self.user_id).to_list()
         return dataframe_metas
 
-    async def create(self, filename: str) -> DataFrameMetadata:
-        new_obj = DataFrameMetadata(filename=filename, user_id=self.user_id)
-        await new_obj.insert()
+    async def create(self, filename: str, parent_id: PydanticObjectId = None) -> DataFrameMetadata:
+        new_obj = DataFrameMetadata(filename=filename,
+                                    user_id=self.user_id,
+                                    parent_id=parent_id)
+        try:
+            await new_obj.insert()
+        except DuplicateKeyError:
+            raise FilenameExistsUserError(filename)
         return new_obj
 
     async def update(self, dataframe_id: PydanticObjectId, query: Dict) -> DataFrameMetadata:

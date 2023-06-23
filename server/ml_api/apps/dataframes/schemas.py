@@ -1,6 +1,7 @@
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Optional, Any
 
 from pydantic import BaseModel
+from ml_api.apps.dataframes.specs import ScoreFunc, FeatureSelectionMethods
 
 
 class NumericColumnDescription(BaseModel):
@@ -32,3 +33,56 @@ class ColumnDescription(BaseModel):
 class ReadDataFrameResponse(BaseModel):
     total: int
     records: Dict[str, List]
+
+
+class SelectorMethodParams(BaseModel):
+    method_name: FeatureSelectionMethods
+    params: Optional[Dict[str, Any]] = None
+
+
+class FeatureSelectionSummary:
+    result: Dict[str, Dict[str, bool]]
+
+
+class VarianceThresholdParams(BaseModel):
+    threshold: Optional[float] = 0
+
+
+class SelectKBestParams(BaseModel):
+    score_func: ScoreFunc
+    k: Union[int, "all"]
+
+
+class SelectPercentileParams(BaseModel):
+    score_func: ScoreFunc
+    percentile: int
+
+
+class SelectFprFdrFweParams(BaseModel):
+    score_func: ScoreFunc
+    alpha: float
+
+
+class RFEParams(BaseModel):
+    estimator: str
+    n_features_to_select: Optional[int]
+    step: Union[int, float]
+
+
+class SFSParams(BaseModel):
+    estimator: str
+    k_features: Union[int, tuple, str]
+    forward: bool
+    floating: bool
+
+
+class SBSParams(BaseModel):
+    estimator: str
+    k_features: Union[int, tuple, str]
+    forward: bool
+    floating: bool
+
+
+class SelectFromModelParams(BaseModel):
+    estimator: str
+    threshold: Optional[str]

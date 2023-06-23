@@ -4,6 +4,7 @@ from typing import List, Any, Optional, Dict
 from pydantic import BaseModel, Field
 from beanie import Document
 from beanie.odm.fields import PydanticObjectId
+from pymongo import IndexModel, ASCENDING, HASHED
 
 from ml_api.apps.dataframes.specs import AvailableFunctions
 
@@ -29,3 +30,8 @@ class DataFrameMetadata(Document):
 
     class Settings:
         collection = "dataframe_collection"
+        indexes = [
+            IndexModel([("user_id", ASCENDING)]),
+            IndexModel([("user_id", ASCENDING), ("filename", ASCENDING)], unique=True),
+            IndexModel([("parent_id", HASHED)]),
+        ]
