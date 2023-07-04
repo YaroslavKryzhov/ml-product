@@ -1,7 +1,8 @@
 from typing import List, Dict, Union, Optional, Any
 
-from pydantic import BaseModel
-from ml_api.apps.dataframes.specs import ScoreFunc, FeatureSelectionMethods
+from pydantic import BaseModel, Field
+from ml_api.apps.dataframes.specs import ScoreFunc, FeatureSelectionMethods, \
+    BaseSklearnModels
 
 
 class NumericColumnDescription(BaseModel):
@@ -40,49 +41,39 @@ class SelectorMethodParams(BaseModel):
     params: Optional[Dict[str, Any]] = None
 
 
-class FeatureSelectionSummary:
+class FeatureSelectionSummary(BaseModel):
     result: Dict[str, Dict[str, bool]]
 
 
 class VarianceThresholdParams(BaseModel):
-    threshold: Optional[float] = 0
+    threshold: Optional[float] = Field(0, ge=0)  # threshold should be greater than or equal to 0
 
 
 class SelectKBestParams(BaseModel):
     score_func: ScoreFunc
-    k: Union[int, "all"]
+    k: int = Field(1, ge=1)  # k should be greater than or equal to 1
 
 
 class SelectPercentileParams(BaseModel):
     score_func: ScoreFunc
-    percentile: int
+    percentile: int = Field(10, ge=1, le=100)  # percentile should be between 1 and 100
 
 
 class SelectFprFdrFweParams(BaseModel):
     score_func: ScoreFunc
-    alpha: float
+    alpha: float = Field(0.05, ge=0, le=1)  # alpha should be between 0 and 1
 
 
 class RFEParams(BaseModel):
-    estimator: str
-    n_features_to_select: Optional[int]
-    step: Union[int, float]
-
-
-class SFSParams(BaseModel):
-    estimator: str
-    k_features: Union[int, tuple, str]
-    forward: bool
-    floating: bool
-
-
-class SBSParams(BaseModel):
-    estimator: str
-    k_features: Union[int, tuple, str]
-    forward: bool
-    floating: bool
+    estimator: BaseSklearnModels = BaseSklearnModels.linear_regression
+    n_features_to_select: Optional[int] = Field(None, ge=1)  # n_features_to_select should be greater than or equal to 1
+    step: Optional[int] = Field(1, ge=1)  # step should be greater than or equal to 1
 
 
 class SelectFromModelParams(BaseModel):
-    estimator: str
-    threshold: Optional[str]
+    estimator: BaseSklearnModels = BaseSklearnModels.linear_regression
+
+
+class SfsSbsParams(BaseModel):
+    estimator: BaseSklearnModels = BaseSklearnModels.linear_regression
+    n_features_to_select: int = Field(1, ge=1)  # n_features_to_select should be greater than or equal to 1

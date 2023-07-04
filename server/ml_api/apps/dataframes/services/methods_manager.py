@@ -27,7 +27,7 @@ class DataframeMethodsManagerService:
     async def get_feature_selection_summary(self, dataframe_id: PydanticObjectId,
             feature_selection_params: List[schemas.SelectorMethodParams]
                                     ) -> schemas.FeatureSelectionSummary:
-        features, target = self.dataframe_service.get_feature_target_df(dataframe_id)
+        features, target = await self.dataframe_service.get_feature_target_df(dataframe_id)
         selector = FeatureSelector(features, target, feature_selection_params)
         summary = selector.get_summary()
         return summary

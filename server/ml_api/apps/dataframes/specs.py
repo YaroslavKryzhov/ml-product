@@ -17,6 +17,14 @@ class ScoreFunc(Enum):
     f_regression = 'f_regression'
 
 
+class BaseSklearnModels(Enum):
+    linear_regression = 'linear_regression'
+    random_forest_regressor = 'random_forest_regressor'
+    logistic_regression = 'logistic_regression'
+    linear_svc = 'linear_svc'
+    random_forest_classifier = 'random_forest_classifier'
+
+
 class FeatureSelectionMethods(Enum):
     variance_threshold = 'variance_threshold'
     select_k_best = 'select_k_best'

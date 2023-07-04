@@ -35,7 +35,7 @@ async def upload_dataframe(
         - **filename**: сохраняемое имя файла
         - **file**: csv-файл
     """
-    return await DataframeManagerService(user.id).add_new_dataframe(
+    return await DataframeManagerService(user.id).upload_new_dataframe(
         file=file.file, filename=filename)
 
 
@@ -261,7 +261,7 @@ async def delete_column(dataframe_id: PydanticObjectId, column_name: str,
 
 @dataframes_methods_router.post("/feature_selection",
                                 summary="Провести отбор признаков",
-                                response_model=List[schemas.FeatureSelectionSummary])
+                                response_model=schemas.FeatureSelectionSummary)
 async def feature_selection(dataframe_id: PydanticObjectId,
                             selection_params: List[schemas.SelectorMethodParams],
                             user: User = Depends(current_active_user)):

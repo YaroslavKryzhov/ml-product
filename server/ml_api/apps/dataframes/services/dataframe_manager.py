@@ -18,7 +18,7 @@ class DataframeManagerService:
         self.file_service = DataframeFileManagerService(self._user_id)
 
     # 2: GET OPERATIONS -------------------------------------------------------
-    async def add_new_dataframe(self, file, filename: str) -> DataFrameMetadata:
+    async def upload_new_dataframe(self, file, filename: str) -> DataFrameMetadata:
         dataframe_meta = await self.file_service.upload_file(file, filename)
         dataframe_meta_updated = await self._define_and_set_initial_column_types(dataframe_meta.id)
         return dataframe_meta_updated
@@ -43,11 +43,13 @@ class DataframeManagerService:
         await self.metadata_service.set_parent_id(dataframe_id, None)
 
     async def _define_and_set_initial_column_types(self, dataframe_id: PydanticObjectId) -> ColumnTypes:
+        # TODO: разделить на 2 функции
         df = await self.file_service.read_df_from_file(dataframe_id)
         df = df.convert_dtypes()
         numeric_columns = df.select_dtypes(include=["integer", "floating"]).columns.to_list()
         categorical_columns = df.select_dtypes(include=["string", "boolean", "category"]).columns.to_list()
         column_types = models.ColumnTypes(numeric=numeric_columns, categorical=categorical_columns)
+        await self._check_columns_consistency(df, column_types.numeric + column_types.categorical, dataframe_id)
         await self.file_service.write_df_to_file(dataframe_id, df)
         return await self.metadata_service.set_column_types(dataframe_id, column_types)
 
@@ -64,6 +66,7 @@ class DataframeManagerService:
         getattr(column_types, new_type).append(column_name)
 
         df = await self.file_service.read_df_from_file(dataframe_id)
+        await self._check_columns_consistency(df, column_types.numeric + column_types.categorical, dataframe_id)
         try:
             if new_type == "categorical":
                 converted_column = utils._convert_column_to_categorical(
@@ -83,26 +86,27 @@ class DataframeManagerService:
         return await self.metadata_service.set_column_types(dataframe_id,
                                                             column_types)
 
-    async def get_feature_df(self, dataframe_id: PydanticObjectId):
-        # Todo: Странная логика обработки target
-        feature_columns, target_column = await self.metadata_service.get_feature_target_column_names(
-            dataframe_id=dataframe_id)
-        df = await self.file_service.read_df_from_file(dataframe_id)
-
-        if sorted(df.columns.tolist()) != sorted(feature_columns):
-            raise errors.ColumnsNotEqualError(dataframe_id)
-        return df
+    # async def get_feature_df(self, dataframe_id: PydanticObjectId):
+    #     # Todo: Странная логика обработки target
+    #     feature_columns, target_column = await self.metadata_service.get_feature_target_column_names(
+    #         dataframe_id=dataframe_id)
+    #     df = await self.file_service.read_df_from_file(dataframe_id)
+    #     await self.check_columns_consistency(df, feature_columns, dataframe_id)
+    #     return df
 
     async def get_feature_target_df(self, dataframe_id: PydanticObjectId):
-        # TODO: check column_types: numeric only
+        # TODO: check column_types: numeric only and check target for numeric
         feature_columns, target_column = await self.metadata_service.get_feature_target_column_names(
             dataframe_id=dataframe_id)
         df = await self.file_service.read_df_from_file(dataframe_id)
+        await self._check_columns_consistency(df, feature_columns + [target_column], dataframe_id)
 
         if target_column is None:
             raise errors.TargetNotFoundError(dataframe_id)
         features = df.drop(target_column, axis=1)
         target = df[target_column]
+        return features, target
+
+    async def _check_columns_consistency(self, df, feature_columns, dataframe_id):
         if sorted(df.columns.tolist()) != sorted(feature_columns):
             raise errors.ColumnsNotEqualError(dataframe_id)
-        return features, target

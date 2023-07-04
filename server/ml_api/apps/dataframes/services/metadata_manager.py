@@ -41,7 +41,7 @@ class DataframeMetadataManagerService:
                                         ) -> (List[str], Optional[str]):
         dataframe_meta = await self.get_dataframe_meta(dataframe_id)
         column_types = dataframe_meta.feature_columns_types
-        target_column = dataframe_meta.target
+        target_column = dataframe_meta.target_feature
         feature_columns = column_types.categorical + column_types.numeric
         if target_column:
             feature_columns.remove(target_column)
