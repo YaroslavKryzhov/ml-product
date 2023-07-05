@@ -2,7 +2,7 @@ from typing import List, Dict, Union, Optional, Any
 
 from pydantic import BaseModel, Field
 from ml_api.apps.dataframes.specs import ScoreFunc, FeatureSelectionMethods, \
-    BaseSklearnModels
+    BaseSklearnModels, AvailableMethods
 
 
 class NumericColumnDescription(BaseModel):
@@ -77,3 +77,17 @@ class SelectFromModelParams(BaseModel):
 class SfsSbsParams(BaseModel):
     estimator: BaseSklearnModels = BaseSklearnModels.linear_regression
     n_features_to_select: int = Field(1, ge=1)  # n_features_to_select should be greater than or equal to 1
+
+
+class ApplyMethodParams(BaseModel):
+    method_name: AvailableMethods
+    columns: Optional[List[str]] = None
+    params: Optional[Dict[str, Any]] = None
+
+
+class FillCustomValueParams(BaseModel):
+    value: Union[int, float, str]
+
+
+class LeaveNValuesParams(BaseModel):
+    values_to_keep: List[str]

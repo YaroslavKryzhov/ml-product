@@ -1,22 +1,17 @@
 from datetime import datetime
-from typing import List, Any, Optional, Dict
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 from beanie import Document
 from beanie.odm.fields import PydanticObjectId
 from pymongo import IndexModel, ASCENDING, HASHED
 
-from ml_api.apps.dataframes.specs import AvailableFunctions
+from ml_api.apps.dataframes.schemas import ApplyMethodParams
 
 
 class ColumnTypes(BaseModel):
     numeric: List[str]
     categorical: List[str]
-
-
-class PipelineElement(BaseModel):
-    function_name: AvailableFunctions
-    params: Dict[str, Any] = None
 
 
 class DataFrameMetadata(Document):
@@ -25,7 +20,7 @@ class DataFrameMetadata(Document):
     user_id: PydanticObjectId
     feature_columns_types: Optional[ColumnTypes] = ColumnTypes(numeric=[], categorical=[])
     target_feature: Optional[str] = None
-    pipeline: Optional[List[PipelineElement]] = []
+    pipeline: Optional[List[ApplyMethodParams]] = []
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
     class Settings:

@@ -24,17 +24,23 @@ class DataframeManagerService:
         return dataframe_meta_updated
 
     async def save_transformed_dataframe(self, parent_id: PydanticObjectId,
-                                         method_name: str, df: pd.DataFrame) -> DataFrameMetadata:
-        # TODO: set new pipeline
+            new_dataframe_meta: models.DataFrameMetadata, new_df: pd.DataFrame
+                                         ) -> DataFrameMetadata:
         filename = await self.metadata_service.get_filename(parent_id)
+        method_name = 'modified'
         try:
-            new_meta = await self.file_service.create_file(df,
+            meta_created = await self.file_service.create_file(new_df,
                 filename=f"{filename}_{method_name}", parent_id=parent_id)
         except errors.FilenameExistsUserError:
-            new_meta = await self.file_service.create_file(df,
+            meta_created = await self.file_service.create_file(new_df,
                 filename=f"{filename}_{method_name}{utils.get_random_number()}",
                 parent_id=parent_id)
-        return new_meta
+        new_dataframe_id = meta_created.id
+        await self.metadata_service.set_column_types(new_dataframe_id,
+            new_dataframe_meta.feature_columns_types)
+        await self.metadata_service.set_pipeline(new_dataframe_id,
+            new_dataframe_meta.pipeline)
+        return await self.metadata_service.get_dataframe_meta(new_dataframe_id)
 
     async def move_dataframe_to_root(self, dataframe_id: PydanticObjectId):
         parent_id = await self.metadata_service.get_parent_id(dataframe_id)

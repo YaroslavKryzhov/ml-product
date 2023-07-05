@@ -218,6 +218,23 @@ async def set_target_feature(dataframe_id: PydanticObjectId, target_column: str,
     )
 
 
+@dataframes_methods_router.delete("/target",
+                               summary="Очистить выбор целевого признака")
+async def set_target_feature(dataframe_id: PydanticObjectId,
+                       user: User = Depends(current_active_user)):
+    """
+        Убирает отметку столбца датафрейма как целевого (Y).
+
+        - **dataframe_id**: ID csv-файла(датафрейма)
+    """
+    await DataframeMetadataManagerService(user.id).unset_target_feature(dataframe_id)
+    return Response(
+        status_code=status.HTTP_200_OK,
+        content=f"The target column is unset.",
+        media_type='text/plain',
+    )
+
+
 @dataframes_methods_router.put("/change_type",
                                summary="Сменить тип столбца")
 async def set_column_as_categorical(dataframe_id: PydanticObjectId, column_name: str,
@@ -250,7 +267,7 @@ async def delete_column(dataframe_id: PydanticObjectId, column_name: str,
         - **column_name**: имя столбца
     """
     await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id)
-    await DataframeMethodsManagerService(user.id).apply_function(
+    await DataframeMethodsManagerService(user.id).apply_method(
         dataframe_id, specs.AvailableFunctions.drop_column, column_name)
     return Response(
         status_code=status.HTTP_200_OK,
@@ -308,8 +325,8 @@ async def apply_method(dataframe_id: PydanticObjectId, function_name: specs.Avai
 
     """
     await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id)
-    await DataframeMethodsManagerService(user.id).apply_function(dataframe_id,
-                                            function_name.value, params)
+    await DataframeMethodsManagerService(user.id).apply_method(dataframe_id,
+                                                               function_name.value, params)
     return Response(
         status_code=status.HTTP_200_OK,
         content=f"Method '{function_name}' successfully applied",

@@ -15,13 +15,16 @@ from ml_api.apps.dataframes.errors import WrongSelectorParamsError, SelectorMeth
 
 
 class FeatureSelector:
+    """
+    Класс, отвечающий за отбор признаков.
+    """
     def __init__(self, features, target,
                  selector_params: List[schemas.SelectorMethodParams]):
         self.X = features
         self.y = target
         self.summary = pd.DataFrame(index=features.columns)
         self.params = selector_params
-        self.methods = {
+        self._methods = {
             specs.FeatureSelectionMethods.variance_threshold: self._variance_threshold,
             specs.FeatureSelectionMethods.select_k_best: self._select_k_best,
             specs.FeatureSelectionMethods.select_percentile: self._select_percentile,
@@ -144,7 +147,6 @@ class FeatureSelector:
             raise WrongSelectorParamsError("SelectFromModel")
         selector = SelectFromModel(estimator, prefit=True)
         self.summary["SelectFromModel"] = selector.get_support()
-        return self
 
     def _sequential_forward_selection(self, params: Dict[str, Any]):
         try:
@@ -156,7 +158,6 @@ class FeatureSelector:
             n_features_to_select=params.n_features_to_select)
         selector.fit(self.X, self.y)
         self.summary["SequentialForwardSelection"] = selector.get_support()
-        return self
 
     def _sequential_backward_selection(self, params: Dict[str, Any]):
         try:
@@ -168,15 +169,14 @@ class FeatureSelector:
             n_features_to_select=params.n_features_to_select)
         selector.fit(self.X, self.y)
         self.summary["SequentialBackwardSelection"] = selector.get_support()
-        return self
 
     def get_summary(self):
         for method_param in self.params:
             method_name = method_param.method_name
             params = method_param.params
-            if method_name not in self.methods:
+            if method_name not in self._methods:
                 raise SelectorMethodNotExistsError(method_name)
-            self.methods[method_name](params)
+            self._methods[method_name](params)
         result = self.summary.to_dict(orient="index")
         return schemas.FeatureSelectionSummary(result=result)
 

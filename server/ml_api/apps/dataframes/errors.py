@@ -47,6 +47,24 @@ class ColumnNotFoundDataFrameError(HTTPException):
         )
 
 
+class ColumnNotNumericError(HTTPException):
+    """Raise when column not found in column_types.numeric"""
+    def __init__(self, column_name: str):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Column {column_name} not found in column_types.numeric"
+        )
+
+
+class ColumnNotCategoricalError(HTTPException):
+    """Raise when column not found in column_types.categorical"""
+    def __init__(self, column_name: str):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Column {column_name} not found in column_types.categorical"
+        )
+
+
 class ColumnsNotEqualError(HTTPException):
     """Raise when feature columns in dataframe_meta not equal to real in
     Dataframe"""
@@ -90,4 +108,62 @@ class WrongSelectorParamsError(HTTPException):
         super().__init__(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f'Method "{method_name}" has wrong params'
+        )
+
+
+class ApplyingMethodNotExistsError(HTTPException):
+    """Raise when ApplyMethod not exists"""
+    def __init__(self, method_name: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f'Method "{method_name}" not exists'
+        )
+
+
+class WrongApplyingMethodParamsError(HTTPException):
+    """Raise when ApplyMethodParams has wrong params"""
+    def __init__(self, method_name: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f'Method "{method_name}" has wrong params'
+        )
+
+
+class WrongApplyingMethodParamsErrorFull(HTTPException):
+    """Raise when ApplyMethodParams has wrong params"""
+    def __init__(self, message: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=message
+        )
+
+
+class TargetFeatureEncodingError(HTTPException):
+    """Raise when trying to encode target feature"""
+    def __init__(self, target_feature: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Trying to encode target feature {target_feature} - "
+                   f"denied. Target feature can't be encoded. "
+                   f"Make it non-target feature first."
+        )
+
+
+class TargetFeatureDeletingError(HTTPException):
+    """Raise when trying to delete target feature"""
+    def __init__(self, target_feature: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Trying to delete target feature {target_feature} - "
+                   f"denied. Target feature can't be deleted. "
+                   f"Make it non-target feature first."
+        )
+
+
+class NansInDataFrameError(HTTPException):
+    """Raise when pd.DataFrame contains NaNs"""
+    def __init__(self, message: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=message
         )

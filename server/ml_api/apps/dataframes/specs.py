@@ -38,56 +38,25 @@ class FeatureSelectionMethods(Enum):
     select_from_model = 'select_from_model'
 
 
-class AvailableFunctions(Enum):
-    # GROUP 1: Обработка данных------------------------------------------------
-    remove_duplicates = 'remove_duplicates'  # Удаление дубликатов
-    drop_na = 'drop_na'  # Удаление пропусков
-    drop_column = 'drop_column'
-    miss_insert_mean_mode = (
-        'miss_insert_mean_mode'  # Замена пропусков: Среднее и мода
-    )
-    miss_linear_imputer = (
-        'miss_linear_imputer'  # Замена пропусков: Линейная модель
-    )
-    miss_knn_imputer = (
-        'miss_knn_imputer'  # Замена пропусков: К-ближних соседей
-    )
+class AvailableMethods(Enum):
+    drop_duplicates = 'drop_duplicates'
+    drop_na = 'drop_na'
+    drop_columns = 'drop_columns'
 
-    # GROUP 2: Трансформация признаков (required: no NaN values)---------------
-    standardize_features = (
-        'standardize_features'  # Стандартизация цисленных признаков
-    )
-    ordinal_encoding = 'ordinal_encoding'  # Порядковое кодирование
-    one_hot_encoding = 'one_hot_encoding'  # One-Hot кодирование (OHE)
+    fill_mean = 'fill_mean'
+    fill_median = 'fill_median'
+    fill_most_frequent = 'fill_most_frequent'
+    fill_custom_value = 'fill_custom_value'
+    fill_bfill = 'fill_bfill'
+    fill_ffill = 'fill_ffill'
+    fill_interpolation = 'fill_interpolation'
+    fill_linear_imputer = 'fill_linear_imputer'
+    fill_knn_imputer = 'fill_knn_imputer'
 
-    # GROUP 3: Удаление выбросов (required: no NaN values)---------------------
-    outliers_isolation_forest = (
-        'outliers_isolation_forest'  # Удаление выбросов: IsolationForest
-    )
-    outliers_elliptic_envelope = (
-        'outliers_elliptic_envelope'  # Удаление выбросов: EllipticEnvelope
-    )
-    outliers_local_factor = (
-        'outliers_local_factor'  # Удаление выбросов: LocalOutlierFactor
-    )
-    outliers_one_class_svm = (
-        'outliers_one_class_svm'  # Удаление выбросов: OneClassSVM
-    )
-    outliers_sgd_one_class_svm = (
-        'outliers_sgd_one_class_svm'  # Удаление выбросов: SGDOneClassSVM
-    )
+    leave_n_values_encoding = 'leave_n_values_encoding'
+    one_hot_encoding = 'one_hot_encoding'
+    ordinal_encoding = 'ordinal_encoding'
 
-    # Временно приостановлено
-    # GROUP 4: Отбор признаков (required: only numeric columns)----------------
-    # fs_select_percentile = (
-    #     'fs_select_percentile'  # Отбор признаков: по перцентилю
-    # )
-    # fs_select_k_best = 'fs_select_k_best'  # Отбор признаков: k лучших
-    # fs_select_fpr = 'fs_select_fpr'  # Отбор признаков: FPR
-    # fs_select_fdr = 'fs_select_fdr'  # Отбор признаков: FDR
-    # fs_select_fwe = 'fs_select_fwe'  # Отбор признаков: FWE
-    # fs_select_rfe = 'fs_select_rfe'  # Отбор признаков: RFE
-    # fs_select_from_model = (
-    #     'fs_select_from_model'  # Отбор признаков: из линейной модели
-    # )
-    # fs_select_pca = 'fs_select_pca'  # Отбор признаков: Метод главных компонент
+    standard_scaler = 'standard_scaler'
+    min_max_scaler = 'min_max_scaler'
+    robust_scaler = 'robust_scaler'

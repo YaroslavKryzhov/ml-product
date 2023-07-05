@@ -11,8 +11,8 @@ from ml_api.apps.dataframes.services.metadata_manager import DataframeMetadataMa
 
 class DataframeStatisticsProviderService:
     """
-    Отвечает за предоставление клиенту данных, необходимых для отображения данных,
-    находящихся внутри датафрейма (страница Датафрейма на фронтенд-клиенте).
+    Отвечает за предоставление клиенту данных, необходимых для отображения
+    датафрейма (страница Датафрейма на фронтенд-клиенте).
     """
     def __init__(self, user_id):
         self._user_id = user_id

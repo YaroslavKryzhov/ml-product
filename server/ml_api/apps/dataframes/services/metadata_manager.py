@@ -3,7 +3,7 @@ from typing import List, Any, Optional
 from beanie import PydanticObjectId
 
 from ml_api.apps.dataframes.repository import DataFrameInfoCRUD
-from ml_api.apps.dataframes.models import DataFrameMetadata, ColumnTypes, PipelineElement
+from ml_api.apps.dataframes.models import DataFrameMetadata, ColumnTypes, ApplyMethodParams
 from ml_api.apps.dataframes import specs
 from ml_api.apps.dataframes.errors import ColumnNotFoundMetadataError
 
@@ -47,7 +47,7 @@ class DataframeMetadataManagerService:
             feature_columns.remove(target_column)
         return feature_columns, target_column
 
-    async def get_pipeline(self, dataframe_id: PydanticObjectId) -> List[PipelineElement]:
+    async def get_pipeline(self, dataframe_id: PydanticObjectId) -> List[ApplyMethodParams]:
         dataframe_meta = await self.get_dataframe_meta(dataframe_id)
         return dataframe_meta.pipeline
 
@@ -59,21 +59,25 @@ class DataframeMetadataManagerService:
         query = {"$set": {'feature_columns_types': column_types}}
         return await self.info_repository.update(dataframe_id, query)
 
-    async def set_pipeline(self, dataframe_id: PydanticObjectId, pipeline: List[PipelineElement]):
+    async def set_pipeline(self, dataframe_id: PydanticObjectId, pipeline: List[ApplyMethodParams]):
         query = {"$set": {'pipeline': pipeline}}
         return await self.info_repository.update(dataframe_id, query)
 
-    async def add_method_to_pipeline(self, dataframe_id: PydanticObjectId,
-                         function_name: specs.AvailableFunctions, params: Any = None):
-        pipeline = await self.get_pipeline(dataframe_id)
-        pipeline.append(PipelineElement(function_name=function_name, params=params))
-        return await self.set_pipeline(dataframe_id, pipeline)
+    # async def add_method_to_pipeline(self, dataframe_id: PydanticObjectId,
+    #                                  method_params: ApplyMethodParams):
+    #     pipeline = await self.get_pipeline(dataframe_id)
+    #     pipeline.append(method_params)
+    #     return await self.set_pipeline(dataframe_id, pipeline)
 
     async def set_target_feature(self, dataframe_id: PydanticObjectId, target_feature: str):
         column_types = await self.get_column_types(dataframe_id)
         if not (target_feature in column_types.numeric or target_feature in column_types.categorical):
             raise ColumnNotFoundMetadataError(target_feature)
         query = {"$set": {'target_feature': target_feature}}
+        return await self.info_repository.update(dataframe_id, query)
+
+    async def unset_target_feature(self, dataframe_id: PydanticObjectId):
+        query = {"$set": {'target_feature': None}}
         return await self.info_repository.update(dataframe_id, query)
 
     async def set_parent_id(self, dataframe_id, new_parent_id: Optional[PydanticObjectId]):
