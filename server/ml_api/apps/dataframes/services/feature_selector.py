@@ -170,7 +170,7 @@ class FeatureSelector:
         selector.fit(self.X, self.y)
         self.summary["SequentialBackwardSelection"] = selector.get_support()
 
-    def get_summary(self):
+    def get_summary(self) -> schemas.FeatureSelectionSummary:
         for method_param in self.params:
             method_name = method_param.method_name
             params = method_param.params

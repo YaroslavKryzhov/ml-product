@@ -19,15 +19,18 @@ class DataframeStatisticsProviderService:
         self.metadata_service = DataframeMetadataManagerService(self._user_id)
         self.file_service = DataframeFileManagerService(self._user_id)
 
-    # 2: GET OPERATIONS -------------------------------------------------------
-    async def get_dataframe_with_pagination(self, dataframe_id: PydanticObjectId,
-                                            page: int = 1, rows_on_page: int = 50
+    async def get_dataframe_with_pagination(self,
+                                            dataframe_id: PydanticObjectId,
+                                            page: int = 1,
+                                            rows_on_page: int = 50
                                             ) -> schemas.ReadDataFrameResponse:
         await self.metadata_service.get_dataframe_meta(dataframe_id)
         df = await self.file_service.read_df_from_file(dataframe_id)
         return utils._get_dataframe_with_pagination(df, page, rows_on_page)
 
-    async def get_dataframe_column_statistics(self, dataframe_id: PydanticObjectId, bins: int = 10
+    async def get_dataframe_column_statistics(self,
+                                              dataframe_id: PydanticObjectId,
+                                              bins: int = 10
                                               ) -> List[schemas.ColumnDescription]:
         result = []
         dataframe_meta = await self.metadata_service.get_dataframe_meta(dataframe_id)
@@ -41,7 +44,8 @@ class DataframeStatisticsProviderService:
                           (df=df, column_name=column_name))
         return result
 
-    async def get_correlation_matrix(self, dataframe_id: PydanticObjectId) -> Dict[str, Dict[str, float]]:
+    async def get_correlation_matrix(self, dataframe_id: PydanticObjectId
+                                     ) -> Dict[str, Dict[str, float]]:
         await self.metadata_service.get_dataframe_meta(dataframe_id)
         df = await self.file_service.read_df_from_file(dataframe_id)
         return df.corr().to_dict()

@@ -11,6 +11,15 @@ class DataFrameNotFoundError(HTTPException):
         )
 
 
+class ObjectFileNotFoundError(HTTPException):
+    """Raise when file not found"""
+    def __init__(self, file_id: PydanticObjectId):
+        super().__init__(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"File of object with id {file_id} not found."
+        )
+
+
 class FilenameExistsUserError(HTTPException):
     """Raise when filename already exists in user's dataframes"""
     def __init__(self, filename: str):

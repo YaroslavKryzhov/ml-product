@@ -34,8 +34,8 @@ class DataframeMethodsManagerService:
     async def apply_methods(self, dataframe_id: PydanticObjectId,
                             method_params: List[schemas.ApplyMethodParams]
                             ) -> DataFrameMetadata:
-        df = await self.file_service.read_df_from_file(dataframe_id)
         dataframe_meta = await self.metadata_service.get_dataframe_meta(dataframe_id)
+        df = await self.file_service.read_df_from_file(dataframe_id)
 
         function_processor = DataframeMethodProcessor(df, dataframe_meta)
         for method_params in method_params:
@@ -49,10 +49,9 @@ class DataframeMethodsManagerService:
 
     async def copy_pipeline(self, id_from: PydanticObjectId,
                             id_to: PydanticObjectId) -> DataFrameMetadata:
-        # TODO: check if pipeline with id_to already exists +
-        #  логика применения методов при предсказании на документе
+        # Будет доработан, когда проработаются модели
         check_pipeline = await self.metadata_service.get_pipeline(id_to)
         if len(check_pipeline) != 0:
-            raise Exception
+            raise Exception("Pipeline with id_to already exists")
         pipeline_from = await self.metadata_service.get_pipeline(id_from)
         return await self.apply_methods(id_to, pipeline_from)

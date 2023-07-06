@@ -18,7 +18,8 @@ class DataFrameMetadata(Document):
     parent_id: Optional[PydanticObjectId] = None
     filename: str
     user_id: PydanticObjectId
-    feature_columns_types: Optional[ColumnTypes] = ColumnTypes(numeric=[], categorical=[])
+    feature_columns_types: Optional[ColumnTypes] = ColumnTypes(
+        numeric=[], categorical=[])
     target_feature: Optional[str] = None
     pipeline: Optional[List[ApplyMethodParams]] = []
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
@@ -27,6 +28,7 @@ class DataFrameMetadata(Document):
         collection = "dataframe_collection"
         indexes = [
             IndexModel([("user_id", ASCENDING)]),
-            IndexModel([("user_id", ASCENDING), ("filename", ASCENDING)], unique=True),
+            IndexModel([("user_id", ASCENDING), (
+                "filename", ASCENDING)], unique=True),
             IndexModel([("parent_id", HASHED)]),
         ]

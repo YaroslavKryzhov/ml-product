@@ -5,7 +5,8 @@ import pandas as pd
 from ml_api.apps.dataframes import schemas
 
 
-def _get_dataframe_with_pagination(df, page, rows_on_page):
+def _get_dataframe_with_pagination(df, page, rows_on_page
+                                   ) -> schemas.ReadDataFrameResponse:
     """Returns dataframe with pagination."""
     length = len(df)
     pages_count = (length - 1) // rows_on_page + 1
@@ -79,7 +80,8 @@ def _get_categorical_column_statistics(
     )
 
 
-def _get_numeric_column_statistic_params(column: pd.Series) -> schemas.NumericColumnDescription:
+def _get_numeric_column_statistic_params(column: pd.Series
+                                         ) -> schemas.NumericColumnDescription:
     """Returns statistics for numeric column."""
     result = column.describe()
     result.index = [
@@ -95,7 +97,8 @@ def _get_numeric_column_statistic_params(column: pd.Series) -> schemas.NumericCo
     return schemas.NumericColumnDescription(**result.to_dict())
 
 
-def _get_categorical_column_statistic_params(column: pd.Series) -> schemas.NumericColumnDescription:
+def _get_categorical_column_statistic_params(column: pd.Series
+                                             ) -> schemas.NumericColumnDescription:
     """Returns statistics for categorical column."""
     result = {'nunique': column.nunique(),
               'most_frequent': column.value_counts().iloc[:5].to_dict()}

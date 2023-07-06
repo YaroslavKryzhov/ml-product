@@ -4,6 +4,9 @@ from enum import Enum
 class TaskType(Enum):
     classification = 'classification'
     regression = 'regression'
+    clustering = 'clustering'
+    oulier_detection = 'oulier_detection'
+    demensionality_reduction = 'demensionality_reduction'
 
 
 class ColumnType(Enum):

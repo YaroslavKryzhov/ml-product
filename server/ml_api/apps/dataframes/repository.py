@@ -3,13 +3,13 @@ from typing import Dict
 
 import pandas as pd
 from fastapi.responses import FileResponse
-from fastapi import HTTPException, status
 from beanie import PydanticObjectId
 from pymongo.errors import DuplicateKeyError
 
 from ml_api.common.file_manager.base import FileCRUD
 from ml_api.apps.dataframes.models import DataFrameMetadata
-from ml_api.apps.dataframes.errors import FilenameExistsUserError, DataFrameNotFoundError
+from ml_api.apps.dataframes.errors import FilenameExistsUserError, \
+    DataFrameNotFoundError, ObjectFileNotFoundError
 
 
 class DataFrameInfoCRUD:
@@ -23,10 +23,12 @@ class DataFrameInfoCRUD:
         return dataframe_meta
 
     async def get_all(self) -> List[DataFrameMetadata]:
-        dataframe_metas = await DataFrameMetadata.find(DataFrameMetadata.user_id == self.user_id).to_list()
+        dataframe_metas = await DataFrameMetadata.find(
+            DataFrameMetadata.user_id == self.user_id).to_list()
         return dataframe_metas
 
-    async def create(self, filename: str, parent_id: PydanticObjectId = None) -> DataFrameMetadata:
+    async def create(self, filename: str, parent_id: PydanticObjectId = None
+                     ) -> DataFrameMetadata:
         new_obj = DataFrameMetadata(filename=filename,
                                     user_id=self.user_id,
                                     parent_id=parent_id)
@@ -36,7 +38,8 @@ class DataFrameInfoCRUD:
             raise FilenameExistsUserError(filename)
         return new_obj
 
-    async def update(self, dataframe_id: PydanticObjectId, query: Dict) -> DataFrameMetadata:
+    async def update(self, dataframe_id: PydanticObjectId, query: Dict
+                     ) -> DataFrameMetadata:
         dataframe_meta = await DataFrameMetadata.get(dataframe_id)
         if not dataframe_meta:
             raise DataFrameNotFoundError(dataframe_id)
@@ -56,13 +59,11 @@ class DataFrameFileCRUD(FileCRUD):
         try:
             data = pd.read_csv(csv_path)
         except FileNotFoundError:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"File with ID {file_id} not found"
-            )
+            raise ObjectFileNotFoundError(file_id)
         return data
 
-    def download_csv(self, file_id: PydanticObjectId, filename: str) -> FileResponse:
+    def download_csv(self, file_id: PydanticObjectId, filename: str
+                     ) -> FileResponse:
         file_response = self.download(file_id=file_id, filename=filename)
         file_response.media_type = "text/csv"
         return file_response

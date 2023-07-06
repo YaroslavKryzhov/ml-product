@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict
 
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, UploadFile, File, status
@@ -65,7 +65,8 @@ async def rename_dataframe(
         - **dataframe_id**: ID csv-файла(датафрейма)
         - **new_filename**: новое имя файла
     """
-    return await DataframeMetadataManagerService(user.id).set_filename(dataframe_id, new_filename)
+    return await DataframeMetadataManagerService(user.id).set_filename(
+        dataframe_id, new_filename)
 
 
 @dataframes_file_router.delete("", summary="Удалить csv-файл")
@@ -140,7 +141,8 @@ async def read_dataframe_with_pagination(
         - **page**: номер cтраницы (default=1)
         - **rows_on_page**: кол-во строк датафрейма на cтраницу (default=1)
     """
-    return await DataframeStatisticsProviderService(user.id).get_dataframe_with_pagination(dataframe_id, page, rows_on_page)
+    return await DataframeStatisticsProviderService(
+        user.id).get_dataframe_with_pagination(dataframe_id, page, rows_on_page)
 
 
 @dataframes_content_router.get("/statistics",
@@ -166,31 +168,38 @@ async def dataframe_columns_stat_info(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeStatisticsProviderService(user.id).get_dataframe_column_statistics(dataframe_id)
+    return await DataframeStatisticsProviderService(
+        user.id).get_dataframe_column_statistics(dataframe_id)
 
 
-@dataframes_content_router.get("/column_types", response_model=models.ColumnTypes,
-                          summary="Получить списки типов столбцов",
-                          response_description="Списки категориальных и численных столбцов")
-async def get_column_names(dataframe_id: PydanticObjectId, user: User = Depends(current_active_user)):
+@dataframes_content_router.get("/column_types",
+                               response_model=models.ColumnTypes,
+                               summary="Получить списки типов столбцов",
+                               response_description="Списки категориальных и численных столбцов")
+async def get_column_names(dataframe_id: PydanticObjectId,
+                           user: User = Depends(current_active_user)):
     """
         Возвращает список имен столбцов датафрейма.
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeMetadataManagerService(user.id).get_column_types(dataframe_id)
+    return await DataframeMetadataManagerService(
+        user.id).get_column_types(dataframe_id)
 
 
-@dataframes_content_router.get("/corr_matrix", response_model=Dict[str, Dict[str, float]],
-                          summary="Получить матрицу корреляций",
-                          response_description="Словарь словарей")
-async def get_correlation_matrix(dataframe_id: PydanticObjectId, user: User = Depends(current_active_user)):
+@dataframes_content_router.get("/corr_matrix",
+                               response_model=Dict[str, Dict[str, float]],
+                               summary="Получить матрицу корреляций",
+                               response_description="Словарь словарей")
+async def get_correlation_matrix(dataframe_id: PydanticObjectId,
+                                 user: User = Depends(current_active_user)):
     """
         Возвращает матрицу корреляций для численных столбцов датафрейма.
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeStatisticsProviderService(user.id).get_correlation_matrix(dataframe_id)
+    return await DataframeStatisticsProviderService(
+        user.id).get_correlation_matrix(dataframe_id)
 
 
 dataframes_methods_router = APIRouter(
@@ -201,43 +210,40 @@ dataframes_methods_router = APIRouter(
 
 
 @dataframes_methods_router.put("/target",
-                               summary="Задать целевой признак")
-async def set_target_feature(dataframe_id: PydanticObjectId, target_column: str,
-                       user: User = Depends(current_active_user)):
+                               summary="Задать целевой признак",
+                               response_model=models.DataFrameMetadata)
+async def set_target_feature(dataframe_id: PydanticObjectId,
+                             target_column: str,
+                             user: User = Depends(current_active_user)):
     """
         Помечает столбец датафрейма как целевой (Y).
 
         - **dataframe_id**: ID csv-файла(датафрейма)
         - **target_column**: имя целевого столбца
     """
-    await DataframeMetadataManagerService(user.id).set_target_feature(dataframe_id, target_column)
-    return Response(
-        status_code=status.HTTP_200_OK,
-        content=f"The column '{target_column}' is set as target.",
-        media_type='text/plain',
-    )
+    return DataframeMetadataManagerService(
+        user.id).set_target_feature(dataframe_id, target_column)
 
 
 @dataframes_methods_router.delete("/target",
-                               summary="Очистить выбор целевого признака")
+                               summary="Очистить выбор целевого признака",
+                               response_model=models.DataFrameMetadata)
 async def set_target_feature(dataframe_id: PydanticObjectId,
-                       user: User = Depends(current_active_user)):
+                             user: User = Depends(current_active_user)):
     """
         Убирает отметку столбца датафрейма как целевого (Y).
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    await DataframeMetadataManagerService(user.id).unset_target_feature(dataframe_id)
-    return Response(
-        status_code=status.HTTP_200_OK,
-        content=f"The target column is unset.",
-        media_type='text/plain',
-    )
+    return DataframeMetadataManagerService(
+        user.id).unset_target_feature(dataframe_id)
 
 
 @dataframes_methods_router.put("/change_type",
-                               summary="Сменить тип столбца")
-async def set_column_as_categorical(dataframe_id: PydanticObjectId, column_name: str,
+                               summary="Сменить тип столбца",
+                               response_model=models.DataFrameMetadata)
+async def set_column_as_categorical(dataframe_id: PydanticObjectId,
+                                    column_name: str,
                                     new_type: specs.ColumnType,
                                     user: User = Depends(current_active_user)):
     """
@@ -247,33 +253,28 @@ async def set_column_as_categorical(dataframe_id: PydanticObjectId, column_name:
         - **column_name**: имя численного столбца
         - **type**: тип столбца (числовой/категориальный)
     """
-    await DataframeManagerService(user.id
+    return await DataframeManagerService(user.id
         ).convert_column_to_new_type(dataframe_id, column_name, new_type)
-    return Response(
-        status_code=status.HTTP_200_OK,
-        content=f"Changed type of column '{column_name}' to '{new_type}'.",
-        media_type='text/plain',
-    )
 
 
-@dataframes_methods_router.delete("/column", summary="Удалить столбец")
-async def delete_column(dataframe_id: PydanticObjectId, column_name: str,
-                  user: User = Depends(current_active_user)):
+@dataframes_methods_router.delete("/columns", summary="Удалить столбцы",
+                                  response_model=models.DataFrameMetadata)
+async def delete_column(dataframe_id: PydanticObjectId,
+                        column_names: List[str],
+                        user: User = Depends(current_active_user)):
     """
-        Удаляет столбец из датафрейма.
-        *То же самое, что /apply_method?function_name="drop_column"*
+        Удаляет столбцы из датафрейма.
+        *То же самое, что /apply_method?drop_columns*
 
         - **dataframe_id**: ID csv-файла(датафрейма)
         - **column_name**: имя столбца
     """
-    await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id)
-    await DataframeMethodsManagerService(user.id).apply_method(
-        dataframe_id, specs.AvailableFunctions.drop_column, column_name)
-    return Response(
-        status_code=status.HTTP_200_OK,
-        content=f"The column '{column_name}' successfully deleted",
-        media_type='text/plain',
+    method_params = schemas.ApplyMethodParams(
+        method_name=specs.AvailableMethods.drop_columns,
+        columns=column_names
     )
+    return await DataframeMethodsManagerService(user.id).apply_methods(
+        dataframe_id, [method_params])
 
 
 @dataframes_methods_router.post("/feature_selection",
@@ -287,13 +288,15 @@ async def feature_selection(dataframe_id: PydanticObjectId,
         На основе её, пользователь может выбрать какие признаки стоит удалять
     """
     # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id)
-    return await DataframeMethodsManagerService(user.id).get_feature_selection_summary(
-        dataframe_id, selection_params)
+    return await DataframeMethodsManagerService(
+        user.id).get_feature_selection_summary(dataframe_id, selection_params)
 
 
-@dataframes_methods_router.post("/apply_method")
-async def apply_method(dataframe_id: PydanticObjectId, function_name: specs.AvailableFunctions,
-                 params: Any = None, user: User = Depends(current_active_user)):
+@dataframes_methods_router.post("/apply_method",
+                                response_model=models.DataFrameMetadata)
+async def apply_method(dataframe_id: PydanticObjectId,
+                       method_params: List[schemas.ApplyMethodParams],
+                       user: User = Depends(current_active_user)):
     """
         Применяет метод обработки к датафрейму.
 
@@ -308,38 +311,42 @@ async def apply_method(dataframe_id: PydanticObjectId, function_name: specs.Avai
         - **params**: параметры для функции (в текущей реализации нужны только для 'drop_column')
 
         Доступные методы:
-        * 'remove_duplicates' – Удаление дубликатов
-        * 'drop_na' – Удаление пропусков
-        * 'drop_column' – Удаление столбца
-        * 'miss_insert_mean_mode' – Замена пропусков: Среднее и мода
-        * 'miss_linear_imputer' – Замена пропусков: Линейная модель
-        * 'miss_knn_imputer' – Замена пропусков: К-ближних соседей
-        * 'standardize_features' – Стандартизация цисленных признаков
-        * 'ordinal_encoding' – Порядковое кодирование
-        * 'one_hot_encoding' – One-Hot кодирование (OHE)
-        * 'outliers_isolation_forest' – Удаление выбросов: IsolationForest
-        * 'outliers_elliptic_envelope' – Удаление выбросов: EllipticEnvelope
-        * 'outliers_local_factor' – Удаление выбросов: LocalOutlierFactor
-        * 'outliers_one_class_svm' – Удаление выбросов: OneClassSVM
-        * 'outliers_sgd_one_class_svm' – Удаление выбросов: SGDOneClassSVM
+        * `drop_duplicates` - Remove duplicates
+        * `drop_na` - Remove NA values
+        * `drop_columns` - Remove columns
 
+        * `fill_mean` - Replace NA values with the mean
+        * `fill_median` - Replace NA values with the median
+        * `fill_most_frequent` - Replace NA values with the most frequent value
+        * `fill_custom_value` - Replace NA values with a custom value
+        * `fill_bfill` - Fill NA values using backfill method
+        * `fill_ffill` - Fill NA values using forward fill method
+        * `fill_interpolation` - Fill NA values using interpolation
+        * `fill_linear_imputer` - Replace NA values using a linear imputer
+        * `fill_knn_imputer` - Replace NA values using a k-nearest neighbors imputer
+
+        * `leave_n_values_encoding` - Leave N values encoding
+        * `one_hot_encoding` - One-Hot encoding (OHE)
+        * `ordinal_encoding` - Ordinal encoding
+
+        * `standard_scaler` - Standardize numeric features
+        * `min_max_scaler` - Scale features to a given range
+        * `robust_scaler` - Scale features using statistics that are robust to outliers
     """
-    await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id)
-    await DataframeMethodsManagerService(user.id).apply_method(dataframe_id,
-                                                               function_name.value, params)
-    return Response(
-        status_code=status.HTTP_200_OK,
-        content=f"Method '{function_name}' successfully applied",
-        media_type='text/plain',
-    )
+    return await DataframeMethodsManagerService(user.id).apply_methods(
+        dataframe_id, method_params)
+
+    # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id_from)
     # task = apply_function_celery.delay(str(user.id),
     #     str(dataframe_id), function_name.value, params)
     # return task.id
 
 
-@dataframes_methods_router.post("/copy_pipeline")
-async def copy_pipeline(dataframe_id_from: PydanticObjectId, dataframe_id_to: PydanticObjectId,
-                  user: User = Depends(current_active_user)):
+@dataframes_methods_router.post("/copy_pipeline",
+                                response_model=models.DataFrameMetadata)
+async def copy_pipeline(dataframe_id_from: PydanticObjectId,
+                        dataframe_id_to: PydanticObjectId,
+                        user: User = Depends(current_active_user)):
     """
         Применяет пайплайн от одного документа к другому.
 
@@ -348,22 +355,17 @@ async def copy_pipeline(dataframe_id_from: PydanticObjectId, dataframe_id_to: Py
         и будет получено пользователям, если он подключен к каналу по веб-сокету.
 
         В ответе возвращается ID бэкграунд-задачи и JWT для доступа к каналу.
-
         В случае возникновения ошибки в процессе - пайплайн не будет применен даже частично.
-
         В текущей реализации на датафрейм нельзя скопировать пайплайн, если у него уже есть свой пайплайн.
 
         - **dataframe_id**: ID csv-файла(датафрейма) с которого копируется пайплайн
         - **dataframe_id**: ID csv-файла(датафрейма) на который применяется пайплайн
     """
-    await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id_from)
-    await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id_to)
-    await DataframeMethodsManagerService(user.id).copy_pipeline(dataframe_id_from, dataframe_id_to)
-    return Response(
-        status_code=status.HTTP_200_OK,
-        content=f"Pipeline successfully applied",
-        media_type='text/plain',
-    )
+    return await DataframeMethodsManagerService(user.id).copy_pipeline(
+        dataframe_id_from, dataframe_id_to)
+
+    # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id_from)
+    # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id_to)
     # task = copy_pipeline_celery.delay(str(user.id),
     #                                   dataframe_id_from, dataframe_id_to)
     # return task.id

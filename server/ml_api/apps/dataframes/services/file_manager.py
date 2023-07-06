@@ -24,24 +24,28 @@ class DataframeFileManagerService:
         self.file_repository.upload(file_id=dataframe_meta.id, file=file)
         return dataframe_meta
 
-    async def create_file(self, df: pd.DataFrame, filename: str, parent_id: PydanticObjectId = None
+    async def create_file(self, df: pd.DataFrame, filename: str,
+                          parent_id: PydanticObjectId = None
                           ) -> DataFrameMetadata:
         dataframe_meta = await self.info_repository.create(filename, parent_id)
         self.file_repository.save_csv(dataframe_meta.id, df)
         return dataframe_meta
 
-    async def download_file(self, dataframe_id: PydanticObjectId) -> FileResponse:
+    async def download_file(self, dataframe_id: PydanticObjectId
+                            ) -> FileResponse:
         dataframe_meta = await self.info_repository.get(dataframe_id)
         response = self.file_repository.download_csv(
             file_id=dataframe_id, filename=dataframe_meta.filename)
         return response
 
-    async def delete_file(self, dataframe_id: PydanticObjectId):
+    async def delete_file(self, dataframe_id: PydanticObjectId) -> None:
         await self.info_repository.delete(dataframe_id)
         self.file_repository.delete(dataframe_id)
 
-    async def read_df_from_file(self, dataframe_id: PydanticObjectId) -> pd.DataFrame:
+    async def read_df_from_file(self, dataframe_id: PydanticObjectId
+                                ) -> pd.DataFrame:
         return self.file_repository.read_csv(dataframe_id)
 
-    async def write_df_to_file(self, dataframe_id: PydanticObjectId, df: pd.DataFrame):
+    async def write_df_to_file(self, dataframe_id: PydanticObjectId,
+                               df: pd.DataFrame) -> None:
         self.file_repository.save_csv(dataframe_id, df)

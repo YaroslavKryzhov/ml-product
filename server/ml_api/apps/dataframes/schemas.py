@@ -46,28 +46,28 @@ class FeatureSelectionSummary(BaseModel):
 
 
 class VarianceThresholdParams(BaseModel):
-    threshold: Optional[float] = Field(0, ge=0)  # threshold should be greater than or equal to 0
+    threshold: Optional[float] = Field(0, ge=0)
 
 
 class SelectKBestParams(BaseModel):
     score_func: ScoreFunc
-    k: int = Field(1, ge=1)  # k should be greater than or equal to 1
+    k: int = Field(1, ge=1)
 
 
 class SelectPercentileParams(BaseModel):
     score_func: ScoreFunc
-    percentile: int = Field(10, ge=1, le=100)  # percentile should be between 1 and 100
+    percentile: int = Field(10, ge=1, le=100)
 
 
 class SelectFprFdrFweParams(BaseModel):
     score_func: ScoreFunc
-    alpha: float = Field(0.05, ge=0, le=1)  # alpha should be between 0 and 1
+    alpha: float = Field(0.05, ge=0, le=1)
 
 
 class RFEParams(BaseModel):
     estimator: BaseSklearnModels = BaseSklearnModels.linear_regression
-    n_features_to_select: Optional[int] = Field(None, ge=1)  # n_features_to_select should be greater than or equal to 1
-    step: Optional[int] = Field(1, ge=1)  # step should be greater than or equal to 1
+    n_features_to_select: Optional[int] = Field(None, ge=1)
+    step: Optional[int] = Field(1, ge=1)
 
 
 class SelectFromModelParams(BaseModel):
@@ -76,7 +76,7 @@ class SelectFromModelParams(BaseModel):
 
 class SfsSbsParams(BaseModel):
     estimator: BaseSklearnModels = BaseSklearnModels.linear_regression
-    n_features_to_select: int = Field(1, ge=1)  # n_features_to_select should be greater than or equal to 1
+    n_features_to_select: int = Field(1, ge=1)
 
 
 class ApplyMethodParams(BaseModel):
