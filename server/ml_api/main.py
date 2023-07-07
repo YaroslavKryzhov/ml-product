@@ -12,7 +12,6 @@ from ml_api.apps.dataframes.routers import (
     dataframes_content_router,
     dataframes_methods_router
 )
-from ml_api.apps.dataframes.services.methods_processor import ApplyFunctionException
 from ml_api.apps.users.routers import users_router
 # from ml_api.apps.ml_models.routers import models_router
 
@@ -42,12 +41,12 @@ app.add_middleware(
 )
 
 
-@app.exception_handler(ApplyFunctionException)
-async def unicorn_exception_handler(request: Request, exc: ApplyFunctionException):
-    return JSONResponse(
-        status_code=status.HTTP_404_NOT_FOUND,
-        content=str(exc),
-    )
+# @app.exception_handler(ApplyFunctionException)
+# async def unicorn_exception_handler(request: Request, exc: ApplyFunctionException):
+#     return JSONResponse(
+#         status_code=status.HTTP_404_NOT_FOUND,
+#         content=str(exc),
+#     )
 
 
 @app.on_event("startup")
