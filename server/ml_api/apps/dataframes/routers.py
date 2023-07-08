@@ -95,8 +95,7 @@ dataframes_metadata_router = APIRouter(
 
 
 @dataframes_metadata_router.get("", response_model=models.DataFrameMetadata,
-    summary="Получить информацию о csv-файле (датафрейме)",
-    response_description="DataFrameMetadata json-объект")
+    summary="Получить информацию о csv-файле (датафрейме)")
 async def read_dataframe_info(
     dataframe_id: PydanticObjectId,
     user: User = Depends(current_active_user),
@@ -110,8 +109,7 @@ async def read_dataframe_info(
 
 
 @dataframes_metadata_router.get("/all", response_model=List[models.DataFrameMetadata],
-    summary="Получить информацию обо всех csv-файлах (датафреймах)",
-    response_description="Массив DataFrameMetadata json-объектов")
+    summary="Получить информацию обо всех csv-файлах (датафреймах)")
 async def read_all_user_dataframes(user: User = Depends(current_active_user)):
     """
         Возвращает информацию обо всех датафреймах пользователя
@@ -125,9 +123,9 @@ dataframes_content_router = APIRouter(
     responses={404: {"description": "Not found"}})
 
 
-@dataframes_content_router.get("", response_model=schemas.ReadDataFrameResponse,
-    summary="Прочитать датафрейм",
-    response_description="Всего страниц, содержимое страницы")
+@dataframes_content_router.get("",
+                               response_model=schemas.ReadDataFrameResponse,
+                               summary="Прочитать датафрейм")
 async def read_dataframe_with_pagination(
     dataframe_id: PydanticObjectId,
     page: int = 1,
@@ -147,8 +145,7 @@ async def read_dataframe_with_pagination(
 
 @dataframes_content_router.get("/statistics",
     response_model=List[schemas.ColumnDescription],
-    summary="Получить описание столбцов",
-    response_description="Массив стоблцов с их характеристиками")
+    summary="Получить описание столбцов")
 async def dataframe_columns_stat_info(
     dataframe_id: PydanticObjectId,
     user: User = Depends(current_active_user),
@@ -174,8 +171,7 @@ async def dataframe_columns_stat_info(
 
 @dataframes_content_router.get("/column_types",
                                response_model=models.ColumnTypes,
-                               summary="Получить списки типов столбцов",
-                               response_description="Списки категориальных и численных столбцов")
+                               summary="Получить списки типов столбцов")
 async def get_column_names(dataframe_id: PydanticObjectId,
                            user: User = Depends(current_active_user)):
     """
@@ -189,8 +185,7 @@ async def get_column_names(dataframe_id: PydanticObjectId,
 
 @dataframes_content_router.get("/corr_matrix",
                                response_model=Dict[str, Dict[str, float]],
-                               summary="Получить матрицу корреляций",
-                               response_description="Словарь словарей")
+                               summary="Получить матрицу корреляций")
 async def get_correlation_matrix(dataframe_id: PydanticObjectId,
                                  user: User = Depends(current_active_user)):
     """
