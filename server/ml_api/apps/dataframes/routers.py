@@ -1,8 +1,7 @@
 from typing import List, Dict
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, UploadFile, File, status
-from fastapi.responses import Response
+from fastapi import APIRouter, Depends, UploadFile, File
 
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.models import User
@@ -69,7 +68,8 @@ async def rename_dataframe(
         dataframe_id, new_filename)
 
 
-@dataframes_file_router.delete("", summary="Удалить csv-файл")
+@dataframes_file_router.delete("", summary="Удалить csv-файл",
+                               response_model=models.DataFrameMetadata)
 async def delete_dataframe(
     dataframe_id: PydanticObjectId,
     user: User = Depends(current_active_user),
@@ -79,12 +79,7 @@ async def delete_dataframe(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    await DataframeFileManagerService(user.id).delete_file(dataframe_id)
-    return Response(
-        status_code=status.HTTP_200_OK,
-        content=f"Dataframe with id '{dataframe_id}' deleted",
-        media_type='text/plain',
-    )
+    return await DataframeFileManagerService(user.id).delete_file(dataframe_id)
 
 
 dataframes_metadata_router = APIRouter(
@@ -265,7 +260,7 @@ async def delete_column(dataframe_id: PydanticObjectId,
         - **column_name**: имя столбца
     """
     method_params = schemas.ApplyMethodParams(
-        method_name=specs.AvailableMethods.drop_columns,
+        method_name=specs.AvailableMethods.DROP_COLUMNS,
         columns=column_names
     )
     return await DataframeMethodsManagerService(user.id).apply_methods(

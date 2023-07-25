@@ -19,7 +19,7 @@ def get_centrifugo_token(user: User = Depends(current_active_user)):
 
 @users_router.get("/auth/authenticated-route")
 async def authenticated_route(user: User = Depends(current_active_user)):
-    return {"message": f"Hello {user.email}!"}
+    return {"message": f"Hello {user.email}! Your id is {user.id}"}
 
 
 users_router.include_router(

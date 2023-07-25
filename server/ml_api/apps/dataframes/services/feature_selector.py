@@ -25,38 +25,38 @@ class FeatureSelector:
         self.summary = pd.DataFrame(index=features.columns)
         self.params = selector_params
         self._methods = {
-            specs.FeatureSelectionMethods.variance_threshold: self._variance_threshold,
-            specs.FeatureSelectionMethods.select_k_best: self._select_k_best,
-            specs.FeatureSelectionMethods.select_percentile: self._select_percentile,
-            specs.FeatureSelectionMethods.select_fpr: self._select_fpr,
-            specs.FeatureSelectionMethods.select_fdr: self._select_fdr,
-            specs.FeatureSelectionMethods.select_fwe: self._select_fwe,
-            specs.FeatureSelectionMethods.recursive_feature_elimination: self._recursive_feature_elimination,
-            specs.FeatureSelectionMethods.select_from_model: self._select_from_model,
-            specs.FeatureSelectionMethods.sequential_forward_selection: self._sequential_forward_selection,
-            specs.FeatureSelectionMethods.sequential_backward_selection: self._sequential_backward_selection,
+            specs.FeatureSelectionMethods.VARIANCE_THRESHOLD: self._variance_threshold,
+            specs.FeatureSelectionMethods.SELECT_K_BEST: self._select_k_best,
+            specs.FeatureSelectionMethods.SELECT_PERCENTILE: self._select_percentile,
+            specs.FeatureSelectionMethods.SELECT_FPR: self._select_fpr,
+            specs.FeatureSelectionMethods.SELECT_FDR: self._select_fdr,
+            specs.FeatureSelectionMethods.SELECT_FWE: self._select_fwe,
+            specs.FeatureSelectionMethods.RECURSIVE_FEATURE_ELIMINATION: self._recursive_feature_elimination,
+            specs.FeatureSelectionMethods.SELECT_FROM_MODEL: self._select_from_model,
+            specs.FeatureSelectionMethods.SEQUENTIAL_FORWARD_SELECTION: self._sequential_forward_selection,
+            specs.FeatureSelectionMethods.SEQUENTIAL_BACKWARD_SELECTION: self._sequential_backward_selection,
         }
 
     def _get_score_func(self, score_func: str) -> Callable:
-        if score_func == specs.ScoreFunc.chi2:
+        if score_func == specs.ScoreFunc.CHI2:
             return chi2
-        if score_func == specs.ScoreFunc.f_classif:
+        if score_func == specs.ScoreFunc.F_CLASSIF:
             return f_classif
-        if score_func == specs.ScoreFunc.f_regression:
+        if score_func == specs.ScoreFunc.F_REGRESSION:
             return f_regression
         else:
             raise WrongSelectorParamsError("ScoreFunc")
 
     def _get_estimator(self, estimator: specs.BaseSklearnModels):
-        if estimator == specs.BaseSklearnModels.linear_regression:
+        if estimator == specs.BaseSklearnModels.LINEAR_REGRESSION:
             return Lasso()
-        if estimator == specs.BaseSklearnModels.random_forest_regressor:
+        if estimator == specs.BaseSklearnModels.RANDOM_FOREST_REGRESSOR:
             return RandomForestRegressor()
-        if estimator == specs.BaseSklearnModels.logistic_regression:
+        if estimator == specs.BaseSklearnModels.LOGISTIC_REGRESSION:
             return LogisticRegression()
-        if estimator == specs.BaseSklearnModels.linear_svc:
+        if estimator == specs.BaseSklearnModels.LINEAR_SVC:
             return LinearSVC(penalty="l1")
-        if estimator == specs.BaseSklearnModels.random_forest_classifier:
+        if estimator == specs.BaseSklearnModels.RANDOM_FOREST_CLASSIFIER:
             return RandomForestClassifier()
         else:
             raise WrongSelectorParamsError("Estimator")

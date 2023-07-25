@@ -38,9 +38,11 @@ class DataframeFileManagerService:
             file_id=dataframe_id, filename=dataframe_meta.filename)
         return response
 
-    async def delete_file(self, dataframe_id: PydanticObjectId) -> None:
-        await self.info_repository.delete(dataframe_id)
+    async def delete_file(self, dataframe_id: PydanticObjectId
+                          ) -> DataFrameMetadata:
+        dataframe_meta = await self.info_repository.delete(dataframe_id)
         self.file_repository.delete(dataframe_id)
+        return dataframe_meta
 
     async def read_df_from_file(self, dataframe_id: PydanticObjectId
                                 ) -> pd.DataFrame:

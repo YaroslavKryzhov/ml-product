@@ -1,65 +1,57 @@
 from enum import Enum
 
 
-class TaskType(Enum):
-    classification = 'classification'
-    regression = 'regression'
-    clustering = 'clustering'
-    oulier_detection = 'oulier_detection'
-    demensionality_reduction = 'demensionality_reduction'
-
-
 class ColumnType(Enum):
-    numeric = 'numeric'
-    categorical = 'categorical'
+    NUMERIC = 'numeric'
+    CATEGORICAL = 'categorical'
 
 
 class ScoreFunc(Enum):
-    chi2 = 'chi2'
-    f_classif = 'f_classif'
-    f_regression = 'f_regression'
+    CHI2 = 'chi2'
+    F_CLASSIF = 'f_classif'
+    F_REGRESSION = 'f_regression'
 
 
 class BaseSklearnModels(Enum):
-    linear_regression = 'linear_regression'
-    random_forest_regressor = 'random_forest_regressor'
-    logistic_regression = 'logistic_regression'
-    linear_svc = 'linear_svc'
-    random_forest_classifier = 'random_forest_classifier'
+    LINEAR_REGRESSION = 'linear_regression'
+    RANDOM_FOREST_REGRESSOR = 'random_forest_regressor'
+    LOGISTIC_REGRESSION = 'logistic_regression'
+    LINEAR_SVC = 'linear_svc'
+    RANDOM_FOREST_CLASSIFIER = 'random_forest_classifier'
 
 
 class FeatureSelectionMethods(Enum):
-    variance_threshold = 'variance_threshold'
-    select_k_best = 'select_k_best'
-    select_percentile = 'select_percentile'
-    select_fpr = 'select_fpr'
-    select_fdr = 'select_fdr'
-    select_fwe = 'select_fwe'
-    recursive_feature_elimination = 'recursive_feature_elimination'
-    sequential_forward_selection = 'sequential_forward_selection'
-    sequential_backward_selection = 'sequential_backward_selection'
-    select_from_model = 'select_from_model'
+    VARIANCE_THRESHOLD = 'variance_threshold'
+    SELECT_K_BEST = 'select_k_best'
+    SELECT_PERCENTILE = 'select_percentile'
+    SELECT_FPR = 'select_fpr'
+    SELECT_FDR = 'select_fdr'
+    SELECT_FWE = 'select_fwe'
+    RECURSIVE_FEATURE_ELIMINATION = 'recursive_feature_elimination'
+    SEQUENTIAL_FORWARD_SELECTION = 'sequential_forward_selection'
+    SEQUENTIAL_BACKWARD_SELECTION = 'sequential_backward_selection'
+    SELECT_FROM_MODEL = 'select_from_model'
 
 
 class AvailableMethods(Enum):
-    drop_duplicates = 'drop_duplicates'
-    drop_na = 'drop_na'
-    drop_columns = 'drop_columns'
+    DROP_DUPLICATES = 'drop_duplicates'
+    DROP_NA = 'drop_na'
+    DROP_COLUMNS = 'drop_columns'
 
-    fill_mean = 'fill_mean'
-    fill_median = 'fill_median'
-    fill_most_frequent = 'fill_most_frequent'
-    fill_custom_value = 'fill_custom_value'
-    fill_bfill = 'fill_bfill'
-    fill_ffill = 'fill_ffill'
-    fill_interpolation = 'fill_interpolation'
-    fill_linear_imputer = 'fill_linear_imputer'
-    fill_knn_imputer = 'fill_knn_imputer'
+    FILL_MEAN = 'fill_mean'
+    FILL_MEDIAN = 'fill_median'
+    FILL_MOST_FREQUENT = 'fill_most_frequent'
+    FILL_CUSTOM_VALUE = 'fill_custom_value'
+    FILL_BFILL = 'fill_bfill'
+    FILL_FFILL = 'fill_ffill'
+    FILL_INTERPOLATION = 'fill_interpolation'
+    FILL_LINEAR_IMPUTER = 'fill_linear_imputer'
+    FILL_KNN_IMPUTER = 'fill_knn_imputer'
 
-    leave_n_values_encoding = 'leave_n_values_encoding'
-    one_hot_encoding = 'one_hot_encoding'
-    ordinal_encoding = 'ordinal_encoding'
+    LEAVE_N_VALUES_ENCODING = 'leave_n_values_encoding'
+    ONE_HOT_ENCODING = 'one_hot_encoding'
+    ORDINAL_ENCODING = 'ordinal_encoding'
 
-    standard_scaler = 'standard_scaler'
-    min_max_scaler = 'min_max_scaler'
-    robust_scaler = 'robust_scaler'
+    STANDARD_SCALER = 'standard_scaler'
+    MIN_MAX_SCALER = 'min_max_scaler'
+    ROBUST_SCALER = 'robust_scaler'

@@ -4,7 +4,7 @@ from functools import partial
 from hyperopt import fmin, tpe, STATUS_OK, space_eval
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 
-from ml_api.apps.ml_models.utils import classification_searchers, \
+from ml_api.apps.ml_models.models_specs import classification_searchers, \
     regression_searchers
 from ml_api.apps.ml_models.schemas import CompositionParams
 from ml_api.apps.ml_models.specs import AvailableModelTypes, AvailableTaskTypes
@@ -15,7 +15,19 @@ class SearchParamsException(Exception):
     pass
 
 
-class AutoParamsSearch:
+# if params_type == specs.AvailableParamsTypes.AUTO:
+#     composition_params = AutoParamsSearch(
+#         task_type=model_info.task_type,
+#         composition_params=model_info.composition_params,
+#         features=features,
+#         target=target,
+#     ).search_params()
+#     query = {'composition_params': composition_params}
+#     ModelInfoCRUD(self._db, self._user_id).update(
+#         model_id=model_info.id, query=query)
+
+class HyperortService:
+    # TODO: rewrite this class
     def __init__(
             self,
             task_type: AvailableTaskTypes,
@@ -28,10 +40,10 @@ class AutoParamsSearch:
         self.features = features
         self.target = target
 
-    def search_params(self):
+    async def search_params(self):
         for i, model_data in enumerate(self.composition_params):
             self.composition_params[i].params = self._validate_params(
-                model_data.type
+                model_data.model_type
             )
         return self.composition_params
 

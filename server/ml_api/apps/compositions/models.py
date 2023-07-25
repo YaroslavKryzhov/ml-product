@@ -6,27 +6,25 @@ from beanie.odm.fields import PydanticObjectId
 from pymongo import IndexModel, ASCENDING, HASHED
 from pydantic import Field
 
-from ml_api.apps.ml_models.specs import AvailableTaskTypes, \
-    AvailableModelTypes, AvailableParamsTypes
+from ml_api.apps.ml_models.specs import AvailableTaskTypes, AvailableCompositionTypes
 from ml_api.apps.ml_models.schemas import ModelParams, ModelStatuses
 
 
-class ModelMetadata(Document):
+class CompositionMetadata(Document):
     filename: str
     user_id: PydanticObjectId
     dataframe_id: PydanticObjectId
-    task_type: AvailableTaskTypes
-    model_params: ModelParams
-    params_type: AvailableParamsTypes
-    feature_columns: Optional[List[str]] = []
-    target_column: Optional[str] = None
-    test_size: Optional[float] = 0.2
+    task_type: Optional[AvailableTaskTypes] = None
+    composition_type: AvailableCompositionTypes
+    composition_params: ModelParams
+    features: Optional[List[str]] = []
+    target: Optional[str] = None
     status: ModelStatuses = ModelStatuses.BUILDING
-    metrics_report_id: Optional[PydanticObjectId] = None
+    metrics_report: Optional[Dict[float]] = None
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
     class Settings:
-        collection = "model_collection"
+        collection = "composition_collection"
         indexes = [
             IndexModel([("user_id", ASCENDING)]),
             IndexModel([("user_id", ASCENDING), (

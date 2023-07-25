@@ -5,12 +5,12 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from ml_api.apps.ml_models.specs import AvailableCompositionTypes, \
-    AvailableTaskTypes, CompositionStatuses, AvailableModelTypes, \
-    ModelSaveFormats
+    AvailableTaskTypes, ModelStatuses, AvailableModelTypes, \
+    ModelFormats
 
 
-class CompositionParams(BaseModel):
-    type: AvailableModelTypes
+class ModelParams(BaseModel):
+    model_type: AvailableModelTypes
     params: Dict[str, Any]
 
 
@@ -50,9 +50,9 @@ class CompositionInfo(BaseModel):
     task_type: AvailableTaskTypes
     composition_type: AvailableCompositionTypes
     composition_params: List[CompositionParams]
-    status: CompositionStatuses
+    status: ModelStatuses
     report: Optional[Union[ClassificationMetrics, RegeressionMetrics]]
-    save_format: ModelSaveFormats
+    save_format: ModelFormats
 
     class Config:
         orm_mode = True

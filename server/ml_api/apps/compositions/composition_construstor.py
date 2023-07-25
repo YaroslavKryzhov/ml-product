@@ -54,17 +54,17 @@ class CompositionConstructor:
             model = self.composition_params[0]
             composition = ModelConstructor(
                 task_type=self.task_type,
-                model_type=model.type,
+                model_type=model.model_type,
                 params=model.params,
             ).get_model()
             return composition
         for i, model in enumerate(self.composition_params):
             models.append(
                 (
-                    str(i) + "_" + model.type.value,
+                    str(i) + "_" + model.model_type.value,
                     ModelConstructor(
                         task_type=self.task_type,
-                        model_type=model.type,
+                        model_type=model.model_type,
                         params=model.params,
                     ).get_model(),
                 )

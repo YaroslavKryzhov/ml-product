@@ -1,165 +1,144 @@
-from typing import List, Dict, Optional
-from datetime import datetime
-from uuid import UUID
-
-from sqlalchemy.orm import Session
-from fastapi.responses import FileResponse
-from sqlalchemy import exc as sql_exceptions
-from onnxruntime import InferenceSession
-
-from fastapi import HTTPException, status
+from typing import List, Dict
 import pickle
 
+from beanie import PydanticObjectId
+from pymongo.errors import DuplicateKeyError
+from fastapi.responses import FileResponse
+
 from ml_api.common.file_manager.base import FileCRUD
-from ml_api.apps.ml_models.models import Model
-from ml_api.apps.ml_models.schemas import CompositionInfo, CompositionParams
+from ml_api.apps.ml_models.models import ModelMetadata
+from ml_api.apps.ml_models.schemas import ModelParams
+from ml_api.apps.ml_models.specs import AvailableTaskTypes, \
+    AvailableParamsTypes, AvailableModelTypes
+from ml_api.apps.ml_models.errors import ModelNotFoundError, \
+    FilenameExistsUserError, ObjectFileNotFoundError
 
 
 class ModelInfoCRUD:
-    def __init__(self, session: Session, user_id):
-        self.session = session
+    def __init__(self, user_id: PydanticObjectId):
         self.user_id = user_id
 
-    # READ
-    def get(self, model_id: UUID) -> CompositionInfo:
-        model = (
-            self.session.query(Model).filter(Model.id == model_id)
-            .first()
-        )
-        if model is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Model with id {model_id} not found."
-            )
-        return CompositionInfo.from_orm(model)
+    async def get(self, model_id: PydanticObjectId) -> ModelMetadata:
+        model_meta = await ModelMetadata.get(model_id)
+        if model_meta is None:
+            raise ModelNotFoundError(model_id)
+        return model_meta
 
-    def get_all(self) -> List[CompositionInfo]:
-        models = (
-            self.session.query(Model).filter(Model.user_id == self.user_id)
-            .all()
-        )
-        result = []
-        for model in models:
-            result.append(CompositionInfo.from_orm(model))
-        return result
+    async def get_all(self) -> List[ModelMetadata]:
+        model_metas = await ModelMetadata.find(
+            ModelMetadata.user_id == self.user_id).to_list()
+        return model_metas
 
-    # CREATE
-    def create(
-            self,
-            filename: str,
-            dataframe_id: UUID,
-            features: List,
-            target: str,
-            task_type: str,
-            composition_type: str,
-            composition_params: List[CompositionParams],
-            model_status: Optional[str],
-            save_format: str,
-            report: Optional[Dict] = None,
-    ) -> CompositionInfo:
-        new_obj = Model(
-            filename=filename,
-            user_id=self.user_id,
-            dataframe_id=dataframe_id,
-            features=features,
-            target=target,
-            created_at=str(datetime.now()),
-            task_type=task_type,
-            composition_type=composition_type,
-            composition_params=composition_params,
-            status=model_status,
-            report=report,
-            save_format=save_format
-        )
-        self.session.add(new_obj)
+    async def get_by_dataframe_id(self, dataframe_id: PydanticObjectId
+                                  ) -> List[ModelMetadata]:
+        models = await ModelMetadata.find(
+            (ModelMetadata.user_id == self.user_id) &
+            (ModelMetadata.dataframe_id == dataframe_id)
+        ).to_list()
+        return models
+
+    async def create(self,
+                     filename: str,
+                     dataframe_id: PydanticObjectId,
+                     task_type: AvailableTaskTypes,
+                     model_params: ModelParams,
+                     params_type: AvailableParamsTypes,
+                     feature_columns: List[str],
+                     target_column: str,
+                     test_size: float) -> ModelMetadata:
+        new_obj = ModelMetadata(filename=filename,
+                                user_id=self.user_id,
+                                dataframe_id=dataframe_id,
+                                task_type=task_type,
+                                model_params=model_params,
+                                params_type=params_type,
+                                feature_columns=feature_columns,
+                                target_column=target_column,
+                                test_size=test_size)
         try:
-            self.session.commit()
-        except sql_exceptions.IntegrityError as err:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=str(err)
-            )
-        except sql_exceptions.SQLAlchemyError as err:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=str(err)
-            )
-        self.session.refresh(new_obj)
-        return CompositionInfo.from_orm(new_obj)
+            await new_obj.insert()
+        except DuplicateKeyError:
+            raise FilenameExistsUserError(filename)
+        return new_obj
 
-    def update(self, model_id: UUID, query: Dict):
-        try:
-            res = self.session.query(Model).filter(Model.id == model_id
-                ).update(query)
-            if res == 0:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Model with id {model_id} not found."
-                )
-        except sql_exceptions.IntegrityError as err:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=str(err)
-            )
-        except sql_exceptions.SQLAlchemyError as err:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=str(err)
-            )
-        self.session.commit()
+    async def update(self, model_id: PydanticObjectId, query: Dict
+                     ) -> ModelMetadata:
+        model_meta = await ModelMetadata.get(model_id)
+        if model_meta is None:
+            raise ModelNotFoundError(model_id)
+        return await model_meta.update(query)
 
-    # DELETE
-    def delete(self, model_id: UUID):
-        res = self.session.query(Model).filter(Model.id == model_id
-                                                   ).delete()
-        if res == 0:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Model with id {model_id} not found."
-            )
-        self.session.commit()
+    async def delete(self, model_id: PydanticObjectId) -> ModelMetadata:
+        model_meta = await ModelMetadata.get(model_id)
+        if model_meta is None:
+            raise ModelNotFoundError(model_id)
+        return await model_meta.delete()
 
 
 class ModelFileCRUD(FileCRUD):
 
-    def read_onnx(self, model_uuid: UUID):
-        model_path = self._get_path(model_uuid)
-        try:
-            model = InferenceSession(model_path)
-        except FileNotFoundError:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Saved model with id {model_uuid} not found."
-            )
-        return model
-
-    def download_model(self, model_uuid: UUID, filename: str) -> FileResponse:
-        file_response = self.download(file_uuid=model_uuid, filename=filename)
-        return file_response
-
-    def save_onnx(self, model_uuid: UUID, model):
-        """Save model in the ONNX format"""
-        model_path = self._get_path(model_uuid)
-        with open(model_path, "wb") as f:
-            f.write(model.SerializeToString())
-
-    """
-    Some pickled models (like catboost) don't work properly after saving and load.
-    """
-    def read_pickle(self, model_uuid: UUID):
-        model_path = self._get_path(model_uuid)
+    def read_model(self, file_id: PydanticObjectId):
+        """Read model file"""
+        model_path = self._get_path(file_id)
         try:
             with open(model_path, 'rb') as f:
                 model = pickle.load(f)
         except FileNotFoundError:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Saved model with id {model_uuid} not found."
-            )
+            raise ObjectFileNotFoundError(file_id)
         return model
 
-    def save_pickle(self, model_uuid: UUID, model):
-        """Save model in the pickle format"""
-        model_path = self._get_path(model_uuid)
+    def download_model(self, file_id: PydanticObjectId,
+                       filename: str) -> FileResponse:
+        file_response = self.download(file_id=file_id, filename=filename)
+        return file_response
+
+    def save_model(self, file_id: PydanticObjectId, model):
+        """Save model file"""
+        model_path = self._get_path(file_id)
         with open(model_path, "wb") as f:
             pickle.dump(model, f, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+# class ModelFileCRUD(FileCRUD):
+#
+#     def read_onnx(self, model_uuid: UUID):
+#         model_path = self._get_path(model_uuid)
+#         try:
+#             model = InferenceSession(model_path)
+#         except FileNotFoundError:
+#             raise HTTPException(
+#                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#                 detail=f"Saved model with id {model_uuid} not found."
+#             )
+#         return model
+#
+#     def download_model(self, model_uuid: UUID, filename: str) -> FileResponse:
+#         file_response = self.download(file_uuid=model_uuid, filename=filename)
+#         return file_response
+#
+#     def save_onnx(self, model_uuid: UUID, model):
+#         """Save model in the ONNX format"""
+#         model_path = self._get_path(model_uuid)
+#         with open(model_path, "wb") as f:
+#             f.write(model.SerializeToString())
+#
+#     """
+#     Some pickled models (like catboost) don't work properly after saving and load.
+#     """
+#     def read_pickle(self, model_uuid: UUID):
+#         model_path = self._get_path(model_uuid)
+#         try:
+#             with open(model_path, 'rb') as f:
+#                 model = pickle.load(f)
+#         except FileNotFoundError:
+#             raise HTTPException(
+#                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#                 detail=f"Saved model with id {model_uuid} not found."
+#             )
+#         return model
+#
+#     def save_pickle(self, model_uuid: UUID, model):
+#         """Save model in the pickle format"""
+#         model_path = self._get_path(model_uuid)
+#         with open(model_path, "wb") as f:
+#             pickle.dump(model, f, protocol=pickle.HIGHEST_PROTOCOL)

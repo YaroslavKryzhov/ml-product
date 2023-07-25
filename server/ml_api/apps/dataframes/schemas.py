@@ -65,17 +65,17 @@ class SelectFprFdrFweParams(BaseModel):
 
 
 class RFEParams(BaseModel):
-    estimator: BaseSklearnModels = BaseSklearnModels.linear_regression
+    estimator: BaseSklearnModels = BaseSklearnModels.LINEAR_REGRESSION
     n_features_to_select: Optional[int] = Field(None, ge=1)
     step: Optional[int] = Field(1, ge=1)
 
 
 class SelectFromModelParams(BaseModel):
-    estimator: BaseSklearnModels = BaseSklearnModels.linear_regression
+    estimator: BaseSklearnModels = BaseSklearnModels.LINEAR_REGRESSION
 
 
 class SfsSbsParams(BaseModel):
-    estimator: BaseSklearnModels = BaseSklearnModels.linear_regression
+    estimator: BaseSklearnModels = BaseSklearnModels.LINEAR_REGRESSION
     n_features_to_select: int = Field(1, ge=1)
 
 

@@ -51,12 +51,12 @@ class DataframeMetadataManagerService:
 
     async def set_column_types(self, dataframe_id: PydanticObjectId,
                                column_types: ColumnTypes) -> DataFrameMetadata:
-        query = {"$set": {'feature_columns_types': column_types}}
+        query = {"$set": {DataFrameMetadata.feature_columns_types: column_types}}
         return await self.info_repository.update(dataframe_id, query)
 
     async def set_pipeline(self, dataframe_id: PydanticObjectId,
             pipeline: List[ApplyMethodParams]) -> DataFrameMetadata:
-        query = {"$set": {'pipeline': pipeline}}
+        query = {"$set": {DataFrameMetadata.pipeline: pipeline}}
         return await self.info_repository.update(dataframe_id, query)
 
     async def set_target_feature(self, dataframe_id: PydanticObjectId,
@@ -65,16 +65,16 @@ class DataframeMetadataManagerService:
         if not (target_feature in column_types.numeric or
                 target_feature in column_types.categorical):
             raise ColumnNotFoundMetadataError(target_feature)
-        query = {"$set": {'target_feature': target_feature}}
+        query = {"$set": {DataFrameMetadata.target_feature: target_feature}}
         return await self.info_repository.update(dataframe_id, query)
 
     async def unset_target_feature(self, dataframe_id: PydanticObjectId
                                    ) -> DataFrameMetadata:
-        query = {"$set": {'target_feature': None}}
+        query = {"$set": {DataFrameMetadata.target_feature: None}}
         return await self.info_repository.update(dataframe_id, query)
 
     async def set_parent_id(self, dataframe_id,
                             new_parent_id: Optional[PydanticObjectId]
                             ) -> DataFrameMetadata:
-        query = {"$set": {'parent_id': new_parent_id}}
+        query = {"$set": {DataFrameMetadata.parent_id: new_parent_id}}
         return await self.info_repository.update(dataframe_id, query)

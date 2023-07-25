@@ -45,11 +45,11 @@ class DataFrameInfoCRUD:
             raise DataFrameNotFoundError(dataframe_id)
         return await dataframe_meta.update(query)
 
-    async def delete(self, dataframe_id: PydanticObjectId):
+    async def delete(self, dataframe_id: PydanticObjectId) -> DataFrameMetadata:
         dataframe_meta = await DataFrameMetadata.get(dataframe_id)
         if not dataframe_meta:
             raise DataFrameNotFoundError(dataframe_id)
-        await dataframe_meta.delete()
+        return await dataframe_meta.delete()
 
 
 class DataFrameFileCRUD(FileCRUD):

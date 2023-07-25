@@ -102,6 +102,9 @@ class DataframeManagerService:
 
     async def get_feature_target_column_names(self,
             dataframe_id: PydanticObjectId) -> (List[str], Optional[str]):
+        """Returns list of feature columns and target column name.
+        If target column is not set, returns None instead of target column name.
+        If feature columns contain categorical column, raises ColumnNotNumericError."""
         dataframe_meta = await self.metadata_service.get_dataframe_meta(dataframe_id)
         column_types = dataframe_meta.feature_columns_types
         target_column = dataframe_meta.target_feature
