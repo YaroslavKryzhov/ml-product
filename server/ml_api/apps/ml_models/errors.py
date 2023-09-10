@@ -2,7 +2,7 @@ from pydantic import ValidationError
 from fastapi import HTTPException, status
 from beanie import PydanticObjectId
 
-from ml_api.apps.ml_models import schemas
+from ml_api.apps.ml_models import schemas, specs
 
 
 class FilenameExistsUserError(HTTPException):
@@ -129,6 +129,16 @@ class HyperoptModelParamsValidationError(HTTPException):
                    f"Validation error for model_params after HyperOpt: \n"
                    f"{model_params.json()}; \n"
                    f"Error: \n {error.json()}."
+        )
+
+
+class HyperoptTaskTypeError(HTTPException):
+    """Raise when trying to use hyperopt on wrong task type"""
+    def __init__(self, task_type: specs.AvailableTaskTypes):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Can't use hyperopt parameters optimisation with "
+                   f"task_type of{task_type.value}"
         )
 
 

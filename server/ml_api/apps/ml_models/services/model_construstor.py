@@ -10,7 +10,7 @@ from ml_api.apps.ml_models import specs, schemas, errors
 
 
 class ModelConstructorService:
-    # TODO: add more models
+    # TODO: finish models list in constructor for all tasks
     def __init__(self):
         self._classification_models_map: Dict[specs.AvailableModelTypes, Callable] = {
             specs.AvailableModelTypes.DECISION_TREE_CLASSIFIER: self._get_decision_tree_classifier,
@@ -29,11 +29,7 @@ class ModelConstructorService:
             specs.AvailableModelTypes.PASSIVE_AGGRESSIVE_CLASSIFIER: self._get_passive_aggressive_classifier,
             specs.AvailableModelTypes.K_NEIGHBORS_CLASSIFIER: self._get_k_neighbors_classifier,
             specs.AvailableModelTypes.RADIUS_NEIGHBORS_CLASSIFIER: self._get_radius_neighbors_classifier,
-            specs.AvailableModelTypes.NEAREST_CENTROID: self._get_nearest_centroid,
-            specs.AvailableModelTypes.GAUSSIAN_NB: self._get_gaussian_nb,
             specs.AvailableModelTypes.MLP_CLASSIFIER: self._get_mlp_classifier,
-            specs.AvailableModelTypes.VOTING_CLASSIFIER: self._get_voting_classifier,
-            specs.AvailableModelTypes.STACKING_CLASSIFIER: self._get_stacking_classifier,
         }
         self._regression_models_map: Dict[
             specs.AvailableModelTypes, Callable] = {
@@ -57,8 +53,6 @@ class ModelConstructorService:
             specs.AvailableModelTypes.K_NEIGHBORS_REGRESSOR: self._get_k_neighbors_regressor,
             specs.AvailableModelTypes.RADIUS_NEIGHBORS_REGRESSOR: self._get_radius_neighbors_regressor,
             specs.AvailableModelTypes.MLP_REGRESSOR: self._get_mlp_regressor,
-            specs.AvailableModelTypes.VOTING_REGRESSOR: self._get_voting_regressor,
-            specs.AvailableModelTypes.STACKING_REGRESSOR: self._get_stacking_regressor,
         }
 
     async def get_model(self, task_type: specs.AvailableTaskTypes,
@@ -132,18 +126,5 @@ class ModelConstructorService:
     def _get_radius_neighbors_classifier(self, model_params: Dict[str, Any]):
         return neighbors.RadiusNeighborsClassifier(**model_params)
 
-    def _get_nearest_centroid(self, model_params: Dict[str, Any]):
-        return neighbors.NearestCentroid(**model_params)
-
-    def _get_gaussian_nb(self, model_params: Dict[str, Any]):
-        return naive_bayes.GaussianNB(**model_params)
-
     def _get_mlp_classifier(self, model_params: Dict[str, Any]):
         return neural_network.MLPClassifier(**model_params)
-
-    def _get_voting_classifier(self, model_params: Dict[str, Any]):
-        return ensemble.VotingClassifier(**model_params)
-
-    def _get_stacking_classifier(self, model_params: Dict[str, Any]):
-        return ensemble.StackingClassifier(**model_params)
-

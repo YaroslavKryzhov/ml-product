@@ -9,6 +9,11 @@ from ml_api.apps.ml_models.specs import AvailableCompositionTypes, \
     ModelFormats
 
 
+class DataframeGetterInfo(BaseModel):
+    dataframe_id: str
+    user_id: str
+
+
 class ModelParams(BaseModel):
     model_type: AvailableModelTypes
     params: Dict[str, Any]

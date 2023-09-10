@@ -1,147 +1,100 @@
-from typing import List, Dict, Any
-from functools import partial
+from hyperopt import fmin, tpe, hp, STATUS_OK, space_eval
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import silhouette_score
 
-from hyperopt import fmin, tpe, STATUS_OK, space_eval
-from sklearn.model_selection import StratifiedKFold, cross_val_score
-
-from ml_api.apps.ml_models.models_specs import classification_searchers, \
-    regression_searchers
-from ml_api.apps.ml_models.schemas import CompositionParams
-from ml_api.apps.ml_models.specs import AvailableModelTypes, AvailableTaskTypes
-from ml_api.apps.ml_models.services.model_construstor import ModelConstructor
-
-
-class SearchParamsException(Exception):
-    pass
+from ml_api.apps.dataframes.services.dataframe_manager import \
+    DataframeManagerService
+from ml_api.apps.ml_models import schemas, specs, errors
+from ml_api.apps.ml_models.services.model_construstor import \
+    ModelConstructorService
+from ml_api.apps.ml_models.specs import AvailableTaskTypes as task_types
 
 
-# if params_type == specs.AvailableParamsTypes.AUTO:
-#     composition_params = AutoParamsSearch(
-#         task_type=model_info.task_type,
-#         composition_params=model_info.composition_params,
-#         features=features,
-#         target=target,
-#     ).search_params()
-#     query = {'composition_params': composition_params}
-#     ModelInfoCRUD(self._db, self._user_id).update(
-#         model_id=model_info.id, query=query)
+class HyperoptService:
+    def __init__(self, dataframe_info: schemas.DataframeGetterInfo):
+        self.target = None
+        self.features = None
+        self.dataframe_id = dataframe_info.dataframe_id
+        self.user_id = dataframe_info.user_id
 
-class HyperortService:
-    # TODO: rewrite this class
-    def __init__(
-            self,
-            task_type: AvailableTaskTypes,
-            composition_params: List[CompositionParams],
-            features,
-            target,
-    ):
-        self.task_type = task_type
-        self.composition_params = composition_params
-        self.features = features
-        self.target = target
+    async def _prepare_data(self, task_type):
+        if task_type in [task_types.CLASSIFICATION,
+                         task_types.REGRESSION]:
+            self.features, self.target = DataframeManagerService(
+                self.user_id).get_feature_target_df(self.dataframe_id)
 
-    async def search_params(self):
-        for i, model_data in enumerate(self.composition_params):
-            self.composition_params[i].params = self._validate_params(
-                model_data.model_type
-            )
-        return self.composition_params
+        if task_type == task_types.CLUSTERING:
+            self.features = DataframeManagerService(
+                self.user_id).get_feature_df(self.dataframe_id)
 
-    def _validate_params(self, model_type: AvailableModelTypes
-                         ) -> Dict[str, Any]:
-        if self.task_type == AvailableTaskTypes.CLASSIFICATION:
-            search_space = classification_searchers.CLASSIFICATION_CONFIG.get(
-                model_type.value, None
-            )
-            if search_space is None:
-                raise SearchParamsException(
-                    f'Unavailable model: Model {model_type.value} not '
-                    f'found in searchers config')
-            if self.target.nunique() == 2:
-                best = fmin(
-                    fn=partial(self._objective_binary, model_type=model_type),
-                    space=search_space,
-                    algo=tpe.suggest,
-                    max_evals=50,
-                    show_progressbar=True,
-                )
-                return space_eval(search_space, best)
-            else:
-                best = fmin(
-                    fn=partial(
-                        self._objective_multiclass, model_type=model_type
-                    ),
-                    space=search_space,
-                    algo=tpe.suggest,
-                    max_evals=50,
-                    show_progressbar=True,
-                )
-                return space_eval(search_space, best)
-        elif self.task_type == AvailableTaskTypes.REGRESSION:
-            search_space = regression_searchers.REGRESSION_CONFIG.get(
-                model_type.value, None
-            )
-            # TODO: fill regression config at utils/regression_searchers
-            if search_space is None:
-                raise SearchParamsException(
-                    f'Unavailable model: Model {model_type.value} not '
-                    f'found in searchers config')
-            best = fmin(
-                fn=partial(self._objective_regression, model_type=model_type),
-                space=search_space,
-                algo=tpe.suggest,
-                max_evals=50,
-                show_progressbar=True,
-            )
-            return space_eval(search_space, best)
+        if task_type in [task_types.OUTLIER_DETECTION,
+                         task_types.DIMENSIONALITY_REDUCTION]:
+            raise errors.HyperoptTaskTypeError(task_type)
+
         else:
-            raise SearchParamsException(
-                f'Unknown task type: {self.task_type}')
+            raise errors.UnknownTaskTypeError(task_type)
 
-    def _objective_binary(self, params, model_type: AvailableModelTypes):
-        model = ModelConstructor(
-            task_type=self.task_type, model_type=model_type, params=params
-        ).get_model()
-        skf = StratifiedKFold(n_splits=4, shuffle=True, random_state=1)
-        score = cross_val_score(
-            estimator=model,
-            X=self.features,
-            y=self.target,
-            scoring='roc_auc',
-            cv=skf,
-            n_jobs=-1,
-            error_score="raise",
-        )
-        return {'loss': -score.mean(), 'params': params, 'status': STATUS_OK}
+    def get_model_params_search_space(self, model_type):
+        # TODO: write map for params searcher
+        # Здесь можно определить пространство поиска для каждого типа модели
+        # Возвращаем словарь с параметрами
+        # classification_searchers.CLASSIFICATION_CONFIG.get(
+        #     model_type.value, None
+        # )
+        return {
+            # Пример для DecisionTreeClassifier
+            specs.AvailableModelTypes.DECISION_TREE_CLASSIFIER: {
+                'criterion': hp.choice('criterion', ['gini', 'entropy']),
+                'splitter': hp.choice('splitter', ['best', 'random']),
+                'max_depth': hp.quniform('max_depth', 1, 20, 1)
+            },
+            # Добавьте другие модели с их параметрами
+        }.get(model_type, {})
 
-    def _objective_multiclass(self, params, model_type: AvailableModelTypes):
-        model = ModelConstructor(
-            task_type=self.task_type, model_type=model_type, params=params
-        ).get_model()
-        skf = StratifiedKFold(n_splits=4, shuffle=True, random_state=1)
-        score = cross_val_score(
-            estimator=model,
-            X=self.features,
-            y=self.target,
-            scoring='roc_auc_ovr_weighted',
-            cv=skf,
-            n_jobs=-1,
-            error_score="raise",
-        )
-        return {'loss': -score.mean(), 'params': params, 'status': STATUS_OK}
+    async def search_params(self, task_type: task_types,
+                            model_type: specs.AvailableModelTypes) -> schemas.ModelParams:
+        await self._prepare_data(task_type)
 
-    def _objective_regression(self, params, model_type: AvailableModelTypes):
-        model = ModelConstructor(
-            task_type=self.task_type, model_type=model_type, params=params
-        ).get_model()
-        skf = StratifiedKFold(n_splits=4, shuffle=True, random_state=1)
-        score = cross_val_score(
-            estimator=model,
-            X=self.features,
-            y=self.target,
-            scoring='mse',
-            cv=skf,
-            n_jobs=-1,
-            error_score="raise",
-        )
-        return {'loss': -score.mean(), 'params': params, 'status': STATUS_OK}
+        search_space = self.get_model_params_search_space(model_type)
+
+        best = fmin(fn=lambda params: self._objective(params, task_type, model_type),
+                    space=search_space,
+                    algo=tpe.suggest,
+                    max_evals=50)
+        best_params = space_eval(search_space, best)
+
+        return schemas.ModelParams(model_type=model_type, params=best_params)
+
+    def _objective(self, params, task_type, model_type):
+        model_params = schemas.ModelParams(model_type=model_type, params=params)
+        model = await ModelConstructorService().get_model(task_type, model_params)
+        del model_params
+
+        if task_type == task_types.CLASSIFICATION:
+            scoring_method = 'roc_auc_ovr' if len(self.target.unique()) > 2 \
+                else 'roc_auc'
+            scores = cross_val_score(model, self.features, self.target,
+                                     scoring=scoring_method,
+                                     cv=5,
+                                     n_jobs=-1,
+                                     error_score="raise")
+            loss = -scores.mean()
+
+        elif task_type == task_types.REGRESSION:
+            scores = cross_val_score(model, self.features, self.target,
+                scoring='mse',
+                cv=5,
+                n_jobs=-1,
+                error_score="raise",
+            )
+            loss = -scores.mean()
+
+        elif task_type == task_types.CLUSTERING:
+            model.fit(self.features)
+            labels = model.labels_
+            loss = -silhouette_score(self.features, labels)
+
+        else:
+            raise errors.UnknownTaskTypeError(task_type)
+
+        return {'loss': loss, 'status': STATUS_OK}

@@ -78,3 +78,8 @@ class ModelMetadataManagerService:
                          new_status: specs.ModelStatuses) -> ModelMetadata:
         query = {"$set": {ModelMetadata.status: new_status}}
         return await self.info_repository.update(model_id, query)
+
+    async def set_model_params(self, model_id: PydanticObjectId,
+                         new_model_params: schemas.ModelParams) -> ModelMetadata:
+        query = {"$set": {ModelMetadata.model_params: new_model_params}}
+        return await self.info_repository.update(model_id, query)

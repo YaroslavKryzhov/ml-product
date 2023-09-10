@@ -63,7 +63,7 @@ class GradientBoostingClassifierParams(BaseModel):
 
 
 class AdaBoostClassifierParams(BaseModel):
-    base_estimator: Optional[str] = None
+    # base_estimator: Optional[str] = None
     n_estimators: conint(ge=1) = 50
     learning_rate: confloat(gt=0) = 1.0
     algorithm: Literal['SAMME', 'SAMME.R'] = 'SAMME.R'
@@ -71,7 +71,7 @@ class AdaBoostClassifierParams(BaseModel):
 
 
 class BaggingClassifierParams(BaseModel):
-    base_estimator: Optional[str] = None
+    # base_estimator: Optional[str] = None
     n_estimators: conint(ge=1) = 10
     max_samples: conint(ge=1) = 1.0
     max_features: conint(ge=1) = 1.0

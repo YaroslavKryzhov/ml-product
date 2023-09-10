@@ -35,61 +35,46 @@ class ModelFormats(Enum):
 
 
 class AvailableModelTypes(Enum):
-    # TODO: group models by type
-    # Decision Trees and Ensembles
+    # Classification models
     DECISION_TREE_CLASSIFIER = 'DecisionTreeClassifier'
-    DECISION_TREE_REGRESSOR = 'DecisionTreeRegressor'
     RANDOM_FOREST_CLASSIFIER = 'RandomForestClassifier'
-    RANDOM_FOREST_REGRESSOR = 'RandomForestRegressor'
     EXTRA_TREES_CLASSIFIER = 'ExtraTreesClassifier'
-    EXTRA_TREES_REGRESSOR = 'ExtraTreesRegressor'
     GRADIENT_BOOSTING_CLASSIFIER = 'GradientBoostingClassifier'
-    GRADIENT_BOOSTING_REGRESSOR = 'GradientBoostingRegressor'
     ADABOOST_CLASSIFIER = 'AdaBoostClassifier'
-    ADABOOST_REGRESSOR = 'AdaBoostRegressor'
     BAGGING_CLASSIFIER = 'BaggingClassifier'
-    BAGGING_REGRESSOR = 'BaggingRegressor'
     XGB_CLASSIFIER = 'XGBClassifier'
-    XGB_REGRESSOR = 'XGBRegressor'
     LGBM_CLASSIFIER = 'LGBMClassifier'
-    LGBM_REGRESSOR = 'LGBMRegressor'
     CAT_BOOST_CLASSIFIER = 'CatBoostClassifier'
-    CAT_BOOST_REGRESSOR = 'CatBoostRegressor'
-
-    # Linear models
     SGD_CLASSIFIER = 'SGDClassifier'
-    SGD_REGRESSOR = 'SGDRegressor'
     LINEAR_SVC = 'LinearSVC'
-    LINEAR_SVR = 'LinearSVR'
     SVC = 'SVC'
-    SVR = 'SVR'
     LOGISTIC_REGRESSION = 'LogisticRegression'
+    PASSIVE_AGGRESSIVE_CLASSIFIER = 'PassiveAggressiveClassifier'
+    K_NEIGHBORS_CLASSIFIER = 'KNeighborsClassifier'
+    RADIUS_NEIGHBORS_CLASSIFIER = 'RadiusNeighborsClassifier'
+    MLP_CLASSIFIER = 'MLPClassifier'
+
+    # Regression models
+    DECISION_TREE_REGRESSOR = 'DecisionTreeRegressor'
+    RANDOM_FOREST_REGRESSOR = 'RandomForestRegressor'
+    EXTRA_TREES_REGRESSOR = 'ExtraTreesRegressor'
+    GRADIENT_BOOSTING_REGRESSOR = 'GradientBoostingRegressor'
+    ADABOOST_REGRESSOR = 'AdaBoostRegressor'
+    BAGGING_REGRESSOR = 'BaggingRegressor'
+    XGB_REGRESSOR = 'XGBRegressor'
+    LGBM_REGRESSOR = 'LGBMRegressor'
+    CAT_BOOST_REGRESSOR = 'CatBoostRegressor'
+    SGD_REGRESSOR = 'SGDRegressor'
+    LINEAR_SVR = 'LinearSVR'
+    SVR = 'SVR'
     LINEAR_REGRESSION = 'LinearRegression'
     RIDGE = 'Ridge'
     LASSO = 'Lasso'
     ELASTIC_NET = 'ElasticNet'
-    PASSIVE_AGGRESSIVE_CLASSIFIER = 'PassiveAggressiveClassifier'
     PASSIVE_AGGRESSIVE_REGRESSOR = 'PassiveAggressiveRegressor'
-
-    # KNN models
-    K_NEIGHBORS_CLASSIFIER = 'KNeighborsClassifier'
     K_NEIGHBORS_REGRESSOR = 'KNeighborsRegressor'
-    RADIUS_NEIGHBORS_CLASSIFIER = 'RadiusNeighborsClassifier'
     RADIUS_NEIGHBORS_REGRESSOR = 'RadiusNeighborsRegressor'
-    NEAREST_CENTROID = 'NearestCentroid'
-
-    # Naive Bayes
-    GAUSSIAN_NB = 'GaussianNB'
-
-    # Neural Networks
-    MLP_CLASSIFIER = 'MLPClassifier'
     MLP_REGRESSOR = 'MLPRegressor'
-
-    # Ensembling methods
-    VOTING_CLASSIFIER = 'VotingClassifier'
-    VOTING_REGRESSOR = 'VotingRegressor'
-    STACKING_CLASSIFIER = 'StackingClassifier'
-    STACKING_REGRESSOR = 'StackingRegressor'
 
     # Clustering models
     K_MEANS = 'KMeans'
@@ -116,8 +101,12 @@ class AvailableModelTypes(Enum):
     LINEAR_DISCRIMINANT_ANALYSIS = 'LinearDiscriminantAnalysis'
     T_SNE = 'TSNE'
     ISOMAP = 'Isomap'
-
-    # Matrix factorization
     NMF = 'NMF'
     TRUNCATED_SVD = 'TruncatedSVD'
+
+    # Ensembling methods
+    # VOTING_CLASSIFIER = 'VotingClassifier'
+    # VOTING_REGRESSOR = 'VotingRegressor'
+    # STACKING_CLASSIFIER = 'StackingClassifier'
+    # STACKING_REGRESSOR = 'StackingRegressor'
 
