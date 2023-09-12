@@ -43,8 +43,8 @@ class ModelProcessingManagerService:
             model_meta.id, model_params_validated)
 
         try:
-            model = await ModelConstructorService().get_model(
-                task_type, model_params_validated)
+            model = ModelConstructorService().get_model(task_type,
+                                                        model_params_validated)
         except Exception as err:
             await self._set_problem_status(model_meta.id)
             raise err

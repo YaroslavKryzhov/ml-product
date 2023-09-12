@@ -1,162 +1,106 @@
 from hyperopt import hp
-import numpy as np
+from ml_api.apps.ml_models.specs import AvailableModelTypes as Models
 
-CLASSIFICATION_CONFIG = {
-    'DecisionTreeClassifier': {
-        'criterion': hp.choice(label='criterion', options=['gini', 'entropy']),
-        'max_depth': hp.randint(label='max_depth', low=3, high=30),
+# Определяем search_space
+CLASSIFICATION_SEARCH_SPACE_CONFIG = {
+    Models.DECISION_TREE_CLASSIFIER: {
+        'criterion': hp.choice('criterion', ['gini', 'entropy']),
+        'splitter': hp.choice('splitter', ['best', 'random']),
+        'max_depth': hp.quniform('max_depth', 1, 20, 1)
     },
-    'RandomForestClassifier': {
-        'criterion': hp.choice(label='criterion', options=['gini', 'entropy']),
-        'max_depth': hp.randint(label='max_depth', low=3, high=20),
-        'n_estimators': hp.randint(label='n_estimators', low=100, high=300),
+
+    Models.RANDOM_FOREST_CLASSIFIER: {
+        'n_estimators': hp.quniform('n_estimators', 50, 200, 1),
+        'criterion': hp.choice('criterion', ['gini', 'entropy']),
+        'max_depth': hp.quniform('max_depth', 1, 20, 1)
     },
-    # 'CatBoostClassifier': {
-    #     'learning_rate':     hp.uniform('learning_rate', 0.001, 0.1),
-    #     'max_depth':         hp.randint('max_depth', 5, 16),
-    #     'colsample_bylevel': hp.uniform('colsample_bylevel', 0.3, 0.8)
-    # },
-    'AdaBoostClassifier': {
-        'n_estimators': hp.randint(label="n_estimators", low=100, high=300),
-        'learning_rate': hp.uniform('learning_rate', 1e-6, 1),
+
+    Models.EXTRA_TREES_CLASSIFIER: {
+        'n_estimators': hp.quniform('n_estimators', 50, 200, 1),
+        'criterion': hp.choice('criterion', ['gini', 'entropy']),
+        'max_depth': hp.quniform('max_depth', 1, 20, 1)
     },
-    'GradientBoostingClassifier': {
-        'loss': hp.choice(
-            label='loss', options=['log_loss', 'deviance', 'exponential']
-        ),
-        'learning_rate': hp.uniform('learning_rate', 1e-6, 1),
-        'n_estimators': hp.randint(label="n_estimators", low=100, high=300),
-        'criterion': hp.choice(
-            label='criterion',
-            options=['friedman_mse', 'squared_error', 'mse', 'mae'],
-        ),
-        'max_depth': hp.randint('max_depth', 3, 20),
-        # 'max_features': hp.choice(
-        #     label='max_features', options=['auto', 'sqrt', 'log2']
-        # ),
+
+    Models.GRADIENT_BOOSTING_CLASSIFIER: {
+        'n_estimators': hp.quniform('n_estimators', 50, 200, 1),
+        'learning_rate': hp.loguniform('learning_rate', -5, 0),
+        'max_depth': hp.quniform('max_depth', 1, 10, 1)
     },
-    "BaggingClassifier": {
-        'n_estimators': hp.randint(label="n_estimators", low=10, high=100),
+
+    Models.ADABOOST_CLASSIFIER: {
+        'n_estimators': hp.quniform('n_estimators', 50, 200, 1),
+        'learning_rate': hp.loguniform('learning_rate', -5, 0)
     },
-    'ExtraTreesClassifier': {
-        'n_estimators': hp.randint(label="n_estimators", low=100, high=300),
-        'criterion': hp.choice(label='criterion', options=['gini', 'entropy']),
-        'max_depth': hp.randint(label='max_depth', low=3, high=20),
-        # 'max_features': hp.choice(
-        #     label='max_features', options=['auto', 'sqrt', 'log2']
-        # ),
-        # 'class_weight': hp.choice(
-        #     label='class_weight', options=['balanced', 'balanced_subsample']
-        # ),
+
+    Models.BAGGING_CLASSIFIER: {
+        'n_estimators': hp.quniform('n_estimators', 10, 100, 1),
+        'max_samples': hp.uniform('max_samples', 0.5, 1)
     },
-    'SGDClassifier': {
-        'loss': hp.choice(
-            label='loss',
-            options=[
-                'hinge',
-                'log',
-                'modified_huber',
-                'squared_hinge',
-                'perceptron',
-                'squared_error',
-                'huber',
-                'epsilon_insensitive',
-                'squared_epsilon_insensitive',
-            ],
-        ),
-        'penalty': hp.choice(
-            label='penalty', options=['l2', 'l1', 'elasticnet']
-        ),
-        'l1_ratio': hp.uniform(label='l1_ratio', low=0, high=1),
-        # 'max_iter': hp.uniform(label='max_iter', low=1000, high=20000),
-        'learning_rate': hp.choice(
-            label='learning_rate',
-            options=['constant', 'optimal', 'invscaling', 'adaptive'],
-        ),
-        'epsilon': hp.randint(label='epsilon', low=0.01, high=1),
+
+    Models.XGB_CLASSIFIER: {
+        'n_estimators': hp.quniform('n_estimators', 50, 200, 1),
+        'learning_rate': hp.loguniform('learning_rate', -5, 0),
+        'max_depth': hp.quniform('max_depth', 1, 10, 1)
     },
-    'LinearSVC': {
-        'loss': hp.choice(label='loss', options=['hinge', 'squared_hinge']),
-        'penalty': hp.choice(label='penalty', options=['l2', 'l1']),
-        # 'multi_class': hp.choice(
-        #     label='multi_class', options=['ovr', 'crammer_singer']
-        # ),
-        # 'max_iter': hp.uniform(label='max_iter', low=1000, high=20000),
+
+    Models.LGBM_CLASSIFIER: {
+        'n_estimators': hp.quniform('n_estimators', 50, 200, 1),
+        'learning_rate': hp.loguniform('learning_rate', -5, 0),
+        'max_depth': hp.quniform('max_depth', 1, 10, 1)
     },
-    'SVC': {
-        'kernel': hp.choice(
-            label='kernel',
-            options=['linear', 'poly', 'rbf', 'sigmoid', 'precomputed'],
-        ),
-        'degree': hp.randint(label='degree', low=1, high=10),
-        'gamma': hp.choice(label='gamma', options=['scale', 'auto']),
-        # 'max_iter': hp.uniform(label='max_iter', low=1000, high=20000),
-        # 'decision_function_shape': hp.choice(
-        #     label='decision_function_shape', options=['ovo', 'ovr']
-        # ),
+
+    Models.CAT_BOOST_CLASSIFIER: {
+        'iterations': hp.quniform('iterations', 50, 200, 1),
+        'learning_rate': hp.loguniform('learning_rate', -5, 0),
+        'depth': hp.quniform('depth', 1, 10, 1)
     },
-    "LogisticRegression": {
-        'penalty': hp.choice(
-            label='penalty', options=['l2', 'l1', 'elasticnet', 'none']
-        ),
-        'solver': hp.choice(
-            label='solver',
-            options=['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'],
-        ),
-        # 'max_iter': hp.uniform(label='max_iter', low=100, high=200),
-        'C': hp.uniform('C', 0.001, 1),
-        'l1_ratio': hp.uniform(label='l1_ratio', low=0, high=1),
+
+    Models.SGD_CLASSIFIER: {
+        'loss': hp.choice('loss', ['hinge', 'log', 'modified_huber']),
+        'penalty': hp.choice('penalty', ['none', 'l1', 'l2', 'elasticnet']),
+        'alpha': hp.loguniform('alpha', -5, 0)
     },
-    "MLPClassifier": {
-        'activation': hp.choice(
-            label='activation',
-            options=['identity', 'logistic', 'tanh', 'relu'],
-        ),
-        'solver': hp.choice(label='solver', options=['lbfgs', 'sgd', 'adam']),
-        'learning_rate': hp.choice(
-            label='learning_rate',
-            options=['constant', 'invscaling', 'adaptive'],
-        ),
-        'alpha': hp.uniform('alpha', 0.0001, 0.1),
-        # 'max_iter': hp.randint('max_iter', 1000, 3000),
+
+    Models.LINEAR_SVC: {
+        'C': hp.loguniform('C', -5, 0),
+        'penalty': hp.choice('penalty', ['l1', 'l2']),
+        'loss': hp.choice('loss', ['hinge', 'squared_hinge'])
     },
-    "KNeighborsClassifier": {
-        'metric': hp.choice(
-            label='metric',
-            options=[
-                'cityblock',
-                'cosine',
-                'euclidean',
-                'haversine',
-                'l1',
-                'l2',
-                'manhattan',
-                'nan_euclidean',
-                'minkowski',
-                'mahalanobis',
-            ],
-        ),
-        'n_neighbors': hp.randint(label="n_neighbors", low=3, high=30),
+
+    Models.SVC: {
+        'C': hp.loguniform('C', -5, 0),
+        'kernel': hp.choice('kernel', ['linear', 'poly', 'rbf', 'sigmoid']),
+        'degree': hp.quniform('degree', 1, 5, 1)
     },
-    # 'XGBoost': {
-    #     'learning_rate': hp.uniform('learning_rate', 0.001, 1),
-    #     'min_split_loss': hp.uniform('min_split_loss', 0, 1000),
-    #     'max_depth': hp.randint('max_depth', 3, 10),
-    #     'min_child_weight': hp.uniform('min_child_weight', 0, 1000),
-    #     'max_delta_step': hp.uniform('max_delta_step', 1, 10),
-    #     'subsample': hp.uniform('subsample', 0.5, 1),
-    #     'reg_lambda': hp.uniform('reg_lambda', 0, 10),
-    #     'reg_alpha': hp.uniform('reg_alpha', 0, 10)
-    # },
-    # 'LightGBM': {
-    #     'learning_rate': hp.uniform('learning_rate', 0.001, 1),
-    #     'num_leaves': hp.randint('num_leaves', 20, 50),
-    #     'max_depth': hp.randint('max_depth', 1, 10),
-    #     'min_child_samples': hp.randint('min_child_samples', 10, 50),
-    #     'subsample': hp.uniform('subsample', 0.5, 1),
-    #     'reg_lambda': hp.uniform('reg_lambda', 0, 10),
-    #     'reg_alpha': hp.uniform('reg_alpha', 0, 10),
-    #     'n_estimators': hp.randint('n_estimators', 50, 1000),
-    #     'colsample_bytree' : hp.uniform('colsample_bytree', 0.5, 1)
-    # }
+
+    Models.LOGISTIC_REGRESSION: {
+        'C': hp.loguniform('C', -5, 0),
+        'penalty': hp.choice('penalty', ['l1', 'l2', 'elasticnet']),
+    },
+
+    Models.PASSIVE_AGGRESSIVE_CLASSIFIER: {
+        'C': hp.loguniform('C', -5, 0),
+        'loss': hp.choice('loss', ['hinge', 'squared_hinge'])
+    },
+
+    Models.K_NEIGHBORS_CLASSIFIER: {
+        'n_neighbors': hp.quniform('n_neighbors', 1, 20, 1),
+        'weights': hp.choice('weights', ['uniform', 'distance']),
+        'algorithm': hp.choice('algorithm',
+                               ['auto', 'ball_tree', 'kd_tree', 'brute'])
+    },
+
+    Models.RADIUS_NEIGHBORS_CLASSIFIER: {
+        'radius': hp.uniform('radius', 0.5, 2),
+        'weights': hp.choice('weights', ['uniform', 'distance']),
+        'algorithm': hp.choice('algorithm',
+                               ['auto', 'ball_tree', 'kd_tree', 'brute'])
+    },
+
+    Models.MLP_CLASSIFIER: {
+        'hidden_layer_sizes': hp.choice('hidden_layer_sizes',
+                                        [(50,), (100,), (50, 50), (100, 100)]),
+        'activation': hp.choice('activation', ['relu', 'tanh', 'logistic']),
+        'solver': hp.choice('solver', ['adam', 'sgd', 'lbfgs'])
+    }
 }

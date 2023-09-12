@@ -1,13 +1,20 @@
-from hyperopt import fmin, tpe, hp, STATUS_OK, space_eval
+from hyperopt import fmin, tpe, STATUS_OK, space_eval
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import silhouette_score
 
 from ml_api.apps.dataframes.services.dataframe_manager import \
     DataframeManagerService
-from ml_api.apps.ml_models import schemas, specs, errors
+from ml_api.apps.ml_models import schemas, errors
 from ml_api.apps.ml_models.services.model_construstor import \
     ModelConstructorService
-from ml_api.apps.ml_models.specs import AvailableTaskTypes as task_types
+from ml_api.apps.ml_models.specs import AvailableTaskTypes as TaskTypes
+from ml_api.apps.ml_models.specs import AvailableModelTypes as ModelTypes
+from ml_api.apps.ml_models.models_specs.hyperopt_params.\
+    classification_searchers import CLASSIFICATION_SEARCH_SPACE_CONFIG
+from ml_api.apps.ml_models.models_specs.hyperopt_params.regression_searchers \
+    import REGRESSION_SEARCH_SPACE_CONFIG
+from ml_api.apps.ml_models.models_specs.hyperopt_params.clustering_searchers \
+    import CLUSTERING_SEARCH_SPACE_CONFIG
 
 
 class HyperoptService:
@@ -17,45 +24,51 @@ class HyperoptService:
         self.dataframe_id = dataframe_info.dataframe_id
         self.user_id = dataframe_info.user_id
 
-    async def _prepare_data(self, task_type):
-        if task_type in [task_types.CLASSIFICATION,
-                         task_types.REGRESSION]:
-            self.features, self.target = DataframeManagerService(
+        self._task_to_searcher_params_map = {
+            TaskTypes.CLASSIFICATION: CLASSIFICATION_SEARCH_SPACE_CONFIG,
+            TaskTypes.REGRESSION: REGRESSION_SEARCH_SPACE_CONFIG,
+            TaskTypes.CLUSTERING: CLUSTERING_SEARCH_SPACE_CONFIG,
+        }
+
+        self._task_to_model_error_map = {
+            TaskTypes.CLASSIFICATION: errors.UnknownClassificationModelError,
+            TaskTypes.REGRESSION: errors.UnknownRegressionModelError,
+            TaskTypes.CLUSTERING: errors.UnknownClusteringModelError,
+        }
+
+    async def _prepare_data(self, task_type: TaskTypes):
+        if task_type in [TaskTypes.CLASSIFICATION,
+                         TaskTypes.REGRESSION]:
+            self.features, self.target = await DataframeManagerService(
                 self.user_id).get_feature_target_df(self.dataframe_id)
 
-        if task_type == task_types.CLUSTERING:
-            self.features = DataframeManagerService(
+        if task_type == TaskTypes.CLUSTERING:
+            self.features = await DataframeManagerService(
                 self.user_id).get_feature_df(self.dataframe_id)
 
-        if task_type in [task_types.OUTLIER_DETECTION,
-                         task_types.DIMENSIONALITY_REDUCTION]:
+        if task_type in [TaskTypes.OUTLIER_DETECTION,
+                         TaskTypes.DIMENSIONALITY_REDUCTION]:
             raise errors.HyperoptTaskTypeError(task_type)
 
         else:
             raise errors.UnknownTaskTypeError(task_type)
 
-    def get_model_params_search_space(self, model_type):
-        # TODO: write map for params searcher
-        # Здесь можно определить пространство поиска для каждого типа модели
-        # Возвращаем словарь с параметрами
-        # classification_searchers.CLASSIFICATION_CONFIG.get(
-        #     model_type.value, None
-        # )
-        return {
-            # Пример для DecisionTreeClassifier
-            specs.AvailableModelTypes.DECISION_TREE_CLASSIFIER: {
-                'criterion': hp.choice('criterion', ['gini', 'entropy']),
-                'splitter': hp.choice('splitter', ['best', 'random']),
-                'max_depth': hp.quniform('max_depth', 1, 20, 1)
-            },
-            # Добавьте другие модели с их параметрами
-        }.get(model_type, {})
+    def get_model_params_search_space(self, task_type: TaskTypes,
+                                      model_type: ModelTypes):
+        if task_type not in self._task_to_searcher_params_map:
+            raise errors.UnknownTaskTypeError(task_type)
+        searcher_params_map = self._task_to_searcher_params_map[task_type]
 
-    async def search_params(self, task_type: task_types,
-                            model_type: specs.AvailableModelTypes) -> schemas.ModelParams:
+        if model_type not in searcher_params_map:
+            unknown_model_err = self._task_to_model_error_map[task_type]
+            raise unknown_model_err(model_type)
+        return searcher_params_map[model_type]
+
+    async def search_params(self, task_type: TaskTypes,
+                            model_type: ModelTypes) -> schemas.ModelParams:
         await self._prepare_data(task_type)
 
-        search_space = self.get_model_params_search_space(model_type)
+        search_space = self.get_model_params_search_space(task_type, model_type)
 
         best = fmin(fn=lambda params: self._objective(params, task_type, model_type),
                     space=search_space,
@@ -67,29 +80,21 @@ class HyperoptService:
 
     def _objective(self, params, task_type, model_type):
         model_params = schemas.ModelParams(model_type=model_type, params=params)
-        model = await ModelConstructorService().get_model(task_type, model_params)
-        del model_params
+        model = ModelConstructorService().get_model(task_type, model_params)
 
-        if task_type == task_types.CLASSIFICATION:
-            scoring_method = 'roc_auc_ovr' if len(self.target.unique()) > 2 \
-                else 'roc_auc'
+        if task_type == TaskTypes.CLASSIFICATION:
+            scoring_method = 'roc_auc_weighted' if \
+                len(self.target.unique()) > 2 else 'roc_auc'
             scores = cross_val_score(model, self.features, self.target,
-                                     scoring=scoring_method,
-                                     cv=5,
-                                     n_jobs=-1,
-                                     error_score="raise")
+                scoring=scoring_method, cv=5, n_jobs=-1, error_score="raise")
             loss = -scores.mean()
 
-        elif task_type == task_types.REGRESSION:
+        elif task_type == TaskTypes.REGRESSION:
             scores = cross_val_score(model, self.features, self.target,
-                scoring='mse',
-                cv=5,
-                n_jobs=-1,
-                error_score="raise",
-            )
+                scoring='mse', cv=5, n_jobs=-1, error_score="raise")
             loss = -scores.mean()
 
-        elif task_type == task_types.CLUSTERING:
+        elif task_type == TaskTypes.CLUSTERING:
             model.fit(self.features)
             labels = model.labels_
             loss = -silhouette_score(self.features, labels)

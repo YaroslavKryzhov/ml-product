@@ -55,23 +55,23 @@ class ModelConstructorService:
             specs.AvailableModelTypes.MLP_REGRESSOR: self._get_mlp_regressor,
         }
 
-    async def get_model(self, task_type: specs.AvailableTaskTypes,
+    def get_model(self, task_type: specs.AvailableTaskTypes,
                   model_params: schemas.ModelParams):
         if task_type == specs.AvailableTaskTypes.CLASSIFICATION:
-            model = await self.get_classification_model(model_params)
+            model = self.get_classification_model(model_params)
         elif task_type == specs.AvailableTaskTypes.REGRESSION:
-            model = await self.get_regression_model(model_params)
+            model = self.get_regression_model(model_params)
         elif task_type == specs.AvailableTaskTypes.CLUSTERING:
-            model = await self.get_clustering_model(model_params)
+            model = self.get_clustering_model(model_params)
         elif task_type == specs.AvailableTaskTypes.OUTLIER_DETECTION:
-            model = await self.get_outlier_detection_model(model_params)
+            model = self.get_outlier_detection_model(model_params)
         elif task_type == specs.AvailableTaskTypes.DIMENSIONALITY_REDUCTION:
-            model = await self.get_dimensionality_reduction_model(model_params)
+            model = self.get_dimensionality_reduction_model(model_params)
         else:
             raise errors.UnknownTaskTypeError(task_type)
         return model
 
-    async def get_classification_model(self, model_params: schemas.ModelParams):
+    def get_classification_model(self, model_params: schemas.ModelParams):
         classification_model = model_params.model_type
         if classification_model not in self._classification_models_map:
             raise errors.UnknownClassificationModelError(classification_model)
