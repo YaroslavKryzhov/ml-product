@@ -114,24 +114,28 @@ class ParamsValidationService:
                               model_params: schemas.ModelParams,
                               params_type: specs.AvailableParamsTypes,
                               dataframe_info: schemas.DataframeGetterInfo) -> schemas.ModelParams:
+        initial_params = await self._get_initial_params(params_type, model_params,
+                                                  dataframe_info, task_type)
+
+        validated_params = self._validate_model_params(task_type,
+                                                       initial_params)
+        return schemas.ModelParams(type=model_params.model_type,
+                                   params=validated_params)
+
+    async def _get_initial_params(self, params_type: specs.AvailableParamsTypes,
+                            model_params: schemas.ModelParams,
+                            dataframe_info: schemas.DataframeGetterInfo,
+                            task_type: TaskTypes) -> Dict:
+
         if params_type == specs.AvailableParamsTypes.DEFAULT:
-            params = {}
-        elif params_type == specs.AvailableParamsTypes.CUSTOM:
-            try:
-                params = self._validate_model_params(task_type, model_params)
-            except ValidationError as err:
-                raise errors.ModelParamsValidationError(model_params, err)
-        elif params_type == specs.AvailableParamsTypes.AUTO:
-            model_type = model_params.model_type
-            model_params = await HyperoptService(dataframe_info).search_params(
-                task_type, model_type)
-            try:
-                params = self._validate_model_params(task_type, model_params)
-            except ValidationError as err:
-                raise errors.HyperoptModelParamsValidationError(model_params, err)
-        else:
-            raise errors.UnknownParamsTypeError(params_type)
-        return schemas.ModelParams(type=model_params.model_type, params=params)
+            return {}
+        if params_type == specs.AvailableParamsTypes.CUSTOM:
+            return model_params
+        if params_type == specs.AvailableParamsTypes.AUTO:
+            return await HyperoptService(dataframe_info).search_params(
+                task_type, model_params.model_type)
+
+        raise errors.UnknownParamsTypeError(params_type)
 
     def _validate_model_params(self, task_type, model_params) -> Dict[str, Any]:
         model_type = model_params.model_type
@@ -145,9 +149,8 @@ class ParamsValidationService:
             raise unknown_model_err(model_type)
         model_params_class = model_params_map[model_type]
 
-        # try:
-        validated_params = model_params_class(**model_params.params)
-        # TODO: move ValidationError raise here after hyperopt debug
-        # except ValidationError as err:
-        #     raise errors.ModelParamsValidationError(model_params, err)
+        try:
+            validated_params = model_params_class(**model_params.params)
+        except ValidationError as err:
+            raise errors.ModelParamsValidationError(model_params, err)
         return validated_params.dict()

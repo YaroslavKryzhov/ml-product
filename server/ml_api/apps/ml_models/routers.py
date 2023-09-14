@@ -128,14 +128,12 @@ def train_model(model_name: str,
         model_params=model_params,
         params_type=params_type,
         test_size=test_size)
-    model = await ModelProcessingManagerService(user.id).prepare_model(
-        model_meta=model_meta)
-    result = await ModelProcessingManagerService(user.id).train_model(
-        model_meta=model_meta, model=model)
-    return result
+    result = await ModelProcessingManagerService(
+        user.id).prepare_and_train_model(model_meta=model_meta)
     # task = train_composition_celery.delay(
     #     str(user.id), str(model_info.id), params_type.value, test_size)
     # return task.id
+    return result
 
 
 @models_processing_router.get("/predict")

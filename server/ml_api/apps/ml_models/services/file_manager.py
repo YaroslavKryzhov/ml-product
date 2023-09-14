@@ -43,6 +43,7 @@ class ModelFileManagerService:
 
     async def load_model_from_file(self, dataframe_id: PydanticObjectId
                                 ) -> pd.DataFrame:
+        # TODO: rewrite model saving/reading
         return self.file_repository.read_csv(dataframe_id)
 
     async def delete_file(self, model_id: PydanticObjectId) -> ModelMetadata:

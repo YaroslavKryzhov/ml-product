@@ -20,14 +20,18 @@ class ModelProcessingManagerService:
         await self.metadata_manager.set_status(
             model_id, specs.ModelStatuses.PROBLEM)
 
-    async def prepare_model(self, model_meta: ModelMetadata):  # -> sklearn.Estimator
+    async def prepare_and_train_model(self, model_meta: ModelMetadata):
+        # Может быть стоит разбирать мету на части тут
+        model = await self._prepare_model(model_meta=model_meta)
+        result = await self._train_model(model_meta=model_meta, model=model)
+        return result
+
+    async def _prepare_model(self, model_meta: ModelMetadata):  # -> sklearn.Estimator
         """
         Валидирует параметры модели и создает её экземпляр.
         """
         dataframe_info = schemas.DataframeGetterInfo(
-            dataframe_id=model_meta.dataframe_id,
-            user_id=self._user_id
-        )
+            dataframe_id=model_meta.dataframe_id, user_id=self._user_id)
         model_params = model_meta.model_params
         params_type = model_meta.params_type
         task_type = model_meta.task_type
@@ -35,23 +39,18 @@ class ModelProcessingManagerService:
         try:
             model_params_validated = await ParamsValidationService().validate_params(
                 task_type, model_params, params_type, dataframe_info)
-        except Exception as err:
-            await self._set_problem_status(model_meta.id)
-            raise err
 
-        await self.metadata_manager.set_model_params(
-            model_meta.id, model_params_validated)
+            await self.metadata_manager.set_model_params(
+                model_meta.id, model_params_validated)
 
-        try:
             model = ModelConstructorService().get_model(task_type,
                                                         model_params_validated)
         except Exception as err:
             await self._set_problem_status(model_meta.id)
             raise err
-
         return model
 
-    def train_model(self, model_meta: ModelMetadata, model):
+    def _train_model(self, model_meta: ModelMetadata, model):
         """
         Обучает предоставленную модель на данных из датафрейма.
         """
