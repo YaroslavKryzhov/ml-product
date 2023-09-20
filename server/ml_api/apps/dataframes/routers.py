@@ -68,8 +68,7 @@ async def rename_dataframe(
         dataframe_id, new_filename)
 
 
-@dataframes_file_router.delete("", summary="Удалить csv-файл",
-                               response_model=models.DataFrameMetadata)
+@dataframes_file_router.delete("", summary="Удалить csv-файл")
 async def delete_dataframe(
     dataframe_id: PydanticObjectId,
     user: User = Depends(current_active_user),
@@ -79,7 +78,7 @@ async def delete_dataframe(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeFileManagerService(user.id).delete_file(dataframe_id)
+    await DataframeFileManagerService(user.id).delete_file(dataframe_id)
 
 
 dataframes_metadata_router = APIRouter(
@@ -211,7 +210,7 @@ async def set_target_feature(dataframe_id: PydanticObjectId,
         - **dataframe_id**: ID csv-файла(датафрейма)
         - **target_column**: имя целевого столбца
     """
-    return DataframeMetadataManagerService(
+    return await DataframeMetadataManagerService(
         user.id).set_target_feature(dataframe_id, target_column)
 
 
@@ -225,7 +224,7 @@ async def set_target_feature(dataframe_id: PydanticObjectId,
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return DataframeMetadataManagerService(
+    return await DataframeMetadataManagerService(
         user.id).unset_target_feature(dataframe_id)
 
 
@@ -251,6 +250,7 @@ async def set_column_as_categorical(dataframe_id: PydanticObjectId,
                                   response_model=models.DataFrameMetadata)
 async def delete_column(dataframe_id: PydanticObjectId,
                         column_names: List[str],
+                        # TODO: подумать над форматом списка
                         user: User = Depends(current_active_user)):
     """
         Удаляет столбцы из датафрейма.

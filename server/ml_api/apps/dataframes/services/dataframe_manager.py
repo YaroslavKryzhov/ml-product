@@ -26,16 +26,16 @@ class DataframeManagerService:
                                                             column_types)
 
     async def save_transformed_dataframe(self, parent_id: PydanticObjectId,
-            new_dataframe_meta: models.DataFrameMetadata, new_df: pd.DataFrame
-                                         ) -> DataFrameMetadata:
+            new_dataframe_meta: models.DataFrameMetadata, new_df: pd.DataFrame,
+            method_name: str = 'modified') -> DataFrameMetadata:
         filename = await self.metadata_service.get_filename(parent_id)
-        method_name = 'modified'
         try:
             meta_created = await self.file_service.create_file(new_df,
                 filename=f"{filename}_{method_name}", parent_id=parent_id)
         except errors.FilenameExistsUserError:
+            # TODO: !!!! не передается target и вероятно и другие поля
             meta_created = await self.file_service.create_file(new_df,
-                filename=f"{filename}_{method_name}{utils.get_random_number()}",
+                filename=f"{filename}_{method_name}_{utils.get_random_number()}",
                 parent_id=parent_id)
         new_dataframe_id = meta_created.id
         await self.metadata_service.set_column_types(new_dataframe_id,
@@ -43,12 +43,29 @@ class DataframeManagerService:
         return await self.metadata_service.set_pipeline(new_dataframe_id,
             new_dataframe_meta.pipeline)
 
+    async def save_predictions_dataframe(self, filename: str,
+                                         pred_df: pd.DataFrame,
+                                         ) -> DataFrameMetadata:
+        try:
+            meta_created = await self.file_service.create_file(pred_df,
+                filename=f"{filename}",
+                is_prediction=True)
+        except errors.FilenameExistsUserError:
+            meta_created = await self.file_service.create_file(pred_df,
+                filename=f"{filename}{utils.get_random_number()}",
+                is_prediction=True)
+        return meta_created
+
     async def move_dataframe_to_root(self, dataframe_id: PydanticObjectId
                                      ) -> DataFrameMetadata:
         parent_id = await self.metadata_service.get_parent_id(dataframe_id)
         if parent_id is None:
             raise errors.NoParentIDError()
         await self.metadata_service.set_parent_id(dataframe_id, None)
+
+    async def move_prediction_to_root(self, dataframe_id: PydanticObjectId
+                                     ) -> DataFrameMetadata:
+        await self.metadata_service.set_is_prediction(dataframe_id, False)
 
     async def _define_initial_column_types(self, dataframe_id: PydanticObjectId
                                            ) -> ColumnTypes:
@@ -61,7 +78,7 @@ class DataframeManagerService:
         column_types = models.ColumnTypes(
             numeric=numeric_columns, categorical=categorical_columns)
         await self._check_columns_consistency(
-            df, column_types.numeric + column_types.categorical, dataframe_id)
+            df, column_types.numeric + column_types.categorical)
         await self.file_service.write_df_to_file(dataframe_id, df)
         return column_types
 
@@ -80,7 +97,7 @@ class DataframeManagerService:
 
         df = await self.file_service.read_df_from_file(dataframe_id)
         await self._check_columns_consistency(df,
-            column_types.numeric + column_types.categorical, dataframe_id)
+            column_types.numeric + column_types.categorical)
         try:
             if new_type == "categorical":
                 converted_column = utils._convert_column_to_categorical(
@@ -119,29 +136,28 @@ class DataframeManagerService:
             raise errors.ColumnNotNumericError(column_types.categorical[0])
         return column_types.numeric, target_column
 
-    async def get_feature_target_df(self, dataframe_id: PydanticObjectId
-                                    ) -> (pd.DataFrame, pd.Series):
-        numeric_feature_columns, target_column = await self.get_feature_target_column_names(
-            dataframe_id=dataframe_id)
-        df = await self.file_service.read_df_from_file(dataframe_id)
-        await self._check_columns_consistency(df,
-            numeric_feature_columns + [target_column], dataframe_id)
-        if target_column is None:
+    async def get_feature_target_df_supervised(self,
+            dataframe_id: PydanticObjectId) -> (pd.DataFrame, pd.Series):
+        features, target = await self.get_feature_target_df(dataframe_id)
+        if target is None:
             raise errors.TargetNotFoundError(dataframe_id)
-        features = df.drop(target_column, axis=1)
-        target = df[target_column]
         return features, target
 
-    async def get_feature_df(self, dataframe_id: PydanticObjectId
-                             ) -> pd.DataFrame:
-        numeric_feature_columns, target_column = await self.get_feature_target_column_names(
+    async def get_feature_target_df(self, dataframe_id: PydanticObjectId
+                                    ) -> (pd.DataFrame, Optional[pd.Series]):
+        feature_columns, target_column = await self.get_feature_target_column_names(
             dataframe_id=dataframe_id)
         df = await self.file_service.read_df_from_file(dataframe_id)
-        await self._check_columns_consistency(df,
-            numeric_feature_columns + [target_column], dataframe_id)
-        return df
+        if target_column is not None:
+            df_columns_list = feature_columns + [target_column]
+            await self._check_columns_consistency(df, df_columns_list)
+            features = df.drop(target_column, axis=1)
+            target = df[target_column]
+            return features, target
+        else:
+            await self._check_columns_consistency(df, feature_columns)
+            return df, None
 
-    async def _check_columns_consistency(self, df, feature_columns,
-                                         dataframe_id) -> None:
-        if sorted(df.columns.tolist()) != sorted(feature_columns):
-            raise errors.ColumnsNotEqualError(dataframe_id)
+    async def _check_columns_consistency(self, df, df_columns_list) -> None:
+        if sorted(df.columns.tolist()) != sorted(df_columns_list):
+            raise errors.ColumnsNotEqualError()

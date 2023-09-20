@@ -6,6 +6,7 @@ from ml_api.apps.ml_models import specs, schemas, errors
 from ml_api.apps.ml_models.specs import AvailableModelTypes as Models
 from ml_api.apps.ml_models.specs import AvailableTaskTypes as TaskTypes
 from ml_api.apps.ml_models.services.params_searcher import HyperoptService
+from ml_api.apps.ml_models.models import ModelMetadata
 from ml_api.apps.ml_models.models_specs.validation_params import \
     clustering_models_params as cluster_params, \
     classification_models_params as classif_params, \
@@ -18,7 +19,13 @@ class ParamsValidationService:
     """
     Отвечает за валидацию параметров модели.
     """
-    def __init__(self):
+    def __init__(self, user_id, model_meta: ModelMetadata):
+        self._user_id = user_id
+        self.dataframe_id = model_meta.dataframe_id
+        self.model_type = model_meta.model_params.model_type
+        self.model_params = model_meta.model_params.params
+        self.params_type = model_meta.params_type
+        self.task_type = model_meta.task_type
 
         self._classification_models_params_map = {
             Models.DECISION_TREE_CLASSIFIER: classif_params.DecisionTreeClassifierParams,
@@ -94,7 +101,7 @@ class ParamsValidationService:
             Models.TRUNCATED_SVD: dim_red_params.TruncatedSVDParams
         }
 
-        self._task_to_models_params_map = {
+        self._task_to_models_params_map_map = {
             TaskTypes.CLASSIFICATION: self._classification_models_params_map,
             TaskTypes.REGRESSION: self._regression_models_params_map,
             TaskTypes.CLUSTERING: self._clustering_models_params_map,
@@ -110,47 +117,39 @@ class ParamsValidationService:
             TaskTypes.DIMENSIONALITY_REDUCTION: errors.UnknownDimensionalityReductionModelError,
         }
 
-    async def validate_params(self, task_type: TaskTypes,
-                              model_params: schemas.ModelParams,
-                              params_type: specs.AvailableParamsTypes,
-                              dataframe_info: schemas.DataframeGetterInfo) -> schemas.ModelParams:
-        initial_params = await self._get_initial_params(params_type, model_params,
-                                                  dataframe_info, task_type)
+    async def validate_params(self) -> schemas.ModelParams:
+        initial_params = await self._get_initial_params()
 
-        validated_params = self._validate_model_params(task_type,
-                                                       initial_params)
-        return schemas.ModelParams(type=model_params.model_type,
+        validated_params = self._validate_params(initial_params)
+
+        return schemas.ModelParams(model_type=self.model_type,
                                    params=validated_params)
 
-    async def _get_initial_params(self, params_type: specs.AvailableParamsTypes,
-                            model_params: schemas.ModelParams,
-                            dataframe_info: schemas.DataframeGetterInfo,
-                            task_type: TaskTypes) -> Dict:
+    async def _get_initial_params(self) -> Dict:
 
-        if params_type == specs.AvailableParamsTypes.DEFAULT:
+        if self.params_type == specs.AvailableParamsTypes.DEFAULT:
             return {}
-        if params_type == specs.AvailableParamsTypes.CUSTOM:
-            return model_params
-        if params_type == specs.AvailableParamsTypes.AUTO:
-            return await HyperoptService(dataframe_info).search_params(
-                task_type, model_params.model_type)
+        if self.params_type == specs.AvailableParamsTypes.CUSTOM:
+            return self.model_params
+        if self.params_type == specs.AvailableParamsTypes.AUTO:
+            hyperopt_model_params = await HyperoptService(self._user_id, self.dataframe_id
+                ).search_params(self.task_type, self.model_type)
+            return hyperopt_model_params.params
+        raise errors.UnknownParamsTypeError(self.params_type)
 
-        raise errors.UnknownParamsTypeError(params_type)
+    def _validate_params(self, initial_params: Dict) -> Dict[str, Any]:
+        if self.task_type not in self._task_to_models_params_map_map:
+            raise errors.UnknownTaskTypeError(self.task_type)
+        model_params_map = self._task_to_models_params_map_map[self.task_type]
 
-    def _validate_model_params(self, task_type, model_params) -> Dict[str, Any]:
-        model_type = model_params.model_type
-
-        if task_type not in self._task_to_models_params_map:
-            raise errors.UnknownTaskTypeError(task_type)
-        model_params_map = self._task_to_models_params_map[task_type]
-
-        if model_type not in model_params_map:
-            unknown_model_err = self._task_to_model_error_map[task_type]
-            raise unknown_model_err(model_type)
-        model_params_class = model_params_map[model_type]
+        if self.model_type not in model_params_map:
+            unknown_model_err = self._task_to_model_error_map[self.task_type]
+            raise unknown_model_err(self.model_type)
+        model_params_class = model_params_map[self.model_type]
 
         try:
-            validated_params = model_params_class(**model_params.params)
+            validated_params = model_params_class(**initial_params)
         except ValidationError as err:
-            raise errors.ModelParamsValidationError(model_params, err)
+            raise errors.ModelParamsValidationError(self.model_type,
+                                                    initial_params, err)
         return validated_params.dict()

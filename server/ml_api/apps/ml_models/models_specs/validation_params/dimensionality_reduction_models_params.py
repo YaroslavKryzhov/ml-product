@@ -5,7 +5,6 @@ from typing import Literal
 # PCA (Principal Component Analysis)
 class PCAParams(BaseModel):
     n_components: Optional[Union[int, float, Literal['mle']]] = None
-    copy: bool = True
     whiten: bool = False
     svd_solver: Literal['auto', 'full', 'arpack', 'randomized'] = 'auto'
     tol: float = 0.0

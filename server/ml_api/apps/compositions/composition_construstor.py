@@ -88,5 +88,4 @@ class CompositionConstructor:
                 f'Unknown composition type: {self.composition_type}')
 
     def _build_regression_composition(self):
-        # TODO: add regression
         raise NotImplementedError

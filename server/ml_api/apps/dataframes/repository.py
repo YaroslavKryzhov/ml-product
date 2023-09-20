@@ -1,3 +1,5 @@
+import tempfile
+from pathlib import Path
 from typing import List
 from typing import Dict
 
@@ -7,6 +9,7 @@ from beanie import PydanticObjectId
 from pymongo.errors import DuplicateKeyError
 
 from ml_api.common.file_manager.base import FileCRUD
+from ml_api.config import ROOT_DIR
 from ml_api.apps.dataframes.models import DataFrameMetadata
 from ml_api.apps.dataframes.errors import FilenameExistsUserError, \
     DataFrameNotFoundError, ObjectFileNotFoundError
@@ -24,14 +27,16 @@ class DataFrameInfoCRUD:
 
     async def get_all(self) -> List[DataFrameMetadata]:
         dataframe_metas = await DataFrameMetadata.find(
-            DataFrameMetadata.user_id == self.user_id).to_list()
+            DataFrameMetadata.user_id == self.user_id).find(
+            DataFrameMetadata.is_prediction == False).to_list()
         return dataframe_metas
 
-    async def create(self, filename: str, parent_id: PydanticObjectId = None
-                     ) -> DataFrameMetadata:
+    async def create(self, filename: str, parent_id: PydanticObjectId = None,
+                     is_prediction: bool = False) -> DataFrameMetadata:
         new_obj = DataFrameMetadata(filename=filename,
                                     user_id=self.user_id,
-                                    parent_id=parent_id)
+                                    parent_id=parent_id,
+                                    is_prediction=is_prediction)
         try:
             await new_obj.insert()
         except DuplicateKeyError:
@@ -45,28 +50,48 @@ class DataFrameInfoCRUD:
             raise DataFrameNotFoundError(dataframe_id)
         return await dataframe_meta.update(query)
 
-    async def delete(self, dataframe_id: PydanticObjectId) -> DataFrameMetadata:
+    async def delete(self, dataframe_id: PydanticObjectId):
         dataframe_meta = await DataFrameMetadata.get(dataframe_id)
         if not dataframe_meta:
             raise DataFrameNotFoundError(dataframe_id)
-        return await dataframe_meta.delete()
+        await dataframe_meta.delete()
 
 
 class DataFrameFileCRUD(FileCRUD):
+    def __init__(self, user_id):
+        self.user_id = user_id
+
+    def _get_csv_path(self, file_id: PydanticObjectId):
+        user_path = Path(ROOT_DIR) / str(self.user_id) / "dataframes"
+        user_path.mkdir(parents=True, exist_ok=True)
+        return user_path / f"{file_id}.csv"
+
+    def upload_csv(self, file_id: PydanticObjectId,
+                   file: tempfile.SpooledTemporaryFile) -> FileResponse:
+        csv_path = self._get_csv_path(file_id)
+        self._upload(csv_path, file)
+
+    def download_csv(self, file_id: PydanticObjectId, filename: str
+                     ) -> FileResponse:
+        csv_path = self._get_csv_path(file_id)
+        if not filename.endswith('.csv'):
+            filename += '.csv'
+        file_response = self._download(path=csv_path, filename=filename)
+        file_response.media_type = "text/csv"
+        return file_response
 
     def read_csv(self, file_id: PydanticObjectId) -> pd.DataFrame:
-        csv_path = self._get_path(file_id)
+        csv_path = self._get_csv_path(file_id)
         try:
             data = pd.read_csv(csv_path)
         except FileNotFoundError:
             raise ObjectFileNotFoundError(file_id)
         return data
 
-    def download_csv(self, file_id: PydanticObjectId, filename: str
-                     ) -> FileResponse:
-        file_response = self.download(file_id=file_id, filename=filename)
-        file_response.media_type = "text/csv"
-        return file_response
-
     def save_csv(self, file_id: PydanticObjectId, data: pd.DataFrame):
-        data.to_csv(self._get_path(file_id), index=False)
+        csv_path = self._get_csv_path(file_id)
+        data.to_csv(csv_path, index=False)
+
+    def delete_csv(self, file_id: PydanticObjectId):
+        csv_path = self._get_csv_path(file_id)
+        self._delete(csv_path)

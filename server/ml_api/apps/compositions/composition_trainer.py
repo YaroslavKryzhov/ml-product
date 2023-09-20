@@ -48,7 +48,6 @@ class CompositionTrainer:
         except AttributeError:
             # try:
             probabilities = self.composition.decision_function(f_valid)
-            # TODO: test for different errors
             # except AttributeError:
             #     probabilities = None
         return predictions, probabilities, t_valid
@@ -162,5 +161,4 @@ class CompositionTrainer:
         return self.composition, report
 
     def _process_regression(self) -> (Any, schemas.RegeressionMetrics):
-        #  TODO: add regression
         raise NotImplementedError

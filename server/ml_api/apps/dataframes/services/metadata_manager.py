@@ -78,3 +78,7 @@ class DataframeMetadataManagerService:
                             ) -> DataFrameMetadata:
         query = {"$set": {DataFrameMetadata.parent_id: new_parent_id}}
         return await self.info_repository.update(dataframe_id, query)
+
+    async def set_is_prediction(self, dataframe_id, value: bool) -> DataFrameMetadata:
+        query = {"$set": {DataFrameMetadata.is_prediction: value}}
+        return await self.info_repository.update(dataframe_id, query)

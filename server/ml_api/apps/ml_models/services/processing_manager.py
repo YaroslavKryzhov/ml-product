@@ -1,10 +1,14 @@
+import traceback
+
 from ml_api.apps.ml_models.services.model_construstor import ModelConstructorService
 from ml_api.apps.ml_models.services.model_trainer import ModelTrainerService
 from ml_api.apps.ml_models.services.params_validator import ParamsValidationService
 from ml_api.apps.ml_models.services.metadata_manager import ModelMetadataManagerService
 from ml_api.apps.ml_models.services.file_manager import ModelFileManagerService
-from ml_api.apps.ml_models import specs, schemas
+from ml_api.apps.ml_models import specs
+from ml_api.apps.ml_models.schemas import ModelTrainingResults
 from ml_api.apps.ml_models.models import ModelMetadata
+from ml_api.apps.training_reports.services.report_creator import ReportCreatorService
 
 
 class ModelProcessingManagerService:
@@ -16,58 +20,73 @@ class ModelProcessingManagerService:
         self.file_manager = ModelFileManagerService(self._user_id)
         self.metadata_manager = ModelMetadataManagerService(self._user_id)
 
-    async def _set_problem_status(self, model_id):
+    async def _set_status(self, model_id, status: specs.ModelStatuses):
         await self.metadata_manager.set_status(
-            model_id, specs.ModelStatuses.PROBLEM)
+            model_id, status)
 
-    async def prepare_and_train_model(self, model_meta: ModelMetadata):
-        # Может быть стоит разбирать мету на части тут
+    async def _process_error(self, err, model_meta):
+        await self._set_status(model_meta.id, specs.ModelStatuses.PROBLEM)
+        error_description = traceback.format_exc()
+        report = ReportCreatorService().get_error_report(model_meta.task_type,
+                                                         error_description)
+        await self.metadata_manager.add_report(model_meta.id,
+            model_meta.dataframe_id, report)
+
+    async def train_model(self, model_meta: ModelMetadata):
         model = await self._prepare_model(model_meta=model_meta)
-        result = await self._train_model(model_meta=model_meta, model=model)
-        return result
+        model_training_results = await self._train_model(model_meta=model_meta, model=model)
+        await self._save_model_training_results(model_meta, model_training_results)
 
     async def _prepare_model(self, model_meta: ModelMetadata):  # -> sklearn.Estimator
         """
         Валидирует параметры модели и создает её экземпляр.
         """
-        dataframe_info = schemas.DataframeGetterInfo(
-            dataframe_id=model_meta.dataframe_id, user_id=self._user_id)
-        model_params = model_meta.model_params
-        params_type = model_meta.params_type
-        task_type = model_meta.task_type
-
+        model_id = model_meta.id
+        await self._set_status(model_id, specs.ModelStatuses.BUILDING)
         try:
-            model_params_validated = await ParamsValidationService().validate_params(
-                task_type, model_params, params_type, dataframe_info)
+            model_params_validated = await ParamsValidationService(
+                self._user_id, model_meta).validate_params()
 
             await self.metadata_manager.set_model_params(
-                model_meta.id, model_params_validated)
+                model_id, model_params_validated)
 
-            model = ModelConstructorService().get_model(task_type,
-                                                        model_params_validated)
+            return ModelConstructorService().get_model(model_meta.task_type,
+                                                       model_params_validated)
         except Exception as err:
-            await self._set_problem_status(model_meta.id)
+            await self._process_error(err, model_meta)
             raise err
-        return model
 
-    def _train_model(self, model_meta: ModelMetadata, model):
+    async def _train_model(self, model_meta: ModelMetadata, model) -> ModelTrainingResults:
         """
         Обучает предоставленную модель на данных из датафрейма.
         """
         model_id = model_meta.id
-        self.metadata_manager.set_status(model_id, specs.ModelStatuses.TRAINING)
+        await self.metadata_manager.set_status(model_id, specs.ModelStatuses.TRAINING)
         try:
-            model, metrics = ModelTrainerService(model_meta, model).train_model()
-        except Exception as e:
-            await self._set_problem_status(model_id)
-            raise e
-        self.metadata_manager.set_status(model_id, specs.ModelStatuses.TRAINED)
+            return await ModelTrainerService(self._user_id,
+                model_meta, model).train_model()
+        except Exception as err:
+            await self._process_error(err, model_meta)
+            raise err
 
+    async def _save_model_training_results(self, model_meta: ModelMetadata,
+            model_training_results: ModelTrainingResults):
+        model_id = model_meta.id
+        dataframe_id = model_meta.dataframe_id
         try:
-            self.file_manager.save_model(model_id, model)
-        except Exception as e:
-            await self._set_problem_status(model_id)
-            raise e
+            await self.file_manager.save_model(model_id, model_training_results.model)
+            for report, pred_df in model_training_results.results:
+                await self.metadata_manager.add_report(model_id, dataframe_id,
+                                                       report)
+                df_filename = f"{model_meta.filename}_" \
+                                  f"predictions_{report.report_type.value}"
+                await self.metadata_manager.add_predictions(model_id, pred_df,
+                                                                df_filename)
+        except Exception as err:
+            await self._process_error(err, model_meta)
+            raise err
+
+        await self.metadata_manager.set_status(model_id, specs.ModelStatuses.TRAINED)
 
     # def predict_on_model(self, dataframe_id: UUID, model_id: UUID):
     #     features = DataframeManagerService(self._db, self._user_id

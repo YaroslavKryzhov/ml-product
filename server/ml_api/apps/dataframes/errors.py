@@ -77,10 +77,10 @@ class ColumnNotCategoricalError(HTTPException):
 class ColumnsNotEqualError(HTTPException):
     """Raise when feature columns in dataframe_meta not equal to real in
     Dataframe"""
-    def __init__(self, dataframe_id: PydanticObjectId):
+    def __init__(self):
         super().__init__(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Feature columns in dataframe_meta with id {dataframe_id} not equal to real in Dataframe"
+            detail=f"Feature columns in dataframe_meta not equal to real in Dataframe"
             )
 
 

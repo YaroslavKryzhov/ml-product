@@ -1,6 +1,7 @@
 from hyperopt import fmin, tpe, STATUS_OK, space_eval
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import silhouette_score
+from beanie.odm.fields import PydanticObjectId
 
 from ml_api.apps.dataframes.services.dataframe_manager import \
     DataframeManagerService
@@ -18,11 +19,11 @@ from ml_api.apps.ml_models.models_specs.hyperopt_params.clustering_searchers \
 
 
 class HyperoptService:
-    def __init__(self, dataframe_info: schemas.DataframeGetterInfo):
+    def __init__(self, user_id, dataframe_id: PydanticObjectId):
         self.target = None
         self.features = None
-        self.dataframe_id = dataframe_info.dataframe_id
-        self.user_id = dataframe_info.user_id
+        self.dataframe_id = dataframe_id
+        self.user_id = user_id
 
         self._task_to_searcher_params_map = {
             TaskTypes.CLASSIFICATION: CLASSIFICATION_SEARCH_SPACE_CONFIG,
@@ -40,11 +41,11 @@ class HyperoptService:
         if task_type in [TaskTypes.CLASSIFICATION,
                          TaskTypes.REGRESSION]:
             self.features, self.target = await DataframeManagerService(
-                self.user_id).get_feature_target_df(self.dataframe_id)
+                self.user_id).get_feature_target_df_supervised(self.dataframe_id)
 
         if task_type == TaskTypes.CLUSTERING:
-            self.features = await DataframeManagerService(
-                self.user_id).get_feature_df(self.dataframe_id)
+            self.features, _ = await DataframeManagerService(
+                self.user_id).get_feature_target_df(self.dataframe_id)
 
         if task_type in [TaskTypes.OUTLIER_DETECTION,
                          TaskTypes.DIMENSIONALITY_REDUCTION]:

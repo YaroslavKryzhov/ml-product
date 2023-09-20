@@ -1,5 +1,6 @@
+from pathlib import Path
 from typing import List, Dict
-import pickle
+import joblib
 
 from beanie import PydanticObjectId
 from pymongo.errors import DuplicateKeyError
@@ -9,9 +10,10 @@ from ml_api.common.file_manager.base import FileCRUD
 from ml_api.apps.ml_models.models import ModelMetadata
 from ml_api.apps.ml_models.schemas import ModelParams
 from ml_api.apps.ml_models.specs import AvailableTaskTypes, \
-    AvailableParamsTypes, AvailableModelTypes
+    AvailableParamsTypes
 from ml_api.apps.ml_models.errors import ModelNotFoundError, \
     FilenameExistsUserError, ObjectFileNotFoundError
+from ml_api.config import ROOT_DIR
 
 
 class ModelInfoCRUD:
@@ -32,9 +34,8 @@ class ModelInfoCRUD:
     async def get_by_dataframe_id(self, dataframe_id: PydanticObjectId
                                   ) -> List[ModelMetadata]:
         models = await ModelMetadata.find(
-            (ModelMetadata.user_id == self.user_id) &
-            (ModelMetadata.dataframe_id == dataframe_id)
-        ).to_list()
+            ModelMetadata.user_id == self.user_id).find(
+            ModelMetadata.dataframe_id == dataframe_id).to_list()
         return models
 
     async def create(self,
@@ -45,7 +46,8 @@ class ModelInfoCRUD:
                      params_type: AvailableParamsTypes,
                      feature_columns: List[str],
                      target_column: str,
-                     test_size: float) -> ModelMetadata:
+                     test_size: float,
+                     stratify: bool) -> ModelMetadata:
         new_obj = ModelMetadata(filename=filename,
                                 user_id=self.user_id,
                                 dataframe_id=dataframe_id,
@@ -54,7 +56,8 @@ class ModelInfoCRUD:
                                 params_type=params_type,
                                 feature_columns=feature_columns,
                                 target_column=target_column,
-                                test_size=test_size)
+                                test_size=test_size,
+                                stratify=stratify)
         try:
             await new_obj.insert()
         except DuplicateKeyError:
@@ -68,35 +71,48 @@ class ModelInfoCRUD:
             raise ModelNotFoundError(model_id)
         return await model_meta.update(query)
 
-    async def delete(self, model_id: PydanticObjectId) -> ModelMetadata:
+    async def delete(self, model_id: PydanticObjectId):
         model_meta = await ModelMetadata.get(model_id)
         if model_meta is None:
             raise ModelNotFoundError(model_id)
-        return await model_meta.delete()
+        await model_meta.delete()
 
 
 class ModelFileCRUD(FileCRUD):
+    def __init__(self, user_id):
+        self.user_id = user_id
 
-    def read_model(self, file_id: PydanticObjectId):
+    def _get_joblib_path(self, file_id: PydanticObjectId):
+        user_path = Path(ROOT_DIR) / str(self.user_id) / "models"
+        user_path.mkdir(parents=True, exist_ok=True)
+        return user_path / f"{file_id}.joblib"
+
+    def download_model(self, file_id: PydanticObjectId, filename: str
+                     ) -> FileResponse:
+        joblib_path = self._get_joblib_path(file_id)
+        if not filename.endswith('.joblib'):
+            filename += '.joblib'
+        file_response = self._download(path=joblib_path, filename=filename)
+        return file_response
+
+    def read_model(self, file_id: PydanticObjectId):  # -> Estimator object
         """Read model file"""
-        model_path = self._get_path(file_id)
+        joblib_path = self._get_joblib_path(file_id)
         try:
-            with open(model_path, 'rb') as f:
-                model = pickle.load(f)
+            model = joblib.load(joblib_path)
         except FileNotFoundError:
             raise ObjectFileNotFoundError(file_id)
         return model
 
-    def download_model(self, file_id: PydanticObjectId,
-                       filename: str) -> FileResponse:
-        file_response = self.download(file_id=file_id, filename=filename)
-        return file_response
-
     def save_model(self, file_id: PydanticObjectId, model):
         """Save model file"""
-        model_path = self._get_path(file_id)
-        with open(model_path, "wb") as f:
-            pickle.dump(model, f, protocol=pickle.HIGHEST_PROTOCOL)
+        joblib_path = self._get_joblib_path(file_id)
+        joblib.dump(model, joblib_path)
+
+    def delete_model(self, file_id: PydanticObjectId):
+        """Delete model file"""
+        joblib_path = self._get_joblib_path(file_id)
+        self._delete(joblib_path)
 
 
 # class ModelFileCRUD(FileCRUD):

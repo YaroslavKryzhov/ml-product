@@ -1,28 +1,29 @@
 from datetime import datetime
-from typing import List, Optional, Dict
+from typing import List, Optional
 
 from beanie import Document
 from beanie.odm.fields import PydanticObjectId
 from pymongo import IndexModel, ASCENDING, HASHED
 from pydantic import Field
 
-from ml_api.apps.ml_models.specs import AvailableTaskTypes, \
-    AvailableModelTypes, AvailableParamsTypes
-from ml_api.apps.ml_models.schemas import ModelParams, ModelStatuses
+from ml_api.apps.ml_models import specs
+from ml_api.apps.ml_models.schemas import ModelParams
 
 
 class ModelMetadata(Document):
     filename: str
     user_id: PydanticObjectId
     dataframe_id: PydanticObjectId
-    task_type: AvailableTaskTypes
+    task_type: specs.AvailableTaskTypes
     model_params: ModelParams
-    params_type: AvailableParamsTypes
+    params_type: specs.AvailableParamsTypes
     feature_columns: Optional[List[str]] = []
     target_column: Optional[str] = None
-    test_size: Optional[float] = 0.2
-    status: ModelStatuses = ModelStatuses.BUILDING
-    metrics_report_id: Optional[PydanticObjectId] = None
+    test_size: Optional[float] = 0.25
+    stratify: Optional[bool] = False
+    status: specs.ModelStatuses = specs.ModelStatuses.BUILDING
+    metrics_reports: List[PydanticObjectId] = []
+    model_predictions: List[PydanticObjectId] = []
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
     class Settings:

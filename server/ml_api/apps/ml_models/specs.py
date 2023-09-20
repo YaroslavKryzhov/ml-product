@@ -29,9 +29,10 @@ class ModelStatuses(Enum):
     PROBLEM = 'Problem'
 
 
-class ModelFormats(Enum):
-    ONNX = 'onnx'
-    PICKLE = 'pickle'
+# class ModelFormats(Enum):
+#     ONNX = 'onnx'
+#     PICKLE = 'pickle'
+#     JOBLIB = 'joblib'
 
 
 class AvailableModelTypes(Enum):

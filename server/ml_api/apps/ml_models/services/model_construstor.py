@@ -2,9 +2,10 @@ from typing import Dict, Any, Callable
 
 from sklearn import ensemble, linear_model, svm, neighbors, neural_network, \
     tree, cluster, mixture, decomposition, discriminant_analysis, manifold, covariance
-from xgboost import XGBClassifier, XGBRegressor
-from lightgbm import LGBMClassifier, LGBMRegressor
-from catboost import CatBoostClassifier, CatBoostRegressor
+# TODO: install libraries
+# from xgboost import XGBClassifier, XGBRegressor
+# from lightgbm import LGBMClassifier, LGBMRegressor
+# from catboost import CatBoostClassifier, CatBoostRegressor
 
 from ml_api.apps.ml_models import specs, schemas, errors
 from ml_api.apps.ml_models.specs import AvailableModelTypes as Models
@@ -23,9 +24,9 @@ class ModelConstructorService:
             Models.GRADIENT_BOOSTING_CLASSIFIER: self._get_gradient_boosting_classifier,
             Models.ADABOOST_CLASSIFIER: self._get_adaboost_classifier,
             Models.BAGGING_CLASSIFIER: self._get_bagging_classifier,
-            Models.XGB_CLASSIFIER: self._get_xgb_classifier,
-            Models.LGBM_CLASSIFIER: self._get_lgbm_classifier,
-            Models.CAT_BOOST_CLASSIFIER: self._get_cat_boost_classifier,
+            # Models.XGB_CLASSIFIER: self._get_xgb_classifier,
+            # Models.LGBM_CLASSIFIER: self._get_lgbm_classifier,
+            # Models.CAT_BOOST_CLASSIFIER: self._get_cat_boost_classifier,
             Models.SGD_CLASSIFIER: self._get_sgd_classifier,
             Models.LINEAR_SVC: self._get_linear_svc,
             Models.SVC: self._get_svc,
@@ -42,9 +43,9 @@ class ModelConstructorService:
             Models.GRADIENT_BOOSTING_REGRESSOR: self._get_gradient_boosting_regressor,
             Models.ADABOOST_REGRESSOR: self._get_adaboost_regressor,
             Models.BAGGING_REGRESSOR: self._get_bagging_regressor,
-            Models.XGB_REGRESSOR: self._get_xgb_regressor,
-            Models.LGBM_REGRESSOR: self._get_lgbm_regressor,
-            Models.CAT_BOOST_REGRESSOR: self._get_cat_boost_regressor,
+            # Models.XGB_REGRESSOR: self._get_xgb_regressor,
+            # Models.LGBM_REGRESSOR: self._get_lgbm_regressor,
+            # Models.CAT_BOOST_REGRESSOR: self._get_cat_boost_regressor,
             Models.SGD_REGRESSOR: self._get_sgd_regressor,
             Models.LINEAR_SVR: self._get_linear_svr,
             Models.SVR: self._get_svr,
@@ -88,7 +89,7 @@ class ModelConstructorService:
             Models.TRUNCATED_SVD: self._get_truncated_svd,
         }
 
-        self._task_to_models_map = {
+        self._task_to_models_map_map = {
             TaskTypes.CLASSIFICATION: self._classification_models_map,
             TaskTypes.REGRESSION: self._regression_models_map,
             TaskTypes.CLUSTERING: self._clustering_models_map,
@@ -108,9 +109,9 @@ class ModelConstructorService:
                   model_params: schemas.ModelParams):
         model_type = model_params.model_type
 
-        if task_type not in self._task_to_models_map:
+        if task_type not in self._task_to_models_map_map:
             raise errors.UnknownTaskTypeError(task_type)
-        model_map = self._task_to_models_map[task_type]
+        model_map = self._task_to_models_map_map[task_type]
 
         if model_type not in model_map:
             unknown_model_err = self._task_to_model_error_map[task_type]
@@ -137,14 +138,14 @@ class ModelConstructorService:
     def _get_bagging_classifier(self, model_params: Dict[str, Any]):
         return ensemble.BaggingClassifier(**model_params)
 
-    def _get_xgb_classifier(self, model_params: Dict[str, Any]):
-        return XGBClassifier(**model_params)
-
-    def _get_lgbm_classifier(self, model_params: Dict[str, Any]):
-        return LGBMClassifier(**model_params)
-
-    def _get_cat_boost_classifier(self, model_params: Dict[str, Any]):
-        return CatBoostClassifier(**model_params)
+    # def _get_xgb_classifier(self, model_params: Dict[str, Any]):
+    #     return XGBClassifier(**model_params)
+    #
+    # def _get_lgbm_classifier(self, model_params: Dict[str, Any]):
+    #     return LGBMClassifier(**model_params)
+    #
+    # def _get_cat_boost_classifier(self, model_params: Dict[str, Any]):
+    #     return CatBoostClassifier(**model_params)
 
     def _get_sgd_classifier(self, model_params: Dict[str, Any]):
         return linear_model.SGDClassifier(**model_params)
@@ -189,14 +190,14 @@ class ModelConstructorService:
     def _get_bagging_regressor(self, model_params: Dict[str, Any]):
         return ensemble.BaggingRegressor(**model_params)
 
-    def _get_xgb_regressor(self, model_params: Dict[str, Any]):
-        return XGBRegressor(**model_params)
-
-    def _get_lgbm_regressor(self, model_params: Dict[str, Any]):
-        return LGBMRegressor(**model_params)
-
-    def _get_cat_boost_regressor(self, model_params: Dict[str, Any]):
-        return CatBoostRegressor(**model_params)
+    # def _get_xgb_regressor(self, model_params: Dict[str, Any]):
+    #     return XGBRegressor(**model_params)
+    #
+    # def _get_lgbm_regressor(self, model_params: Dict[str, Any]):
+    #     return LGBMRegressor(**model_params)
+    #
+    # def _get_cat_boost_regressor(self, model_params: Dict[str, Any]):
+    #     return CatBoostRegressor(**model_params)
 
     def _get_sgd_regressor(self, model_params: Dict[str, Any]):
         return linear_model.SGDRegressor(**model_params)

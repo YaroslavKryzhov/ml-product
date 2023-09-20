@@ -1,7 +1,14 @@
-from ml_api.apps.dataframes.services.dataframe_manager import \
-    DataframeManagerService
-from ml_api.apps.ml_models import specs, errors
+from typing import Optional
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+
+from ml_api.apps.dataframes.services.dataframe_manager import DataframeManagerService
+from ml_api.apps.ml_models import errors
+from ml_api.apps.ml_models.specs import AvailableTaskTypes as TaskTypes
 from ml_api.apps.ml_models.models import ModelMetadata
+from ml_api.apps.ml_models.schemas import ModelTrainingResults
+from ml_api.apps.training_reports.services.report_creator import ReportCreatorService
 
 
 class ModelTrainerService:
@@ -14,162 +21,160 @@ class ModelTrainerService:
         self.feature_columns = model_meta.feature_columns
         self.target_column = model_meta.target_column
         self.test_size = model_meta.test_size
+        self.stratify = model_meta.stratify
+
         self.dataframe_manager = DataframeManagerService(self._user_id)
+        self.report_creator = ReportCreatorService()
+        self.classes_limit = 10
+        self._task_to_method_map = {
+            TaskTypes.CLASSIFICATION: self._process_classification,
+            TaskTypes.REGRESSION: self._process_regression,
+            TaskTypes.CLUSTERING: self._process_clustering,
+            TaskTypes.OUTLIER_DETECTION: self._process_outlier_detection,
+            TaskTypes.DIMENSIONALITY_REDUCTION: self._process_dimensionality_reduction,
+        }
 
-    async def train_model(self):
-        if self.task_type == specs.AvailableTaskTypes.CLASSIFICATION:
-            return self._process_classification()
-        elif self.task_type == specs.AvailableTaskTypes.REGRESSION:
-            return self._process_regression()
-        elif self.task_type == specs.AvailableTaskTypes.CLUSTERING:
-            return self._process_clustering()
-        elif self.task_type == specs.AvailableTaskTypes.OUTLIER_DETECTION:
-            return self._process_outlier_detection()
-        elif self.task_type == specs.AvailableTaskTypes.DIMENSIONALITY_REDUCTION:
-            return self._process_dimensionality_reduction()
+    async def _get_train_data(self) -> (pd.DataFrame, Optional[pd.Series]):
+        if self.task_type in [TaskTypes.CLASSIFICATION, TaskTypes.REGRESSION]:
+            return await self.dataframe_manager.\
+                get_feature_target_df_supervised(dataframe_id=self.dataframe_id)
         else:
-            raise errors.UnknownTaskTypeError(self.task_type)
+            return await self.dataframe_manager.get_feature_target_df(
+                dataframe_id=self.dataframe_id)
 
-    async def _process_classification(self):
-        classes_limit = 10
-        features, target = self.dataframe_manager.get_feature_target_df(
-            dataframe_id=self.dataframe_id)
+    def _get_train_test_split(self, features, target):
+        stratify = target if self.stratify else None
+        return train_test_split(features, target, test_size=self.test_size,
+                                stratify=stratify)
+
+    def _fit_and_predict(self, f_train, t_train, f_valid):
+        self.model.fit(f_train, t_train)
+        return pd.Series(self.model.predict(f_train)), \
+               pd.Series(self.model.predict(f_valid))
+
+    def _get_probabilities(self, f_valid):
+        try:
+            probabilities = self.model.predict_proba(f_valid)
+            if probabilities.shape[1] == 2:  # Бинарная классификация
+                return probabilities[:, 1]
+            else:  # Многоклассовая классификация
+                return probabilities
+        except AttributeError:
+            try:
+                return self.model.decision_function(f_valid)
+            except AttributeError:
+                return None
+
+    def _get_predictions_df(self, features: pd.DataFrame, res_column: pd.Series):
+        predictions_df = pd.concat([features.reset_index(drop=True),
+                   res_column.reset_index(drop=True)], axis=1)
+        return predictions_df
+
+    async def train_model(self) -> ModelTrainingResults:
+        if self.task_type not in self._task_to_method_map:
+            raise errors.UnknownTaskTypeError(self.task_type)
+        process_train = self._task_to_method_map[self.task_type]
+        model_training_result = await process_train()
+        return model_training_result
+
+    async def _process_classification(self) -> ModelTrainingResults:
+        features, target = await self._get_train_data()
         num_classes = target.nunique()
         if num_classes < 2:
             raise errors.OneClassClassificationError(self.dataframe_id)
-        elif num_classes == 2:
-            return self._process_binary_classification()
-        elif num_classes <= classes_limit:
-            return self._process_multiclass_classification()
-        else:
+        elif num_classes > self.classes_limit:
             raise errors.TooManyClassesClassificationError(
-                classes_limit, self.dataframe_id)
+                num_classes, self.dataframe_id)
 
-    def _process_binary_classification(self):
+        f_train, f_valid, t_train, t_valid = self._get_train_test_split(
+            features, target)
 
-        # fit
-        # score
-        f_train, f_valid, t_train, t_valid = train_test_split(
-            self.features, self.target, test_size=self.test_size,
-            stratify=self.target)
-        self.composition.fit(f_train, t_train)
-        predictions = self.composition.predict(f_valid)
-        try:
-            probabilities = self.composition.predict_proba(f_valid)[:, 1]
-        except AttributeError:
-            # try:
-            probabilities = self.composition.decision_function(f_valid)
-            # TODO: test for different errors
-            # except AttributeError:
-            #     probabilities = None
+        train_preds, valid_preds = self._fit_and_predict(f_train, t_train, f_valid)
+        train_probs = self._get_probabilities(f_train)
+        valid_probs = self._get_probabilities(f_valid)
 
-        accuracy = accuracy_score(target_valid, predictions)
-        recall = recall_score(target_valid, predictions)
-        precision = precision_score(target_valid, predictions)
-        f1 = f1_score(target_valid, predictions)
+        train_results_df = self._get_predictions_df(features, train_preds)
+        valid_results_df = self._get_predictions_df(features, valid_preds)
 
-        # if probabilities is not None:
-        roc_auc = roc_auc_score(target_valid, probabilities)
-        fpr, tpr, _ = roc_curve(target_valid, probabilities)
-        fpr = list(fpr)
-        tpr = list(tpr)
-        report = schemas.ClassificationMetrics(
-            accuracy=accuracy,
-            recall=recall,
-            precision=precision,
-            f1=f1,
-            roc_auc=roc_auc,
-            fpr=fpr,
-            tpr=tpr,
+        if num_classes == 2:
+            train_report = self.report_creator.score_binary_classification(
+                t_train, train_preds, train_probs, is_train=True)
+            valid_report = self.report_creator.score_binary_classification(
+                t_valid, valid_preds, valid_probs)
+        else:
+            classes = list(target.unique())
+            train_report = self.report_creator.score_multiclass_classification(
+                classes, t_train, train_preds, train_probs, is_train=True)
+            valid_report = self.report_creator.score_multiclass_classification(
+                classes, t_valid, valid_preds, valid_probs)
+        return ModelTrainingResults(
+            model=self.model,
+            results=[(train_report, train_results_df),
+                     (valid_report, valid_results_df)],
         )
-        return self.composition, report
 
-    # def _score_binary_classification(self, ): -> to utils
+    async def _process_regression(self) -> ModelTrainingResults:
+        features, target = await self._get_train_data()
+        f_train, f_valid, t_train, t_valid = self._get_train_test_split(
+            features, target)
+        train_preds, valid_preds = self._fit_and_predict(f_train, t_train,
+                                                         f_valid)
 
-    def _process_multiclass_classification(self) -> (Any, schemas.ClassificationMetrics):
-        predictions, probabilities, target_valid = self._fit_model()
+        train_results_df = self._get_predictions_df(features, train_preds)
+        valid_results_df = self._get_predictions_df(features, valid_preds)
 
-        accuracy = accuracy_score(target_valid, predictions)
-        recall = recall_score(target_valid, predictions, average='weighted')
-        precision = precision_score(
-            target_valid, predictions, average='weighted'
+        train_report = self.report_creator.score_regression(
+            t_train, train_preds, is_train=True)
+
+        valid_report = self.report_creator.score_regression(t_valid, valid_preds)
+        return ModelTrainingResults(
+            model=self.model,
+            results=[(train_report, train_results_df),
+                     (valid_report, valid_results_df)],
         )
-        f1 = f1_score(target_valid, predictions, average='weighted')
 
-        roc_auc_weighted = None
-        roc_auc_micro = None
-        roc_auc_macro = None
-        fpr_micro = None
-        fpr_macro = None
-        tpr_micro = None
-        tpr_macro = None
+    async def _process_clustering(self) -> ModelTrainingResults:
+        features, _ = await self._get_train_data()
 
-        if probabilities is not None:
-            classes = list(self.target.unique())
-            target_valid = label_binarize(target_valid, classes=classes)
-            n_classes = len(classes)
+        self.model.fit(features)
+        labels = pd.Series(self.model.labels_)
 
-            roc_auc_weighted = roc_auc_score(
-                target_valid,
-                probabilities,
-                average='weighted',
-                multi_class='ovr',
-            )
+        results_df = self._get_predictions_df(features, labels)
+        report = self.report_creator.score_clustering(features, labels,
+                                                      is_train=True)
 
-            fpr = dict()
-            tpr = dict()
-            roc_auc = dict()
-
-            for i in range(n_classes):
-                fpr[i], tpr[i], _ = roc_curve(
-                    target_valid[:, i], probabilities[:, i]
-                )
-                roc_auc[i] = auc(fpr[i], tpr[i])
-
-            fpr["micro"], tpr["micro"], _ = roc_curve(
-                target_valid.ravel(), probabilities.ravel()
-            )
-            roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
-
-            # First aggregate all false positive rates
-            all_fpr = np.unique(
-                np.concatenate([fpr[i] for i in range(n_classes)])
-            )
-
-            # Then interpolate all ROC curves at this points
-            mean_tpr = np.zeros_like(all_fpr)
-            for i in range(n_classes):
-                mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
-
-            # Finally average it and compute AUC
-            mean_tpr /= n_classes
-
-            fpr["macro"] = all_fpr
-            tpr["macro"] = mean_tpr
-            roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
-
-            fpr_micro = list(fpr["micro"])
-            tpr_micro = list(tpr["micro"])
-            fpr_macro = list(fpr["macro"])
-            tpr_macro = list(tpr["macro"])
-            roc_auc_micro = roc_auc["micro"]
-            roc_auc_macro = roc_auc["macro"]
-
-        report = schemas.ClassificationMetrics(
-            accuracy=accuracy,
-            recall=recall,
-            precision=precision,
-            f1=f1,
-            roc_auc_weighted=roc_auc_weighted,
-            roc_auc_micro=roc_auc_micro,
-            roc_auc_macro=roc_auc_macro,
-            fpr_micro=fpr_micro,
-            fpr_macro=fpr_macro,
-            tpr_micro=tpr_micro,
-            tpr_macro=tpr_macro,
+        return ModelTrainingResults(
+            model=self.model,
+            results=[(report, results_df)],
         )
-        return self.composition, report
 
-    def _process_regression(self) -> (Any, schemas.RegeressionMetrics):
-        #  TODO: add regression
-        raise NotImplementedError
+    async def _process_outlier_detection(self) -> ModelTrainingResults:
+        features, _ = await self._get_train_data()
+        outliers = self.model.fit_predict(features)
+        outliers = pd.Series(outliers).replace({1: False, -1: True})
+
+        results_df = self._get_predictions_df(features, outliers)
+
+        report = self.report_creator.score_outlier_detection(
+            features, outliers, is_train=True)
+        return ModelTrainingResults(
+            model=self.model,
+            results=[(report, results_df)],
+        )
+
+    async def _process_dimensionality_reduction(self) -> ModelTrainingResults:
+        features, target = await self._get_train_data()
+
+        reduced_features = self.model.fit_transform(features)
+
+        if target is not None:
+            results_df = self._get_predictions_df(reduced_features, target)
+        else:
+            results_df = reduced_features
+
+        report = self.report_creator.score_dimensionality_reduction(
+            self.model.explained_variance_ratio_, is_train=True)
+        return ModelTrainingResults(
+            model=self.model,
+            results=[(report, results_df)],
+        )

@@ -34,7 +34,6 @@ class AffinityPropagationParams(BaseModel):
     damping: float = 0.5
     max_iter: int = 200
     convergence_iter: int = 15
-    copy: bool = True
     preference: Optional[float] = None
     affinity: Literal['euclidean', 'precomputed'] = 'euclidean'
     verbose: bool = False
@@ -86,7 +85,7 @@ class AgglomerativeClusteringParams(BaseModel):
 class DBSCANParams(BaseModel):
     eps: float = 0.5
     min_samples: int = 5
-    metric: Union[str, callable] = 'euclidean'
+    metric: str = 'euclidean'
     metric_params: Optional[dict] = None
     algorithm: Literal['auto', 'ball_tree', 'kd_tree', 'brute'] = 'auto'
     leaf_size: int = 30
@@ -97,7 +96,7 @@ class DBSCANParams(BaseModel):
 class OPTICSParams(BaseModel):
     min_samples: int = 5
     max_eps: float = float('inf')
-    metric: Union[str, callable] = 'minkowski'
+    metric: str = 'minkowski'
     p: int = 2
     metric_params: Optional[dict] = None
     cluster_method: Literal['xi', 'dbscan'] = 'xi'
@@ -113,9 +112,8 @@ class OPTICSParams(BaseModel):
 class BirchParams(BaseModel):
     threshold: float = 0.5
     branching_factor: int = 50
-    n_clusters: Optional[Union[int, callable]] = 3
+    n_clusters: Optional[int] = 3
     compute_labels: bool = True
-    copy: bool = True
 
 
 class GaussianMixtureParams(BaseModel):

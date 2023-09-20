@@ -76,7 +76,7 @@ services:
       - ./deploy/mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
       - ./volumes/mongo_data:/data/db
     ports:
-      - "27017:27017"
+      - "27018:27017"
     networks:
       - ml-net
     restart: unless-stopped

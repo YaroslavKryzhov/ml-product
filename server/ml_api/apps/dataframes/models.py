@@ -18,6 +18,7 @@ class DataFrameMetadata(Document):
     parent_id: Optional[PydanticObjectId] = None
     filename: str
     user_id: PydanticObjectId
+    is_prediction: bool = False
     feature_columns_types: Optional[ColumnTypes] = ColumnTypes(
         numeric=[], categorical=[])
     target_feature: Optional[str] = None

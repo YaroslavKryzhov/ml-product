@@ -1,3 +1,5 @@
+from typing import Dict
+
 from pydantic import ValidationError
 from fastapi import HTTPException, status
 from beanie import PydanticObjectId
@@ -109,12 +111,12 @@ class UnknownOutlierDetectionModelError(HTTPException):
 
 class ModelParamsValidationError(HTTPException):
     """Raise when model_params is not valid"""
-    def __init__(self, model_params: schemas.ModelParams,
-                 error: ValidationError):
+    def __init__(self, model_type: specs.AvailableModelTypes,
+                 model_params: Dict, error: ValidationError):
         super().__init__(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Validation error for model_params: \n"
-                   f"{model_params.json()}; \n"
+            detail=f"Validation error for model {model_type.value} with \n"
+                   f"params {model_params}; \n"
                    f"Error: \n {error.json()}."
         )
 
@@ -168,4 +170,13 @@ class TooManyClassesClassificationError(HTTPException):
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"More than {limit} class labels in dataframe "
                    f"with id {dataframe_id}",
+        )
+
+
+class ReportNotFoundError(HTTPException):
+    """Raise when report not found"""
+    def __init__(self, report_id: PydanticObjectId):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Report with id {report_id} not found."
         )
