@@ -5,6 +5,7 @@ from beanie import PydanticObjectId
 from ml_api.apps.dataframes.repository import DataFrameInfoCRUD
 from ml_api.apps.dataframes.models import DataFrameMetadata, ColumnTypes, ApplyMethodParams
 from ml_api.apps.dataframes.errors import ColumnNotFoundMetadataError
+from ml_api.apps.dataframes.schemas import FeatureSelectionSummary
 
 
 class DataframeMetadataManagerService:
@@ -66,6 +67,12 @@ class DataframeMetadataManagerService:
                 target_feature in column_types.categorical):
             raise ColumnNotFoundMetadataError(target_feature)
         query = {"$set": {DataFrameMetadata.target_feature: target_feature}}
+        return await self.info_repository.update(dataframe_id, query)
+
+    async def set_feature_importances(self, dataframe_id: PydanticObjectId,
+                                feature_importances: FeatureSelectionSummary
+                                      ) -> DataFrameMetadata:
+        query = {"$set": {DataFrameMetadata.feature_importance_report: feature_importances}}
         return await self.info_repository.update(dataframe_id, query)
 
     async def unset_target_feature(self, dataframe_id: PydanticObjectId

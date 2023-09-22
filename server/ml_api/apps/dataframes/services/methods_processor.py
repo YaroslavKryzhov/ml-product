@@ -238,7 +238,7 @@ class DataframeMethodProcessor:
             try:
                 column_types.categorical.remove(column)
             except ValueError:
-                raise errors.ColumnNotFoundMetadataError(column)
+                raise errors.ColumnNotFoundMetadataError(column, 'categorical')
         self._set_column_types(column_types)
 
     def _ordinal_encoding(self, columns: List[str], params: Dict[str, Any]):
@@ -260,7 +260,7 @@ class DataframeMethodProcessor:
             try:
                 column_types.categorical.remove(column)
             except ValueError:
-                raise errors.ColumnNotFoundMetadataError(column)
+                raise errors.ColumnNotFoundMetadataError(column, 'categorical')
         self._set_column_types(column_types)
 
     # PART 3: FEATURE SCALING -------------------------------------------------

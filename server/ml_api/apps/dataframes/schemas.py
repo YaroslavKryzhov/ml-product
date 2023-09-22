@@ -1,7 +1,7 @@
 from typing import List, Dict, Union, Optional, Any
 
 from pydantic import BaseModel, Field
-from ml_api.apps.dataframes.specs import ScoreFunc, FeatureSelectionMethods, \
+from ml_api.apps.dataframes.specs import FeatureSelectionMethods, \
     BaseSklearnModels, AvailableMethods
 
 
@@ -42,7 +42,7 @@ class SelectorMethodParams(BaseModel):
 
 
 class FeatureSelectionSummary(BaseModel):
-    result: Dict[str, Dict[str, bool]]
+    result: Dict[str, Dict[str, Optional[bool]]]
 
 
 class VarianceThresholdParams(BaseModel):
@@ -50,17 +50,14 @@ class VarianceThresholdParams(BaseModel):
 
 
 class SelectKBestParams(BaseModel):
-    score_func: ScoreFunc
     k: int = Field(1, ge=1)
 
 
 class SelectPercentileParams(BaseModel):
-    score_func: ScoreFunc
     percentile: int = Field(10, ge=1, le=100)
 
 
 class SelectFprFdrFweParams(BaseModel):
-    score_func: ScoreFunc
     alpha: float = Field(0.05, ge=0, le=1)
 
 

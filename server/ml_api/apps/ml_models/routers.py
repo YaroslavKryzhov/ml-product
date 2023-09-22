@@ -49,7 +49,8 @@ async def rename_model(
         model_id, new_model_name)
 
 
-@models_file_router.delete("",  summary="Удалить модель")
+@models_file_router.delete("",  summary="Удалить модель",
+                           response_model=models.ModelMetadata)
 async def delete_model(
     model_id: PydanticObjectId,
     user: User = Depends(current_active_user),
@@ -59,7 +60,7 @@ async def delete_model(
 
         - **model_id**: ID модели
     """
-    await ModelFileManagerService(user.id).delete_file(model_id)
+    return await ModelFileManagerService(user.id).delete_file(model_id)
 
 
 models_metadata_router = APIRouter(
@@ -119,6 +120,22 @@ async def train_model(model_name: str,
                 test_size: float = None,
                 stratify: bool = None,
                 user: User = Depends(current_active_user)):
+    """
+            # Обработка запускается ассинхронно в бэкграунд-режиме.
+        # Оповещение о конце процедуры обработки будет отправлено через Pub-Sub
+        # и будет получено пользователям, если он подключен к каналу по веб-сокету.
+        #
+        # В ответе возвращается ID бэкграунд-задачи и JWT для доступа к каналу.
+    :param model_name:
+    :param dataframe_id:
+    :param task_type:
+    :param model_params:
+    :param params_type:
+    :param test_size:
+    :param stratify:
+    :param user:
+    :return:
+    """
     model_meta = await ModelMetadataManagerService(user.id).create_model(
         model_name=model_name,
         dataframe_id=dataframe_id,
@@ -127,17 +144,19 @@ async def train_model(model_name: str,
         params_type=params_type,
         test_size=test_size,
         stratify=stratify)
-    await ModelProcessingManagerService(
+    return await ModelProcessingManagerService(
         user.id).train_model(model_meta=model_meta)
     # task = train_composition_celery.delay(
     #     str(user.id), str(model_info.id), params_type.value, test_size)
     # return task.id
 
 
-# @models_processing_router.get("/predict")
-# def predict_on_model(dataframe_id: PydanticObjectId,
-#             model_id: PydanticObjectId,
-#             user: User = Depends(current_active_user)):
-#     result = ModelProcessingManagerService(user.id).predict_on_model(
-#         dataframe_id=dataframe_id, model_id=model_id)
-#     return result
+@models_processing_router.put("/predict")
+async def predict_on_model(dataframe_id: PydanticObjectId,
+            model_id: PydanticObjectId,
+            apply_pipeline: bool = True,
+            user: User = Depends(current_active_user)):
+    return await ModelProcessingManagerService(user.id).predict_on_model(
+        dataframe_id=dataframe_id,
+        model_id=model_id,
+        apply_pipeline=apply_pipeline)

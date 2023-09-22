@@ -6,31 +6,29 @@ class ColumnType(Enum):
     CATEGORICAL = 'categorical'
 
 
-class ScoreFunc(Enum):
-    CHI2 = 'chi2'
-    F_CLASSIF = 'f_classif'
-    F_REGRESSION = 'f_regression'
+class FeatureSelectionTaskType(Enum):
+    CLASSIFICATION = 'classification'
+    REGRESSION = 'regression'
 
 
 class BaseSklearnModels(Enum):
     LINEAR_REGRESSION = 'linear_regression'
     RANDOM_FOREST_REGRESSOR = 'random_forest_regressor'
     LOGISTIC_REGRESSION = 'logistic_regression'
-    LINEAR_SVC = 'linear_svc'
     RANDOM_FOREST_CLASSIFIER = 'random_forest_classifier'
 
 
 class FeatureSelectionMethods(Enum):
-    VARIANCE_THRESHOLD = 'variance_threshold'
-    SELECT_K_BEST = 'select_k_best'
-    SELECT_PERCENTILE = 'select_percentile'
-    SELECT_FPR = 'select_fpr'
-    SELECT_FDR = 'select_fdr'
-    SELECT_FWE = 'select_fwe'
-    RECURSIVE_FEATURE_ELIMINATION = 'recursive_feature_elimination'
-    SEQUENTIAL_FORWARD_SELECTION = 'sequential_forward_selection'
-    SEQUENTIAL_BACKWARD_SELECTION = 'sequential_backward_selection'
-    SELECT_FROM_MODEL = 'select_from_model'
+    VARIANCE_THRESHOLD = 'VarianceThreshold'
+    SELECT_K_BEST = 'SelectKBest'
+    SELECT_PERCENTILE = 'SelectPercentile'
+    SELECT_FPR = 'SelectFpr'
+    SELECT_FDR = 'SelectFdr'
+    SELECT_FWE = 'SelectFwe'
+    RECURSIVE_FEATURE_ELIMINATION = 'RecursiveFeatureElimination'
+    SEQUENTIAL_FORWARD_SELECTION = 'SequentialForwardSelection'
+    SEQUENTIAL_BACKWARD_SELECTION = 'SequentialBackwardSelection'
+    SELECT_FROM_MODEL = 'SelectFromModel'
 
 
 class AvailableMethods(Enum):

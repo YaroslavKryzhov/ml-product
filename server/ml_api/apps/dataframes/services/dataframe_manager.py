@@ -25,47 +25,44 @@ class DataframeManagerService:
         return await self.metadata_service.set_column_types(dataframe_meta.id,
                                                             column_types)
 
-    async def save_transformed_dataframe(self, parent_id: PydanticObjectId,
-            new_dataframe_meta: models.DataFrameMetadata, new_df: pd.DataFrame,
-            method_name: str = 'modified') -> DataFrameMetadata:
-        filename = await self.metadata_service.get_filename(parent_id)
-        try:
-            meta_created = await self.file_service.create_file(new_df,
-                filename=f"{filename}_{method_name}", parent_id=parent_id)
-        except errors.FilenameExistsUserError:
-            # TODO: !!!! не передается target и вероятно и другие поля
-            meta_created = await self.file_service.create_file(new_df,
-                filename=f"{filename}_{method_name}_{utils.get_random_number()}",
-                parent_id=parent_id)
-        new_dataframe_id = meta_created.id
-        await self.metadata_service.set_column_types(new_dataframe_id,
-            new_dataframe_meta.feature_columns_types)
-        return await self.metadata_service.set_pipeline(new_dataframe_id,
-            new_dataframe_meta.pipeline)
+    async def save_transformed_dataframe(
+            self,
+            changed_df_meta: models.DataFrameMetadata,
+            new_df: pd.DataFrame, method_name: str = 'modified'
+    ) -> DataFrameMetadata:
+        changed_df_meta.parent_id = changed_df_meta.id
+        changed_df_meta.filename = f"{changed_df_meta.filename}_{method_name}"
+        return await self._save_dataframe(changed_df_meta, new_df)
 
-    async def save_predictions_dataframe(self, filename: str,
+    async def save_predictions_dataframe(self, dataframe_id: PydanticObjectId,
+                                         df_filename: str,
                                          pred_df: pd.DataFrame,
                                          ) -> DataFrameMetadata:
+        original_df_meta = await self.metadata_service.get_dataframe_meta(dataframe_id)
+        original_df_meta.parent_id = None
+        original_df_meta.filename = df_filename
+        original_df_meta.is_prediction = True
+        original_df_meta.feature_importance_report = None
+        return await self._save_dataframe(original_df_meta, pred_df)
+
+    async def _save_dataframe(self, original_df_meta, pred_df) -> DataFrameMetadata:
         try:
             meta_created = await self.file_service.create_file(pred_df,
-                filename=f"{filename}",
-                is_prediction=True)
+                                                               original_df_meta)
         except errors.FilenameExistsUserError:
+            original_df_meta.filename = f"{original_df_meta.filename}_{utils.get_random_number()}"
             meta_created = await self.file_service.create_file(pred_df,
-                filename=f"{filename}{utils.get_random_number()}",
-                is_prediction=True)
+                                                               original_df_meta)
         return meta_created
 
     async def move_dataframe_to_root(self, dataframe_id: PydanticObjectId
                                      ) -> DataFrameMetadata:
-        parent_id = await self.metadata_service.get_parent_id(dataframe_id)
-        if parent_id is None:
-            raise errors.NoParentIDError()
-        await self.metadata_service.set_parent_id(dataframe_id, None)
-
-    async def move_prediction_to_root(self, dataframe_id: PydanticObjectId
-                                     ) -> DataFrameMetadata:
-        await self.metadata_service.set_is_prediction(dataframe_id, False)
+        dataframe_meta = await self.metadata_service.get_dataframe_meta(dataframe_id)
+        if dataframe_meta.parent_id is not None:
+            await self.metadata_service.set_parent_id(dataframe_id, None)
+        if dataframe_meta.is_prediction:
+            await self.metadata_service.set_is_prediction(dataframe_id, False)
+        return await self.metadata_service.get_dataframe_meta(dataframe_id)
 
     async def _define_initial_column_types(self, dataframe_id: PydanticObjectId
                                            ) -> ColumnTypes:
@@ -88,7 +85,7 @@ class DataframeManagerService:
         column_types = await self.metadata_service.get_column_types(dataframe_id)
         new_type = new_type.value
 
-        current_type = "numeric" if new_type == "numeric" else "categorical"
+        current_type = "categorical" if new_type == "numeric" else "numeric"
         if column_name not in getattr(column_types, current_type):
             raise errors.ColumnNotFoundMetadataError(column_name, current_type)
 

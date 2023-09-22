@@ -69,13 +69,16 @@ class ModelInfoCRUD:
         model_meta = await ModelMetadata.get(model_id)
         if model_meta is None:
             raise ModelNotFoundError(model_id)
-        return await model_meta.update(query)
+        await model_meta.update(query)
+        model_meta_updated = await ModelMetadata.get(model_id)
+        return model_meta_updated
 
-    async def delete(self, model_id: PydanticObjectId):
+    async def delete(self, model_id: PydanticObjectId) -> ModelMetadata:
         model_meta = await ModelMetadata.get(model_id)
         if model_meta is None:
             raise ModelNotFoundError(model_id)
         await model_meta.delete()
+        return model_meta
 
 
 class ModelFileCRUD(FileCRUD):

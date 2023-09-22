@@ -1,7 +1,10 @@
 import traceback
 
+from beanie import PydanticObjectId
+
 from ml_api.apps.ml_models.services.model_construstor import ModelConstructorService
 from ml_api.apps.ml_models.services.model_trainer import ModelTrainerService
+from ml_api.apps.ml_models.services.model_predictor import ModelPredictorService
 from ml_api.apps.ml_models.services.params_validator import ParamsValidationService
 from ml_api.apps.ml_models.services.metadata_manager import ModelMetadataManagerService
 from ml_api.apps.ml_models.services.file_manager import ModelFileManagerService
@@ -35,7 +38,7 @@ class ModelProcessingManagerService:
     async def train_model(self, model_meta: ModelMetadata):
         model = await self._prepare_model(model_meta=model_meta)
         model_training_results = await self._train_model(model_meta=model_meta, model=model)
-        await self._save_model_training_results(model_meta, model_training_results)
+        return await self._save_model_training_results(model_meta, model_training_results)
 
     async def _prepare_model(self, model_meta: ModelMetadata):  # -> sklearn.Estimator
         """
@@ -81,29 +84,23 @@ class ModelProcessingManagerService:
                 df_filename = f"{model_meta.filename}_" \
                                   f"predictions_{report.report_type.value}"
                 await self.metadata_manager.add_predictions(model_id, pred_df,
-                                                                df_filename)
+                                                            dataframe_id,
+                                                            df_filename)
         except Exception as err:
             await self._process_error(err, model_meta)
             raise err
 
         await self.metadata_manager.set_status(model_id, specs.ModelStatuses.TRAINED)
 
-    # def predict_on_model(self, dataframe_id: UUID, model_id: UUID):
-    #     features = DataframeManagerService(self._db, self._user_id
-    #         ).get_feature_df(dataframe_id=dataframe_id)
-    #     model_info = ModelInfoCRUD(self._db, self._user_id).get(model_id)
-    #     if features.columns.to_list() != model_info.features:
-    #         return JSONResponse(
-    #             status_code=status.HTTP_406_NOT_ACCEPTABLE,
-    #             content="Features in doc and in model training history are "
-    #                     "different",
-    #         )
-    #     if model_info.save_format == specs.ModelFormats.ONNX:
-    #         onnx_model = ModelFileCRUD(self._user_id).read_onnx(model_id)
-    #         predictions = onnx_model.run(None,
-    #                             {'X': features.astype(np.float32).values})[0]
-    #     elif model_info.save_format == specs.ModelFormats.PICKLE:
-    #         model = ModelFileCRUD(self._user_id).read_pickle(model_id)
-    #         predictions = model.predict(features)
-    #     features[model_info.target] = predictions.tolist()
-    #     return features.to_dict('list')
+        return await self.metadata_manager.get_model_meta(model_id)
+
+    async def predict_on_model(self, dataframe_id: PydanticObjectId,
+                         model_id: PydanticObjectId,
+                         apply_pipeline: bool = True):
+        model_meta = await self.metadata_manager.get_model_meta(model_id)
+        pred_df = await ModelPredictorService(self._user_id, model_meta).predict(
+            dataframe_id, apply_pipeline)
+        df_filename = f"{model_meta.filename}_predictions"
+        await self.metadata_manager.add_predictions(model_id, pred_df,
+                                                    dataframe_id,
+                                                    df_filename)

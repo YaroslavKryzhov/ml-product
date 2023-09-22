@@ -5,6 +5,7 @@ from beanie import PydanticObjectId
 
 from ml_api.apps.dataframes.services.dataframe_manager import \
     DataframeManagerService
+from ml_api.apps.dataframes.models import DataFrameMetadata
 from ml_api.apps.ml_models import specs, schemas
 from ml_api.apps.ml_models.models import ModelMetadata
 from ml_api.apps.ml_models.repository import ModelInfoCRUD, ModelFileCRUD
@@ -99,8 +100,9 @@ class ModelMetadataManagerService:
 
     async def add_predictions(self, model_id: PydanticObjectId,
                               pred_df: pd.DataFrame,
+                              dataframe_id: PydanticObjectId,
                               df_filename: str) -> ModelMetadata:
         pred_df_info = await self.dataframe_manager.save_predictions_dataframe(
-            df_filename, pred_df)
+            dataframe_id, df_filename, pred_df)
         query = {"$push": {ModelMetadata.model_predictions: pred_df_info.id}}
         return await self.info_repository.update(model_id, query)

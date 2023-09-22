@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 
 from pydantic import ValidationError
 from fastapi import HTTPException, status
@@ -179,4 +179,16 @@ class ReportNotFoundError(HTTPException):
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Report with id {report_id} not found."
+        )
+
+
+class FeaturesNotEqualError(HTTPException):
+    """Raise when features in df for prediction and from 
+    model training dataframe are different"""
+    def __init__(self, features_list_model: List[str],
+                 features_list_input: List[str]):
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Features from training model: {features_list_model}, "
+                   f"are not equal to input: {features_list_input}"
         )

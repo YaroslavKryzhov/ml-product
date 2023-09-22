@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from ml_api.apps.dataframes.services.dataframe_manager import DataframeManagerService
-from ml_api.apps.ml_models import errors
+from ml_api.apps.ml_models import errors, utils
 from ml_api.apps.ml_models.specs import AvailableTaskTypes as TaskTypes
 from ml_api.apps.ml_models.models import ModelMetadata
 from ml_api.apps.ml_models.schemas import ModelTrainingResults
@@ -65,11 +65,6 @@ class ModelTrainerService:
             except AttributeError:
                 return None
 
-    def _get_predictions_df(self, features: pd.DataFrame, res_column: pd.Series):
-        predictions_df = pd.concat([features.reset_index(drop=True),
-                   res_column.reset_index(drop=True)], axis=1)
-        return predictions_df
-
     async def train_model(self) -> ModelTrainingResults:
         if self.task_type not in self._task_to_method_map:
             raise errors.UnknownTaskTypeError(self.task_type)
@@ -93,8 +88,8 @@ class ModelTrainerService:
         train_probs = self._get_probabilities(f_train)
         valid_probs = self._get_probabilities(f_valid)
 
-        train_results_df = self._get_predictions_df(features, train_preds)
-        valid_results_df = self._get_predictions_df(features, valid_preds)
+        train_results_df = utils.get_predictions_df(features, train_preds)
+        valid_results_df = utils.get_predictions_df(features, valid_preds)
 
         if num_classes == 2:
             train_report = self.report_creator.score_binary_classification(
@@ -120,8 +115,8 @@ class ModelTrainerService:
         train_preds, valid_preds = self._fit_and_predict(f_train, t_train,
                                                          f_valid)
 
-        train_results_df = self._get_predictions_df(features, train_preds)
-        valid_results_df = self._get_predictions_df(features, valid_preds)
+        train_results_df = utils.get_predictions_df(features, train_preds)
+        valid_results_df = utils.get_predictions_df(features, valid_preds)
 
         train_report = self.report_creator.score_regression(
             t_train, train_preds, is_train=True)
@@ -139,7 +134,7 @@ class ModelTrainerService:
         self.model.fit(features)
         labels = pd.Series(self.model.labels_)
 
-        results_df = self._get_predictions_df(features, labels)
+        results_df = utils.get_predictions_df(features, labels)
         report = self.report_creator.score_clustering(features, labels,
                                                       is_train=True)
 
@@ -153,7 +148,7 @@ class ModelTrainerService:
         outliers = self.model.fit_predict(features)
         outliers = pd.Series(outliers).replace({1: False, -1: True})
 
-        results_df = self._get_predictions_df(features, outliers)
+        results_df = utils.get_predictions_df(features, outliers)
 
         report = self.report_creator.score_outlier_detection(
             features, outliers, is_train=True)
@@ -168,7 +163,7 @@ class ModelTrainerService:
         reduced_features = self.model.fit_transform(features)
 
         if target is not None:
-            results_df = self._get_predictions_df(reduced_features, target)
+            results_df = utils.get_predictions_df(reduced_features, target)
         else:
             results_df = reduced_features
 

@@ -10,7 +10,7 @@ from pymongo.errors import DuplicateKeyError
 
 from ml_api.common.file_manager.base import FileCRUD
 from ml_api.config import ROOT_DIR
-from ml_api.apps.dataframes.models import DataFrameMetadata
+from ml_api.apps.dataframes.models import DataFrameMetadata, ColumnTypes
 from ml_api.apps.dataframes.errors import FilenameExistsUserError, \
     DataFrameNotFoundError, ObjectFileNotFoundError
 
@@ -31,30 +31,46 @@ class DataFrameInfoCRUD:
             DataFrameMetadata.is_prediction == False).to_list()
         return dataframe_metas
 
-    async def create(self, filename: str, parent_id: PydanticObjectId = None,
-                     is_prediction: bool = False) -> DataFrameMetadata:
-        new_obj = DataFrameMetadata(filename=filename,
-                                    user_id=self.user_id,
-                                    parent_id=parent_id,
-                                    is_prediction=is_prediction)
+    async def create_new(self, filename: str) -> DataFrameMetadata:
+        new_obj = DataFrameMetadata(filename=filename, user_id=self.user_id)
         try:
             await new_obj.insert()
         except DuplicateKeyError:
             raise FilenameExistsUserError(filename)
         return new_obj
 
+    async def create_from_meta(self, dataframe_meta: DataFrameMetadata
+                               ) -> DataFrameMetadata:
+        new_dataframe_meta = DataFrameMetadata(
+            parent_id=dataframe_meta.parent_id,
+            filename=dataframe_meta.filename,
+            user_id=dataframe_meta.user_id,
+            is_prediction=dataframe_meta.is_prediction,
+            feature_columns_types=dataframe_meta.feature_columns_types,
+            target_feature=dataframe_meta.target_feature,
+            pipeline=dataframe_meta.pipeline
+        )
+        try:
+            await new_dataframe_meta.insert()
+        except DuplicateKeyError:
+            raise FilenameExistsUserError(new_dataframe_meta.filename)
+        return new_dataframe_meta
+
     async def update(self, dataframe_id: PydanticObjectId, query: Dict
                      ) -> DataFrameMetadata:
         dataframe_meta = await DataFrameMetadata.get(dataframe_id)
         if not dataframe_meta:
             raise DataFrameNotFoundError(dataframe_id)
-        return await dataframe_meta.update(query)
+        await dataframe_meta.update(query)
+        dataframe_meta_updated = await DataFrameMetadata.get(dataframe_id)
+        return dataframe_meta_updated
 
-    async def delete(self, dataframe_id: PydanticObjectId):
+    async def delete(self, dataframe_id: PydanticObjectId) -> DataFrameMetadata:
         dataframe_meta = await DataFrameMetadata.get(dataframe_id)
         if not dataframe_meta:
             raise DataFrameNotFoundError(dataframe_id)
         await dataframe_meta.delete()
+        return dataframe_meta
 
 
 class DataFrameFileCRUD(FileCRUD):

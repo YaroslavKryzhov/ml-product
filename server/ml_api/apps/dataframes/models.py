@@ -6,7 +6,7 @@ from beanie import Document
 from beanie.odm.fields import PydanticObjectId
 from pymongo import IndexModel, ASCENDING, HASHED
 
-from ml_api.apps.dataframes.schemas import ApplyMethodParams
+from ml_api.apps.dataframes.schemas import ApplyMethodParams, FeatureSelectionSummary
 
 
 class ColumnTypes(BaseModel):
@@ -23,6 +23,7 @@ class DataFrameMetadata(Document):
         numeric=[], categorical=[])
     target_feature: Optional[str] = None
     pipeline: Optional[List[ApplyMethodParams]] = []
+    feature_importance_report: FeatureSelectionSummary = None
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
     class Settings:

@@ -120,6 +120,15 @@ class WrongSelectorParamsError(HTTPException):
         )
 
 
+class SelectorProcessingError(HTTPException):
+    """Raise when error in time of SelectorMethod"""
+    def __init__(self, method_name: str, err):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f'Method "{method_name}" has error: {err}'
+        )
+
+
 class ApplyingMethodNotExistsError(HTTPException):
     """Raise when ApplyMethod not exists"""
     def __init__(self, method_name: str):

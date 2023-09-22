@@ -20,18 +20,17 @@ class DataframeFileManagerService:
 
     # 1: FILE MANAGEMENT OPERATIONS -------------------------------------------
     async def upload_file(self, file, filename: str) -> DataFrameMetadata:
-        dataframe_meta = await self.info_repository.create(filename)
+        dataframe_meta = await self.info_repository.create_new(filename)
         self.file_repository.upload_csv(file_id=dataframe_meta.id, file=file)
         return dataframe_meta
 
-    async def create_file(self, df: pd.DataFrame, filename: str,
-                          parent_id: PydanticObjectId = None,
-                          is_prediction: bool = False
+    async def create_file(self, df: pd.DataFrame,
+                          dataframe_meta: DataFrameMetadata
                           ) -> DataFrameMetadata:
-        dataframe_meta = await self.info_repository.create(filename, parent_id,
-                                                           is_prediction)
-        self.file_repository.save_csv(dataframe_meta.id, df)
-        return dataframe_meta
+        new_dataframe_meta = await self.info_repository.create_from_meta(
+            dataframe_meta)
+        self.file_repository.save_csv(new_dataframe_meta.id, df)
+        return new_dataframe_meta
 
     async def download_file(self, dataframe_id: PydanticObjectId
                             ) -> FileResponse:
@@ -40,9 +39,10 @@ class DataframeFileManagerService:
             file_id=dataframe_id, filename=dataframe_meta.filename)
         return response
 
-    async def delete_file(self, dataframe_id: PydanticObjectId):
-        await self.info_repository.delete(dataframe_id)
+    async def delete_file(self, dataframe_id: PydanticObjectId) -> DataFrameMetadata:
+        dataframe_meta = await self.info_repository.delete(dataframe_id)
         self.file_repository.delete_csv(dataframe_id)
+        return dataframe_meta
 
     async def read_df_from_file(self, dataframe_id: PydanticObjectId
                                 ) -> pd.DataFrame:

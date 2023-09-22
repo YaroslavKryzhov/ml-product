@@ -68,7 +68,8 @@ async def rename_dataframe(
         dataframe_id, new_filename)
 
 
-@dataframes_file_router.delete("", summary="Удалить csv-файл")
+@dataframes_file_router.delete("", summary="Удалить csv-файл",
+                               response_model=models.DataFrameMetadata)
 async def delete_dataframe(
     dataframe_id: PydanticObjectId,
     user: User = Depends(current_active_user),
@@ -78,7 +79,7 @@ async def delete_dataframe(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    await DataframeFileManagerService(user.id).delete_file(dataframe_id)
+    return await DataframeFileManagerService(user.id).delete_file(dataframe_id)
 
 
 dataframes_metadata_router = APIRouter(
@@ -231,10 +232,10 @@ async def set_target_feature(dataframe_id: PydanticObjectId,
 @dataframes_methods_router.put("/change_type",
                                summary="Сменить тип столбца",
                                response_model=models.DataFrameMetadata)
-async def set_column_as_categorical(dataframe_id: PydanticObjectId,
-                                    column_name: str,
-                                    new_type: specs.ColumnType,
-                                    user: User = Depends(current_active_user)):
+async def change_column_type(dataframe_id: PydanticObjectId,
+                             column_name: str,
+                             new_type: specs.ColumnType,
+                             user: User = Depends(current_active_user)):
     """
         Изменяет тип столбца на заданный (числовой/категориальный).
 
@@ -246,11 +247,69 @@ async def set_column_as_categorical(dataframe_id: PydanticObjectId,
         ).convert_column_to_new_type(dataframe_id, column_name, new_type)
 
 
+@dataframes_methods_router.put("/move_to_root",
+                               summary="Переместить в корень интерфейса",
+                               response_model=models.DataFrameMetadata)
+async def move_to_root(dataframe_id: PydanticObjectId,
+                             user: User = Depends(current_active_user)):
+    """
+        Переносит датафрейм из вложенного уровня в корень интерфейса.
+        Либо переносит датафрейм из раздела предсказаний в корень интерфейса.
+
+        - **dataframe_id**: ID csv-файла(датафрейма)
+    """
+    return await DataframeManagerService(user.id).move_dataframe_to_root(
+        dataframe_id)
+
+
+@dataframes_methods_router.post("/feature_importances",
+                                summary="Провести отбор признаков",
+                                response_model=schemas.FeatureSelectionSummary)
+async def feature_importances(dataframe_id: PydanticObjectId,
+                            task_type: specs.FeatureSelectionTaskType,
+                            selection_params: List[schemas.SelectorMethodParams],
+                            user: User = Depends(current_active_user)):
+    """
+        Применяет методы отбора признаков к датафрейму. Возвращает таблицу результатов.
+        На основе её, пользователь может выбрать какие признаки стоит удалять
+
+        - **dataframe_id**: ID csv-файла(датафрейма)
+        - **selection_params**: параметры для функции
+
+        ScoreFunc для методов отбора:
+        * 'chi2'
+        * 'f_classif'
+        * 'f_regression'
+
+        BaseSklearnModels для методов отбора:
+        * 'linear_regression'
+        * 'random_forest_regressor'
+        * 'logistic_regression'
+        * 'linear_svc'
+        * 'random_forest_classifier'
+
+        Доступные методы:
+        * 'variance_threshold': 'threshold' > 0
+        * 'select_k_best': 'k'=1 > 1; 'score_func'
+        * 'select_percentile': 1 < 'percentile'=10 < 100; 'score_func'
+        * 'select_fpr': 0 < 'alpha'=0.05 < 1; 'score_func'
+        * 'select_fdr': 0 < 'alpha'=0.05 < 1; 'score_func'
+        * 'select_fwe': 0 < 'alpha'=0.05 < 1; 'score_func'
+        * 'recursive_feature_elimination': 'n_features_to_select' > 1; 'step'=1 > 1; 'estimator'
+        * 'sequential_forward_selection': 'n_features_to_select' > 1; 'estimator'
+        * 'sequential_backward_selection': 'n_features_to_select' > 1; 'estimator'
+        * 'select_from_model: 'estimator'
+
+    """
+    # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id)
+    return await DataframeMethodsManagerService(
+        user.id).process_feature_importances(dataframe_id, task_type, selection_params)
+
+
 @dataframes_methods_router.delete("/columns", summary="Удалить столбцы",
                                   response_model=models.DataFrameMetadata)
 async def delete_column(dataframe_id: PydanticObjectId,
                         column_names: List[str],
-                        # TODO: подумать над форматом списка
                         user: User = Depends(current_active_user)):
     """
         Удаляет столбцы из датафрейма.
@@ -267,21 +326,6 @@ async def delete_column(dataframe_id: PydanticObjectId,
         dataframe_id, [method_params])
 
 
-@dataframes_methods_router.post("/feature_selection",
-                                summary="Провести отбор признаков",
-                                response_model=schemas.FeatureSelectionSummary)
-async def feature_selection(dataframe_id: PydanticObjectId,
-                            selection_params: List[schemas.SelectorMethodParams],
-                            user: User = Depends(current_active_user)):
-    """
-        Применяет методы отбора признаков к датафрейму. Возвращает таблицу результатов.
-        На основе её, пользователь может выбрать какие признаки стоит удалять
-    """
-    # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id)
-    return await DataframeMethodsManagerService(
-        user.id).get_feature_selection_summary(dataframe_id, selection_params)
-
-
 @dataframes_methods_router.post("/apply_method",
                                 response_model=models.DataFrameMetadata)
 async def apply_method(dataframe_id: PydanticObjectId,
@@ -290,15 +334,8 @@ async def apply_method(dataframe_id: PydanticObjectId,
     """
         Применяет метод обработки к датафрейму.
 
-        Обработка запускается ассинхронно в бэкграунд-режиме.
-        Оповещение о конце процедуры обработки будет отправлено через Pub-Sub
-        и будет получено пользователям, если он подключен к каналу по веб-сокету.
-
-        В ответе возвращается ID бэкграунд-задачи и JWT для доступа к каналу.
-
         - **dataframe_id**: ID csv-файла(датафрейма)
-        - **function_name**: имя выбранной функции
-        - **params**: параметры для функции (в текущей реализации нужны только для 'drop_column')
+        - **method_params**: параметры для функций
 
         Доступные методы:
         * `drop_duplicates` - Remove duplicates

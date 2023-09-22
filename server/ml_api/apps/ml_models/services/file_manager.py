@@ -34,7 +34,8 @@ class ModelFileManagerService:
     async def load_model_from_file(self, model_id: PydanticObjectId):
         return self.file_repository.read_model(model_id)
 
-    async def delete_file(self, model_id: PydanticObjectId):
+    async def delete_file(self, model_id: PydanticObjectId) -> ModelMetadata:
         # TODO: rewrite model deletion to cascade
-        await self.info_repository.delete(model_id)
+        model_meta = await self.info_repository.delete(model_id)
         self.file_repository.delete_model(model_id)
+        return model_meta

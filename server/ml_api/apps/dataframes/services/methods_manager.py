@@ -23,13 +23,24 @@ class DataframeMethodsManagerService:
         self.dataframe_service = DataframeManagerService(self._user_id)
 
     # 4: CELERY FUNCTION OPERATIONS -------------------------------------------
-    async def get_feature_selection_summary(self, dataframe_id: PydanticObjectId,
-            feature_selection_params: List[schemas.SelectorMethodParams]
-                                    ) -> schemas.FeatureSelectionSummary:
+    async def process_feature_importances(self, dataframe_id: PydanticObjectId,
+                                          task_type: specs.FeatureSelectionTaskType,
+                                          feature_selection_params: List[schemas.SelectorMethodParams]
+                                          ) -> schemas.FeatureSelectionSummary:
         features, target = await self.dataframe_service.\
             get_feature_target_df_supervised(dataframe_id)
-        selector = FeatureSelector(features, target, feature_selection_params)
-        summary = selector.get_summary()
+        selector = FeatureSelector(features, target, task_type, feature_selection_params)
+        empty_summary = selector.get_empty_summary()
+        await self.metadata_service.set_feature_importances(dataframe_id,
+                                                            empty_summary)
+        try:
+            summary = selector.get_summary()
+        except Exception:
+            await self.metadata_service.set_feature_importances(dataframe_id,
+                                                                None)
+            return None
+        await self.metadata_service.set_feature_importances(dataframe_id,
+                                                            summary)
         return summary
 
     async def apply_methods(self, dataframe_id: PydanticObjectId,
@@ -44,16 +55,10 @@ class DataframeMethodsManagerService:
         new_df = function_processor.get_df()
         new_dataframe_meta = function_processor.get_meta()
         return await self.dataframe_service.save_transformed_dataframe(
-            parent_id=dataframe_id,
-            new_dataframe_meta=new_dataframe_meta,
+            changed_df_meta=new_dataframe_meta,
             new_df=new_df)
 
     async def copy_pipeline(self, id_from: PydanticObjectId,
                             id_to: PydanticObjectId) -> DataFrameMetadata:
-        # Будет доработан, когда проработаются модели
-        # TODO: write method
-        check_pipeline = await self.metadata_service.get_pipeline(id_to)
-        if len(check_pipeline) != 0:
-            raise Exception("Pipeline with id_to already exists")
         pipeline_from = await self.metadata_service.get_pipeline(id_from)
         return await self.apply_methods(id_to, pipeline_from)
