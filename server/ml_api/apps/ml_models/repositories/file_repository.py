@@ -1,84 +1,11 @@
 from pathlib import Path
-from typing import List, Dict
 import joblib
-
 from beanie import PydanticObjectId
-from pymongo.errors import DuplicateKeyError
 from fastapi.responses import FileResponse
 
+from ml_api.apps.ml_models import errors
 from ml_api.common.file_manager.base import FileCRUD
-from ml_api.apps.ml_models.models import ModelMetadata
-from ml_api.apps.ml_models.schemas import ModelParams
-from ml_api.apps.ml_models.specs import AvailableTaskTypes, \
-    AvailableParamsTypes
-from ml_api.apps.ml_models.errors import ModelNotFoundError, \
-    FilenameExistsUserError, ObjectFileNotFoundError
 from ml_api.config import ROOT_DIR
-
-
-class ModelInfoCRUD:
-    def __init__(self, user_id: PydanticObjectId):
-        self.user_id = user_id
-
-    async def get(self, model_id: PydanticObjectId) -> ModelMetadata:
-        model_meta = await ModelMetadata.get(model_id)
-        if model_meta is None:
-            raise ModelNotFoundError(model_id)
-        return model_meta
-
-    async def get_all(self) -> List[ModelMetadata]:
-        model_metas = await ModelMetadata.find(
-            ModelMetadata.user_id == self.user_id).to_list()
-        return model_metas
-
-    async def get_by_dataframe_id(self, dataframe_id: PydanticObjectId
-                                  ) -> List[ModelMetadata]:
-        models = await ModelMetadata.find(
-            ModelMetadata.user_id == self.user_id).find(
-            ModelMetadata.dataframe_id == dataframe_id).to_list()
-        return models
-
-    async def create(self,
-                     filename: str,
-                     dataframe_id: PydanticObjectId,
-                     task_type: AvailableTaskTypes,
-                     model_params: ModelParams,
-                     params_type: AvailableParamsTypes,
-                     feature_columns: List[str],
-                     target_column: str,
-                     test_size: float,
-                     stratify: bool) -> ModelMetadata:
-        new_obj = ModelMetadata(filename=filename,
-                                user_id=self.user_id,
-                                dataframe_id=dataframe_id,
-                                task_type=task_type,
-                                model_params=model_params,
-                                params_type=params_type,
-                                feature_columns=feature_columns,
-                                target_column=target_column,
-                                test_size=test_size,
-                                stratify=stratify)
-        try:
-            await new_obj.insert()
-        except DuplicateKeyError:
-            raise FilenameExistsUserError(filename)
-        return new_obj
-
-    async def update(self, model_id: PydanticObjectId, query: Dict
-                     ) -> ModelMetadata:
-        model_meta = await ModelMetadata.get(model_id)
-        if model_meta is None:
-            raise ModelNotFoundError(model_id)
-        await model_meta.update(query)
-        model_meta_updated = await ModelMetadata.get(model_id)
-        return model_meta_updated
-
-    async def delete(self, model_id: PydanticObjectId) -> ModelMetadata:
-        model_meta = await ModelMetadata.get(model_id)
-        if model_meta is None:
-            raise ModelNotFoundError(model_id)
-        await model_meta.delete()
-        return model_meta
 
 
 class ModelFileCRUD(FileCRUD):
@@ -104,7 +31,7 @@ class ModelFileCRUD(FileCRUD):
         try:
             model = joblib.load(joblib_path)
         except FileNotFoundError:
-            raise ObjectFileNotFoundError(file_id)
+            raise errors.ObjectFileNotFoundError(file_id)
         return model
 
     def save_model(self, file_id: PydanticObjectId, model):

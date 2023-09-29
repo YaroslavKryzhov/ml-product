@@ -8,7 +8,7 @@ from ml_api.apps.dataframes import specs, models, schemas
 from ml_api.apps.dataframes import errors
 
 
-class DataframeMethodProcessor:
+class MethodsApplier:
     """
     Класс, отвечающий за применение методов.
     """
@@ -46,8 +46,10 @@ class DataframeMethodProcessor:
         for column in columns:
             if column not in column_list:
                 raise errors.ColumnNotFoundMetadataError(column)
-
-        self._methods[method_name](columns, method_params.params)
+        try:
+            self._methods[method_name](columns, method_params.params)
+        except Exception as err:
+            raise errors.ApplyingMethodError(method_name, err)
         self._meta.pipeline.append(method_params)
 
     def get_df(self) -> pd.DataFrame:
@@ -56,13 +58,13 @@ class DataframeMethodProcessor:
     def get_meta(self) -> models.DataFrameMetadata:
         return self._meta
 
-    def _get_column_types(self) -> models.ColumnTypes:
+    def _get_column_types(self) -> schemas.ColumnTypes:
         return self._meta.feature_columns_types
 
-    def _set_column_types(self, column_types: models.ColumnTypes):
+    def _set_column_types(self, column_types: schemas.ColumnTypes):
         self._meta.feature_columns_types = column_types
 
-    def _get_target_feature(self) -> models.ColumnTypes:
+    def _get_target_feature(self) -> schemas.ColumnTypes:
         return self._meta.target_feature
 
     def _get_column_list(self) -> List[str]:

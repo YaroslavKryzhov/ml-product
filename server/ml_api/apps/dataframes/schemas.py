@@ -5,6 +5,11 @@ from ml_api.apps.dataframes.specs import FeatureSelectionMethods, \
     BaseSklearnModels, AvailableMethods
 
 
+class ColumnTypes(BaseModel):
+    numeric: List[str]
+    categorical: List[str]
+
+
 class NumericColumnDescription(BaseModel):
     count: int
     mean: float

@@ -1,9 +1,6 @@
-from typing import Optional
-
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-from ml_api.apps.dataframes.services.dataframe_manager import DataframeManagerService
 from ml_api.apps.ml_models import errors, utils
 from ml_api.apps.ml_models.specs import AvailableTaskTypes as TaskTypes
 from ml_api.apps.ml_models.models import ModelMetadata
@@ -23,7 +20,6 @@ class ModelTrainerService:
         self.test_size = model_meta.test_size
         self.stratify = model_meta.stratify
 
-        self.dataframe_manager = DataframeManagerService(self._user_id)
         self.report_creator = ReportCreatorService()
         self.classes_limit = 10
         self._task_to_method_map = {
@@ -33,14 +29,6 @@ class ModelTrainerService:
             TaskTypes.OUTLIER_DETECTION: self._process_outlier_detection,
             TaskTypes.DIMENSIONALITY_REDUCTION: self._process_dimensionality_reduction,
         }
-
-    async def _get_train_data(self) -> (pd.DataFrame, Optional[pd.Series]):
-        if self.task_type in [TaskTypes.CLASSIFICATION, TaskTypes.REGRESSION]:
-            return await self.dataframe_manager.\
-                get_feature_target_df_supervised(dataframe_id=self.dataframe_id)
-        else:
-            return await self.dataframe_manager.get_feature_target_df(
-                dataframe_id=self.dataframe_id)
 
     def _get_train_test_split(self, features, target):
         stratify = target if self.stratify else None
@@ -65,15 +53,14 @@ class ModelTrainerService:
             except AttributeError:
                 return None
 
-    async def train_model(self) -> ModelTrainingResults:
+    async def train_model(self, features, target) -> ModelTrainingResults:
         if self.task_type not in self._task_to_method_map:
             raise errors.UnknownTaskTypeError(self.task_type)
         process_train = self._task_to_method_map[self.task_type]
-        model_training_result = await process_train()
+        model_training_result = await process_train(features, target)
         return model_training_result
 
-    async def _process_classification(self) -> ModelTrainingResults:
-        features, target = await self._get_train_data()
+    async def _process_classification(self, features, target) -> ModelTrainingResults:
         num_classes = target.nunique()
         if num_classes < 2:
             raise errors.OneClassClassificationError(self.dataframe_id)
@@ -108,8 +95,7 @@ class ModelTrainerService:
                      (valid_report, valid_results_df)],
         )
 
-    async def _process_regression(self) -> ModelTrainingResults:
-        features, target = await self._get_train_data()
+    async def _process_regression(self, features, target) -> ModelTrainingResults:
         f_train, f_valid, t_train, t_valid = self._get_train_test_split(
             features, target)
         train_preds, valid_preds = self._fit_and_predict(f_train, t_train,
@@ -128,9 +114,7 @@ class ModelTrainerService:
                      (valid_report, valid_results_df)],
         )
 
-    async def _process_clustering(self) -> ModelTrainingResults:
-        features, _ = await self._get_train_data()
-
+    async def _process_clustering(self, features, target) -> ModelTrainingResults:
         self.model.fit(features)
         labels = pd.Series(self.model.labels_)
 
@@ -143,8 +127,7 @@ class ModelTrainerService:
             results=[(report, results_df)],
         )
 
-    async def _process_outlier_detection(self) -> ModelTrainingResults:
-        features, _ = await self._get_train_data()
+    async def _process_outlier_detection(self, features, target) -> ModelTrainingResults:
         outliers = self.model.fit_predict(features)
         outliers = pd.Series(outliers).replace({1: False, -1: True})
 
@@ -157,9 +140,7 @@ class ModelTrainerService:
             results=[(report, results_df)],
         )
 
-    async def _process_dimensionality_reduction(self) -> ModelTrainingResults:
-        features, target = await self._get_train_data()
-
+    async def _process_dimensionality_reduction(self, features, target) -> ModelTrainingResults:
         reduced_features = self.model.fit_transform(features)
 
         if target is not None:

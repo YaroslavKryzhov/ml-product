@@ -22,8 +22,8 @@ class ModelMetadata(Document):
     test_size: Optional[float] = 0.25
     stratify: Optional[bool] = False
     status: specs.ModelStatuses = specs.ModelStatuses.BUILDING
-    metrics_reports: List[PydanticObjectId] = []
-    model_predictions: List[PydanticObjectId] = []
+    metrics_report_ids: List[PydanticObjectId] = []
+    model_prediction_ids: List[PydanticObjectId] = []
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
     class Settings:

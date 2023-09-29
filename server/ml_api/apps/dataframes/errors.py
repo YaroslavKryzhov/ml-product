@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import HTTPException, status
 from beanie import PydanticObjectId
 
@@ -8,6 +10,24 @@ class DataFrameNotFoundError(HTTPException):
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Dataframe with id {dataframe_id} not found."
+        )
+
+
+class DataFrameIsNotPredictionError(HTTPException):
+    """Raise when dataframe is not prediction"""
+    def __init__(self, dataframe_id: PydanticObjectId):
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Dataframe with id {dataframe_id} isn't prediction."
+        )
+
+
+class DataFrameAlreadyRootError(HTTPException):
+    """Raise when dataframe is already root (have no parent_id)"""
+    def __init__(self, dataframe_id: PydanticObjectId):
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Dataframe with id {dataframe_id} is already root."
         )
 
 
@@ -74,16 +94,6 @@ class ColumnNotCategoricalError(HTTPException):
         )
 
 
-class ColumnsNotEqualError(HTTPException):
-    """Raise when feature columns in dataframe_meta not equal to real in
-    Dataframe"""
-    def __init__(self):
-        super().__init__(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Feature columns in dataframe_meta not equal to real in Dataframe"
-            )
-
-
 class TargetNotFoundError(HTTPException):
     """Raise when target column not found in dataframe_metadata"""
     def __init__(self, dataframe_id: PydanticObjectId):
@@ -91,6 +101,39 @@ class TargetNotFoundError(HTTPException):
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Dataframe with id {dataframe_id} has no target column"
         )
+
+
+class TargetNotFoundCriticalError(HTTPException):
+    """Raise when target column not found in column_types"""
+    def __init__(self, dataframe_id: PydanticObjectId):
+        super().__init__(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Dataframe with id {dataframe_id} has target column, "
+                   f"but it is not in ColumnTypes"
+        )
+
+
+class CategoricalColumnFoundCriticalError(HTTPException):
+    """Raise when column not found in column_types.numeric"""
+    def __init__(self, dataframe_id: PydanticObjectId, column_names: List[str]):
+        super().__init__(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Dataframe {dataframe_id} has categorical columns "
+                   f"{column_names} "
+                   f"while try to fetch feature-target column names"
+                   f"(expected numeric only)"
+        )
+
+
+class ColumnsNotEqualCriticalError(HTTPException):
+    """Raise when feature columns in dataframe_meta not equal to real in
+    Dataframe"""
+    def __init__(self, df_columns_list: List[str], columns_list: List[str]):
+        super().__init__(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Columns in DataFrame: {df_columns_list}, "
+                   f"are not equal to expected: {columns_list}"
+            )
 
 
 class ColumnCantBeParsedError(HTTPException):
@@ -122,7 +165,7 @@ class WrongSelectorParamsError(HTTPException):
 
 class SelectorProcessingError(HTTPException):
     """Raise when error in time of SelectorMethod"""
-    def __init__(self, method_name: str, err):
+    def __init__(self, method_name: str, err: Exception):
         super().__init__(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f'Method "{method_name}" has error: {err}'
@@ -135,6 +178,15 @@ class ApplyingMethodNotExistsError(HTTPException):
         super().__init__(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f'Method "{method_name}" not exists'
+        )
+
+
+class ApplyingMethodError(HTTPException):
+    """Raise when error in time of ApplyMethod"""
+    def __init__(self, method_name: str, err: Exception):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f'Method "{method_name}" has error: {err}'
         )
 
 
@@ -185,3 +237,13 @@ class NansInDataFrameError(HTTPException):
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=message
         )
+
+
+class UnknownColumnTypeError(HTTPException):
+    """Raise when clustering model is unknown"""
+    def __init__(self, column_type: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Unknown column type {column_type}."
+        )
+

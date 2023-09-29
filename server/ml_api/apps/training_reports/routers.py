@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.models import User
-from ml_api.apps.training_reports.services.report_manager import ReportManagerService
+from ml_api.apps.training_reports.repository import TrainingReportCRUD
 from ml_api.apps.training_reports.models import Report
 
 
@@ -27,7 +27,7 @@ async def read_report(
 
         - **report_id**: ID отчета
     """
-    result = await ReportManagerService(user.id).get_report(report_id)
+    result = await TrainingReportCRUD(user.id).get(report_id)
     return result
 
 
@@ -44,7 +44,7 @@ async def read_reports_by_dataframe(
 
         - **dataframe_id**: ID датафрейма
     """
-    result = await ReportManagerService(user.id).get_reports_by_dataframe_id(
+    result = await TrainingReportCRUD(user.id).get_by_dataframe_id(
         dataframe_id)
     return result
 
@@ -61,7 +61,7 @@ async def read_reports_by_model(
 
         - **model_id**: ID модели
     """
-    result = await ReportManagerService(user.id).get_reports_by_model_id(
+    result = await TrainingReportCRUD(user.id).get_by_model_id(
         model_id)
     return result
 

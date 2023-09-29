@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends
 
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.models import User
-from ml_api.apps.ml_models.services.file_manager import ModelFileManagerService
-from ml_api.apps.ml_models.services.metadata_manager import ModelMetadataManagerService
-from ml_api.apps.ml_models.services.processing_manager import ModelProcessingManagerService
+from ml_api.apps.ml_models.repositories.repository_manager import ModelRepositoryManager
+from ml_api.apps.ml_models.services.models_service import ModelService
+from ml_api.apps.ml_models.services.fit_predict_service import ModelFitPredictService
 from ml_api.apps.ml_models import schemas, specs, models
 # from ml_api.common.celery_tasks.celery_tasks import train_composition_celery
 
@@ -29,7 +29,7 @@ async def download_model(
         - **model_id**: ID модели
         - **model_format**: Формат модели, в котором она будет скачана.
     """
-    return await ModelFileManagerService(user.id).download_file(model_id)
+    return await ModelRepositoryManager(user.id).download_model(model_id)
 
 
 @models_file_router.put("/rename", summary="Переименовать модель",
@@ -45,7 +45,7 @@ async def rename_model(
         - **model_id**: ID модели
         - **new_model_name**: новое имя модели
     """
-    return await ModelMetadataManagerService(user.id).set_filename(
+    return await ModelRepositoryManager(user.id).set_filename(
         model_id, new_model_name)
 
 
@@ -60,7 +60,7 @@ async def delete_model(
 
         - **model_id**: ID модели
     """
-    return await ModelFileManagerService(user.id).delete_file(model_id)
+    return await ModelRepositoryManager(user.id).delete_file(model_id)
 
 
 models_metadata_router = APIRouter(
@@ -81,7 +81,7 @@ async def read_model_info(
 
         - **model_id**: ID модели
     """
-    return await ModelMetadataManagerService(user.id).get_model_meta(model_id)
+    return await ModelRepositoryManager(user.id).get_model_meta(model_id)
 
 
 @models_metadata_router.get("/all", response_model=List[models.ModelMetadata],
@@ -90,7 +90,7 @@ async def read_all_user_models(user: User = Depends(current_active_user)):
     """
         Возвращает информацию обо всех моделях пользователя
     """
-    return await ModelMetadataManagerService(user.id).get_all_models_meta()
+    return await ModelRepositoryManager(user.id).get_all_models_meta()
 
 
 @models_metadata_router.get("/by_dataframe",
@@ -100,7 +100,7 @@ async def read_all_user_compositions(
         dataframe_id: PydanticObjectId,
         user: User = Depends(current_active_user)
 ):
-    return await ModelMetadataManagerService(
+    return await ModelRepositoryManager(
         user.id).get_all_models_meta_by_dataframe(dataframe_id=dataframe_id)
 
 
@@ -136,7 +136,7 @@ async def train_model(model_name: str,
     :param user:
     :return:
     """
-    model_meta = await ModelMetadataManagerService(user.id).create_model(
+    model_meta = await ModelService(user.id).create_model(
         model_name=model_name,
         dataframe_id=dataframe_id,
         task_type=task_type,
@@ -144,7 +144,7 @@ async def train_model(model_name: str,
         params_type=params_type,
         test_size=test_size,
         stratify=stratify)
-    return await ModelProcessingManagerService(
+    return await ModelFitPredictService(
         user.id).train_model(model_meta=model_meta)
     # task = train_composition_celery.delay(
     #     str(user.id), str(model_info.id), params_type.value, test_size)
@@ -156,7 +156,7 @@ async def predict_on_model(dataframe_id: PydanticObjectId,
             model_id: PydanticObjectId,
             apply_pipeline: bool = True,
             user: User = Depends(current_active_user)):
-    return await ModelProcessingManagerService(user.id).predict_on_model(
-        dataframe_id=dataframe_id,
+    return await ModelFitPredictService(user.id).predict_on_model(
+        source_dataframe_id=dataframe_id,
         model_id=model_id,
         apply_pipeline=apply_pipeline)

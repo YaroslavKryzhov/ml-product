@@ -5,11 +5,10 @@ from fastapi import APIRouter, Depends, UploadFile, File
 
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.models import User
-from ml_api.apps.dataframes.services.file_manager import DataframeFileManagerService
-from ml_api.apps.dataframes.services.metadata_manager import DataframeMetadataManagerService
-from ml_api.apps.dataframes.services.df_statistics_provider import DataframeStatisticsProviderService
-from ml_api.apps.dataframes.services.dataframe_manager import DataframeManagerService
-from ml_api.apps.dataframes.services.methods_manager import DataframeMethodsManagerService
+from ml_api.apps.dataframes.repositories.repository_manager import DataframeRepositoryManager
+from ml_api.apps.dataframes.services.df_statistics_service import DataframeStatisticsService
+from ml_api.apps.dataframes.services.dataframe_service import DataframeService
+from ml_api.apps.dataframes.services.methods_service import DataframeMethodsService
 from ml_api.apps.dataframes import schemas, models, specs
 # from ml_api.common.celery_tasks.celery_tasks import apply_function_celery, \
 #     copy_pipeline_celery
@@ -34,7 +33,7 @@ async def upload_dataframe(
         - **filename**: сохраняемое имя файла
         - **file**: csv-файл
     """
-    return await DataframeManagerService(user.id).upload_new_dataframe(
+    return await DataframeService(user.id).upload_new_dataframe(
         file=file.file, filename=filename)
 
 
@@ -48,7 +47,7 @@ async def download_dataframe(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeFileManagerService(user.id).download_file(dataframe_id)
+    return await DataframeRepositoryManager(user.id).download_dataframe(dataframe_id)
 
 
 @dataframes_file_router.put("/rename", summary="Переименовать csv-файл",
@@ -64,7 +63,7 @@ async def rename_dataframe(
         - **dataframe_id**: ID csv-файла(датафрейма)
         - **new_filename**: новое имя файла
     """
-    return await DataframeMetadataManagerService(user.id).set_filename(
+    return await DataframeRepositoryManager(user.id).set_filename(
         dataframe_id, new_filename)
 
 
@@ -79,7 +78,7 @@ async def delete_dataframe(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeFileManagerService(user.id).delete_file(dataframe_id)
+    return await DataframeRepositoryManager(user.id).delete_dataframe(dataframe_id)
 
 
 dataframes_metadata_router = APIRouter(
@@ -100,7 +99,7 @@ async def read_dataframe_info(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id)
+    return await DataframeRepositoryManager(user.id).get_dataframe_meta(dataframe_id)
 
 
 @dataframes_metadata_router.get("/all", response_model=List[models.DataFrameMetadata],
@@ -109,7 +108,7 @@ async def read_all_user_dataframes(user: User = Depends(current_active_user)):
     """
         Возвращает информацию обо всех датафреймах пользователя
     """
-    return await DataframeMetadataManagerService(user.id).get_all_dataframes_meta()
+    return await DataframeRepositoryManager(user.id).get_active_dataframes_meta()
 
 
 dataframes_content_router = APIRouter(
@@ -134,7 +133,7 @@ async def read_dataframe_with_pagination(
         - **page**: номер cтраницы (default=1)
         - **rows_on_page**: кол-во строк датафрейма на cтраницу (default=1)
     """
-    return await DataframeStatisticsProviderService(
+    return await DataframeStatisticsService(
         user.id).get_dataframe_with_pagination(dataframe_id, page, rows_on_page)
 
 
@@ -160,12 +159,12 @@ async def dataframe_columns_stat_info(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeStatisticsProviderService(
+    return await DataframeStatisticsService(
         user.id).get_dataframe_column_statistics(dataframe_id)
 
 
 @dataframes_content_router.get("/column_types",
-                               response_model=models.ColumnTypes,
+                               response_model=schemas.ColumnTypes,
                                summary="Получить списки типов столбцов")
 async def get_column_names(dataframe_id: PydanticObjectId,
                            user: User = Depends(current_active_user)):
@@ -174,8 +173,8 @@ async def get_column_names(dataframe_id: PydanticObjectId,
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeMetadataManagerService(
-        user.id).get_column_types(dataframe_id)
+    return await DataframeRepositoryManager(
+        user.id).get_feature_column_types(dataframe_id)
 
 
 @dataframes_content_router.get("/corr_matrix",
@@ -188,7 +187,7 @@ async def get_correlation_matrix(dataframe_id: PydanticObjectId,
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeStatisticsProviderService(
+    return await DataframeStatisticsService(
         user.id).get_correlation_matrix(dataframe_id)
 
 
@@ -211,22 +210,22 @@ async def set_target_feature(dataframe_id: PydanticObjectId,
         - **dataframe_id**: ID csv-файла(датафрейма)
         - **target_column**: имя целевого столбца
     """
-    return await DataframeMetadataManagerService(
+    return await DataframeService(
         user.id).set_target_feature(dataframe_id, target_column)
 
 
 @dataframes_methods_router.delete("/target",
                                summary="Очистить выбор целевого признака",
                                response_model=models.DataFrameMetadata)
-async def set_target_feature(dataframe_id: PydanticObjectId,
+async def unset_target_feature(dataframe_id: PydanticObjectId,
                              user: User = Depends(current_active_user)):
     """
         Убирает отметку столбца датафрейма как целевого (Y).
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeMetadataManagerService(
-        user.id).unset_target_feature(dataframe_id)
+    return await DataframeService(
+        user.id).unset_target_feature(dataframe_id=dataframe_id)
 
 
 @dataframes_methods_router.put("/change_type",
@@ -243,8 +242,8 @@ async def change_column_type(dataframe_id: PydanticObjectId,
         - **column_name**: имя численного столбца
         - **type**: тип столбца (числовой/категориальный)
     """
-    return await DataframeManagerService(user.id
-        ).convert_column_to_new_type(dataframe_id, column_name, new_type)
+    return await DataframeService(user.id
+                                  ).convert_column_to_new_type(dataframe_id, column_name, new_type)
 
 
 @dataframes_methods_router.put("/move_to_root",
@@ -258,7 +257,22 @@ async def move_to_root(dataframe_id: PydanticObjectId,
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeManagerService(user.id).move_dataframe_to_root(
+    return await DataframeService(user.id).move_dataframe_to_root(
+        dataframe_id)
+
+
+@dataframes_methods_router.put("/move_to_active",
+                               summary="Переместить предсказание в активные",
+                               response_model=models.DataFrameMetadata)
+async def move_to_root(dataframe_id: PydanticObjectId,
+                       user: User = Depends(current_active_user)):
+    """
+        Переносит датафрейм из вложенного уровня в корень интерфейса.
+        Либо переносит датафрейм из раздела предсказаний в корень интерфейса.
+
+        - **dataframe_id**: ID csv-файла(датафрейма)
+    """
+    return await DataframeService(user.id).move_prediction_to_active(
         dataframe_id)
 
 
@@ -302,7 +316,7 @@ async def feature_importances(dataframe_id: PydanticObjectId,
 
     """
     # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id)
-    return await DataframeMethodsManagerService(
+    return await DataframeMethodsService(
         user.id).process_feature_importances(dataframe_id, task_type, selection_params)
 
 
@@ -322,7 +336,7 @@ async def delete_column(dataframe_id: PydanticObjectId,
         method_name=specs.AvailableMethods.DROP_COLUMNS,
         columns=column_names
     )
-    return await DataframeMethodsManagerService(user.id).apply_methods(
+    return await DataframeMethodsService(user.id).apply_methods(
         dataframe_id, [method_params])
 
 
@@ -360,7 +374,7 @@ async def apply_method(dataframe_id: PydanticObjectId,
         * `min_max_scaler` - Scale features to a given range
         * `robust_scaler` - Scale features using statistics that are robust to outliers
     """
-    return await DataframeMethodsManagerService(user.id).apply_methods(
+    return await DataframeMethodsService(user.id).apply_methods(
         dataframe_id, method_params)
 
     # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id_from)
@@ -388,7 +402,7 @@ async def copy_pipeline(dataframe_id_from: PydanticObjectId,
         - **dataframe_id**: ID csv-файла(датафрейма) с которого копируется пайплайн
         - **dataframe_id**: ID csv-файла(датафрейма) на который применяется пайплайн
     """
-    return await DataframeMethodsManagerService(user.id).copy_pipeline(
+    return await DataframeMethodsService(user.id).copy_pipeline(
         dataframe_id_from, dataframe_id_to)
 
     # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id_from)

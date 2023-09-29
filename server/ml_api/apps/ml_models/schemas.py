@@ -14,4 +14,3 @@ class ModelParams(BaseModel):
 class ModelTrainingResults(BaseModel):
     model: Any = None
     results: List[Tuple[Report, Any]] = []
-#   TODO: think of structure and logic

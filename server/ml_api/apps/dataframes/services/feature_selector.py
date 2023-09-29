@@ -19,13 +19,17 @@ class FeatureSelector:
     """
     Класс, отвечающий за отбор признаков.
     """
-    def __init__(self, features, target, task_type: specs.FeatureSelectionTaskType,
+    def __init__(self,
+                 features: pd.DataFrame,
+                 target: pd.Series,
+                 task_type: specs.FeatureSelectionTaskType,
                  selector_params: List[schemas.SelectorMethodParams]):
         self.X = features
         self.y = target
         self.task_type = task_type
         self.summary = pd.DataFrame(index=features.columns)
         self.params = selector_params
+
         self._methods = {
             fs.VARIANCE_THRESHOLD: self._variance_threshold,
             fs.SELECT_K_BEST: self._select_k_best,
@@ -217,7 +221,7 @@ class FeatureSelector:
             params = method_param.params
             if method_name not in self._methods:
                 raise SelectorMethodNotExistsError(method_name)
-            self._methods[method_name](params)
+            self._methods[method_name.value](params)
         result = self.summary.to_dict(orient="index")
         return schemas.FeatureSelectionSummary(result=result)
 

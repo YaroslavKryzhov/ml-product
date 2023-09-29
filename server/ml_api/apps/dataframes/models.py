@@ -1,17 +1,12 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 from beanie import Document
 from beanie.odm.fields import PydanticObjectId
 from pymongo import IndexModel, ASCENDING, HASHED
 
-from ml_api.apps.dataframes.schemas import ApplyMethodParams, FeatureSelectionSummary
-
-
-class ColumnTypes(BaseModel):
-    numeric: List[str]
-    categorical: List[str]
+from ml_api.apps.dataframes import schemas
 
 
 class DataFrameMetadata(Document):
@@ -19,11 +14,11 @@ class DataFrameMetadata(Document):
     filename: str
     user_id: PydanticObjectId
     is_prediction: bool = False
-    feature_columns_types: Optional[ColumnTypes] = ColumnTypes(
+    feature_columns_types: Optional[schemas.ColumnTypes] = schemas.ColumnTypes(
         numeric=[], categorical=[])
     target_feature: Optional[str] = None
-    pipeline: Optional[List[ApplyMethodParams]] = []
-    feature_importance_report: FeatureSelectionSummary = None
+    pipeline: Optional[List[schemas.ApplyMethodParams]] = []
+    feature_importance_report: Optional[schemas.FeatureSelectionSummary] = None
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
     class Settings:

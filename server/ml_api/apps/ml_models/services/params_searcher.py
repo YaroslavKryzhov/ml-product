@@ -3,8 +3,8 @@ from sklearn.model_selection import cross_val_score
 from sklearn.metrics import silhouette_score
 from beanie.odm.fields import PydanticObjectId
 
-from ml_api.apps.dataframes.services.dataframe_manager import \
-    DataframeManagerService
+from ml_api.apps.dataframes.services.dataframe_service import \
+    DataframeService
 from ml_api.apps.ml_models import schemas, errors
 from ml_api.apps.ml_models.services.model_construstor import \
     ModelConstructorService
@@ -40,11 +40,11 @@ class HyperoptService:
     async def _prepare_data(self, task_type: TaskTypes):
         if task_type in [TaskTypes.CLASSIFICATION,
                          TaskTypes.REGRESSION]:
-            self.features, self.target = await DataframeManagerService(
+            self.features, self.target = await DataframeService(
                 self.user_id).get_feature_target_df_supervised(self.dataframe_id)
 
         if task_type == TaskTypes.CLUSTERING:
-            self.features, _ = await DataframeManagerService(
+            self.features, _ = await DataframeService(
                 self.user_id).get_feature_target_df(self.dataframe_id)
 
         if task_type in [TaskTypes.OUTLIER_DETECTION,

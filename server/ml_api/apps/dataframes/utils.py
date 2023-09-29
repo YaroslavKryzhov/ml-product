@@ -1,4 +1,5 @@
 import random
+from typing import List
 
 import pandas as pd
 
@@ -117,5 +118,16 @@ def _convert_column_to_numeric(series: pd.Series) -> pd.Series:
 
 
 def get_random_number():
-    """Returns a random number between 1 and 10 (inclusive)."""
-    return random.randint(1, 10)
+    """Returns a random number between 10 and 99 (inclusive)."""
+    return random.randint(10, 99)
+
+
+def convert_dtypes(df: pd.DataFrame) -> (pd.DataFrame, schemas.ColumnTypes):
+    df = df.convert_dtypes()
+    numeric_columns = df.select_dtypes(
+        include=["integer", "floating"]).columns.to_list()
+    categorical_columns = df.select_dtypes(
+        include=["string", "boolean", "category"]).columns.to_list()
+    column_types = schemas.ColumnTypes(
+        numeric=numeric_columns, categorical=categorical_columns)
+    return df, column_types
