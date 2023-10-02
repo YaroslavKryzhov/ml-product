@@ -87,6 +87,11 @@ class DataframeRepositoryManager:
         dataframe_meta = await self.get_dataframe_meta(dataframe_id)
         return dataframe_meta.parent_id
 
+    async def get_is_prediction(self, dataframe_id: PydanticObjectId
+                                ) -> Optional[PydanticObjectId]:
+        dataframe_meta = await self.get_dataframe_meta(dataframe_id)
+        return dataframe_meta.is_prediction
+
     async def get_filename(self, dataframe_id: PydanticObjectId
                            ) -> str:
         dataframe_meta = await self.get_dataframe_meta(dataframe_id)

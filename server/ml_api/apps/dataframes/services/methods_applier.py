@@ -1,3 +1,4 @@
+import traceback
 from typing import List, Any, Callable, Dict
 
 import pandas as pd
@@ -49,7 +50,10 @@ class MethodsApplier:
         try:
             self._methods[method_name](columns, method_params.params)
         except Exception as err:
-            raise errors.ApplyingMethodError(method_name, err)
+            print(traceback.format_exc())
+            error_type = type(err).__name__
+            error_description = str(err)
+            raise errors.ApplyingMethodError(method_name.value, f"{error_type}: {error_description}")
         self._meta.pipeline.append(method_params)
 
     def get_df(self) -> pd.DataFrame:

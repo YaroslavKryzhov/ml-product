@@ -123,11 +123,19 @@ def get_random_number():
 
 
 def convert_dtypes(df: pd.DataFrame) -> (pd.DataFrame, schemas.ColumnTypes):
+    """If numeric(int) column has only <10 unique values - it detects like
+    categorical"""
     df = df.convert_dtypes()
     numeric_columns = df.select_dtypes(
         include=["integer", "floating"]).columns.to_list()
     categorical_columns = df.select_dtypes(
         include=["string", "boolean", "category"]).columns.to_list()
+
+    for column in numeric_columns.copy():
+        if df[column].nunique() <= 10:
+            numeric_columns.remove(column)
+            categorical_columns.append(column)
+
     column_types = schemas.ColumnTypes(
         numeric=numeric_columns, categorical=categorical_columns)
     return df, column_types

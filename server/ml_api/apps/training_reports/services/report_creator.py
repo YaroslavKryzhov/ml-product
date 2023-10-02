@@ -35,16 +35,23 @@ class ReportCreatorService:
                                     , is_train=False) -> models.Report:
         report_type = ReportTypes.TRAIN if is_train else ReportTypes.VALID
         accuracy = accuracy_score(target, predictions)
-        recall = recall_score(target, predictions)
-        precision = precision_score(target, predictions)
-        f1 = f1_score(target, predictions)
+        try:
+            recall = recall_score(target, predictions)
+            precision = precision_score(target, predictions)
+            f1 = f1_score(target, predictions)
+        except ValueError:
+            recall = None
+            precision = None
+            f1 = None
         roc_auc, fpr, tpr = None, None, None
         if probabilities is not None:
             roc_auc = roc_auc_score(target, probabilities)
-            fpr, tpr, _ = roc_curve(target, probabilities)
-            fpr = list(fpr)
-            tpr = list(tpr)
-
+            try:
+                fpr, tpr, _ = roc_curve(target, probabilities)
+                fpr = list(fpr)
+                tpr = list(tpr)
+            except ValueError:
+                pass
         body = schemas.BinaryClassificationReport(accuracy=accuracy,
                                                  recall=recall,
                                                  precision=precision,

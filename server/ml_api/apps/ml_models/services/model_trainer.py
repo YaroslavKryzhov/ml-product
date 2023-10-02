@@ -37,8 +37,8 @@ class ModelTrainerService:
 
     def _fit_and_predict(self, f_train, t_train, f_valid):
         self.model.fit(f_train, t_train)
-        return pd.Series(self.model.predict(f_train)), \
-               pd.Series(self.model.predict(f_valid))
+        return pd.Series(self.model.predict(f_train), name=self.target_column), \
+               pd.Series(self.model.predict(f_valid), name=self.target_column)
 
     def _get_probabilities(self, f_valid):
         try:
@@ -54,7 +54,7 @@ class ModelTrainerService:
                 return None
 
     async def train_model(self, features, target) -> ModelTrainingResults:
-        if self.task_type not in self._task_to_method_map:
+        if self.task_type not in self._task_to_method_map.keys():
             raise errors.UnknownTaskTypeError(self.task_type)
         process_train = self._task_to_method_map[self.task_type]
         model_training_result = await process_train(features, target)
@@ -75,8 +75,8 @@ class ModelTrainerService:
         train_probs = self._get_probabilities(f_train)
         valid_probs = self._get_probabilities(f_valid)
 
-        train_results_df = utils.get_predictions_df(features, train_preds)
-        valid_results_df = utils.get_predictions_df(features, valid_preds)
+        train_results_df = utils.get_predictions_df(f_train, train_preds)
+        valid_results_df = utils.get_predictions_df(f_valid, valid_preds)
 
         if num_classes == 2:
             train_report = self.report_creator.score_binary_classification(
@@ -101,8 +101,8 @@ class ModelTrainerService:
         train_preds, valid_preds = self._fit_and_predict(f_train, t_train,
                                                          f_valid)
 
-        train_results_df = utils.get_predictions_df(features, train_preds)
-        valid_results_df = utils.get_predictions_df(features, valid_preds)
+        train_results_df = utils.get_predictions_df(f_train, train_preds)
+        valid_results_df = utils.get_predictions_df(f_valid, valid_preds)
 
         train_report = self.report_creator.score_regression(
             t_train, train_preds, is_train=True)

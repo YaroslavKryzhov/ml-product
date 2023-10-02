@@ -22,6 +22,15 @@ class DataFrameIsNotPredictionError(HTTPException):
         )
 
 
+class DataFrameIsPredictionError(HTTPException):
+    """Raise when trying to make some denied action with prediction"""
+    def __init__(self, dataframe_id: PydanticObjectId):
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Dataframe with id {dataframe_id} is prediction."
+        )
+
+
 class DataFrameAlreadyRootError(HTTPException):
     """Raise when dataframe is already root (have no parent_id)"""
     def __init__(self, dataframe_id: PydanticObjectId):
@@ -186,7 +195,7 @@ class ApplyingMethodError(HTTPException):
     def __init__(self, method_name: str, err: Exception):
         super().__init__(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f'Method "{method_name}" has error: {err}'
+            detail=f"Method '{method_name}' has error: {err}"
         )
 
 
@@ -219,15 +228,15 @@ class TargetFeatureEncodingError(HTTPException):
         )
 
 
-class TargetFeatureDeletingError(HTTPException):
+class TargetFeatureDeletingError(Exception):
     """Raise when trying to delete target feature"""
     def __init__(self, target_feature: str):
-        super().__init__(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Trying to delete target feature {target_feature} - "
-                   f"denied. Target feature can't be deleted. "
-                   f"Make it non-target feature first."
+        error_message = (
+            f"Trying to delete target feature {target_feature} - "
+            f"denied. Target feature can't be deleted. "
+            f"Make it non-target feature first."
         )
+        super().__init__(error_message)
 
 
 class NansInDataFrameError(HTTPException):
@@ -247,3 +256,13 @@ class UnknownColumnTypeError(HTTPException):
             detail=f"Unknown column type {column_type}."
         )
 
+
+class ColumnTypesNotDefined(HTTPException):
+    """Raise when column types not defined(maybe in prediction)"""
+
+    def __init__(self, dataframe_id: PydanticObjectId):
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Column types not defined in {dataframe_id}. "
+                   f"Maybe it's prediction dataframe"
+        )

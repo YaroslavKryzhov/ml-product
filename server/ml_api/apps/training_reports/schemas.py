@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -11,12 +11,12 @@ class TwoDimRepresentation(BaseModel):
 
 class BinaryClassificationReport(BaseModel):
     accuracy: float
-    recall: float
-    precision: float
-    f1: float
+    recall: Optional[float]
+    precision: Optional[float]
+    f1: Optional[float]
     roc_auc: float
-    fpr: List[float]
-    tpr: List[float]
+    fpr: Optional[List[float]]
+    tpr: Optional[List[float]]
 
 
 class MulticlassClassificationReport(BaseModel):

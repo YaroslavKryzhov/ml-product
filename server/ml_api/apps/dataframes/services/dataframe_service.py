@@ -56,6 +56,8 @@ class DataframeService:
             # (после удаления таргета) - поднимаем 500-ую
             raise errors.CategoricalColumnFoundCriticalError(
                 column_types.categorical)
+        if len(column_types.categorical) == 0 and len(column_types.numeric) == 0:
+            raise errors.ColumnTypesNotDefined(dataframe_id)
         return column_types.numeric, target_column
 
     async def get_feature_target_df_supervised(self,
@@ -103,7 +105,6 @@ class DataframeService:
         converted_column = self._convert_column_to_new_type(df[column_name],
                                                             new_type)
         df[column_name] = converted_column
-        df[column_name] = df[column_name].convert_dtypes()
         await self.repository.save_pandas_dataframe(dataframe_id, df)
         return await self.repository.set_feature_column_types(dataframe_id,
                                                               column_types)
@@ -123,7 +124,7 @@ class DataframeService:
         except ValueError:
             raise errors.ColumnCantBeParsedError(column.name, new_type.value,
                                                  "invalid values")
-        return converted_column
+        return converted_column.convert_dtypes()
 
     def _change_column_type(self, column_types: schemas.ColumnTypes,
             column_name: str, new_type: specs.ColumnType) -> schemas.ColumnTypes:
@@ -177,8 +178,10 @@ class DataframeService:
     async def move_dataframe_to_root(self, dataframe_id: PydanticObjectId
                                      ) -> DataFrameMetadata:
         dataframe_meta = await self.repository.get_dataframe_meta(dataframe_id)
+        if dataframe_meta.is_prediction:
+            raise errors.DataFrameIsPredictionError(dataframe_id)
         if dataframe_meta.parent_id is None:
-            raise errors.DataFrameIsNotPredictionError(dataframe_id)
+            raise errors.DataFrameAlreadyRootError(dataframe_id)
         dataframe_meta = await self.repository.set_parent_id(dataframe_id,
                                                              None)
         return dataframe_meta

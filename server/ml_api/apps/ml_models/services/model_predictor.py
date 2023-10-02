@@ -14,7 +14,8 @@ class ModelPredictorService:
         self.feature_columns = model_meta.feature_columns
         self.target_column = model_meta.target_column
 
-    async def predict(self, features):
+    async def predict(self, features: pd.DataFrame):
+        print(features.columns)
         predictions = pd.Series(self.model.predict(features), name=self.target_column)
         results_df = utils.get_predictions_df(features, predictions)
         return results_df

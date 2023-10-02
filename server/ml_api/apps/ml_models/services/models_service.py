@@ -37,7 +37,7 @@ class ModelService:
                     dataframe_id=dataframe_id)
 
         model_meta = await self.repository.create_model(
-            filename=model_name,
+            model_name=model_name,
             dataframe_id=dataframe_id,
             task_type=task_type,
             model_params=model_params,

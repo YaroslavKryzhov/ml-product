@@ -38,12 +38,12 @@ class ModelFitPredictService:
         error_description = traceback.format_exc()
         report = ReportCreatorService().get_error_report(model_meta.task_type,
                                                          error_description)
-        await self.repository.add_report(model_meta.id,
+        await self.model_service.add_report(model_meta.id,
             model_meta.dataframe_id, report)
 
     async def train_model(self, model_meta: ModelMetadata) -> ModelMetadata:
         model = await self._prepare_model(model_meta=model_meta)
-        features, target = self._prepare_fit_data(model_meta=model_meta)
+        features, target = await self._prepare_fit_data(model_meta=model_meta)
         model_training_results = await self._fit_model(
             model_meta, model, features, target)
         new_meta = await self._save_model_training_results(model_meta,
@@ -103,8 +103,7 @@ class ModelFitPredictService:
                 df_filename = f"{model_meta.filename}_" \
                               f"predictions_{report.report_type.value}"
                 await self.model_service.add_predictions(model_id, pred_df,
-                                            source_dataframe_id,
-                                            df_filename)
+                                                         df_filename)
         except Exception as err:
             await self._process_error(err, model_meta)
             raise err
@@ -129,14 +128,14 @@ class ModelFitPredictService:
             train_df_id = model_meta.dataframe_id
             features = await self.dataframe_methods_service.copy_pipeline_for_prediction(
                 train_df_id, dataframe_id)
-            return features
-        features, _ = await self.dataframe_service.get_feature_target_df(
-            dataframe_id)
-        await self._check_features_equality(features,
-                                            model_meta.feature_columns)
+        else:
+            features, _ = await self.dataframe_service.get_feature_target_df(
+                dataframe_id)
+        self._check_features_equality(features, model_meta.feature_columns)
+        features = features[model_meta.feature_columns]
         return features
 
-    async def _check_features_equality(self, features, feature_columns):
+    def _check_features_equality(self, features, feature_columns):
         features_list_model = sorted(feature_columns)
         features_list_input = sorted(features.columns.tolist())
         if features_list_model != features_list_input:

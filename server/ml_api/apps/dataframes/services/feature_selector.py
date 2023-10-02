@@ -1,3 +1,4 @@
+import traceback
 from typing import List, Dict, Any, Callable
 
 from pydantic import ValidationError
@@ -72,8 +73,15 @@ class FeatureSelector:
         selector = VarianceThreshold(params.threshold)
         try:
             selector.fit(self.X, self.y)
-        except Exception as err:
-            raise SelectorProcessingError(method_name, err)
+        except Exception:
+            # TODO: make all methods call 1 error method
+            # except Exception as err:
+            # error_type = type(err).__name__
+            # error_description = str(err)
+            # raise errors.ApplyingMethodError(method_name,
+            #                                  f"{error_type}: {error_description}")
+            error_description = traceback.format_exc()
+            raise SelectorProcessingError(method_name, error_description)
         self.summary[method_name] = selector.get_support()
 
     def _select_k_best(self, params: Dict[str, Any]):
