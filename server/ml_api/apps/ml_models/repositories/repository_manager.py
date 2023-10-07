@@ -11,7 +11,8 @@ from ml_api.apps.ml_models.repositories.file_repository import ModelFileCRUD
 
 class ModelRepositoryManager:
     """
-    Работает с файлами ОС и отвечает за синхронизацию файловой системы с данными в MongoDB
+    Работает с файлами ОС и отвечает за синхронизацию файловой системы
+    с данными в MongoDB
     при добавлении/удалении файлов. Также отвечает за доступ к файлам.
     """
     def __init__(self, user_id):
@@ -59,10 +60,10 @@ class ModelRepositoryManager:
     async def load_model(self, model_id: PydanticObjectId):
         return self.file_repository.read_model(model_id)
 
-    async def delete_file(self, model_id: PydanticObjectId) -> ModelMetadata:
-        # TODO: rewrite model deletion to cascade
+    async def delete_model(self, model_id: PydanticObjectId) -> ModelMetadata:
         model_meta = await self.meta_repository.delete(model_id)
-        self.file_repository.delete_model(model_id)
+        if model_meta.status == specs.ModelStatuses.TRAINED:
+            self.file_repository.delete_model(model_id)
         return model_meta
 
     # 2: GET METADATA OPERATIONS ----------------------------------------------
@@ -141,7 +142,8 @@ class ModelRepositoryManager:
         return await self.meta_repository.update(model_id, query)
 
     async def set_model_params(self, model_id: PydanticObjectId,
-                         new_model_params: schemas.ModelParams) -> ModelMetadata:
+                         new_model_params: schemas.ModelParams
+                               ) -> ModelMetadata:
         query = {"$set": {ModelMetadata.model_params: new_model_params}}
         return await self.meta_repository.update(model_id, query)
 
@@ -150,7 +152,13 @@ class ModelRepositoryManager:
         query = {"$push": {ModelMetadata.metrics_report_ids: report_id}}
         return await self.meta_repository.update(model_id, query)
 
-    async def add_predictions(self, model_id: PydanticObjectId,
-                              prediction_id: PydanticObjectId) -> ModelMetadata:
+    async def add_prediction(self, model_id: PydanticObjectId,
+                             prediction_id: PydanticObjectId) -> ModelMetadata:
         query = {"$push": {ModelMetadata.model_prediction_ids: prediction_id}}
+        return await self.meta_repository.update(model_id, query)
+
+    async def remove_prediction(self, model_id: PydanticObjectId,
+                                prediction_id: PydanticObjectId
+                                ) -> ModelMetadata:
+        query = {"$pull": {ModelMetadata.model_prediction_ids: prediction_id}}
         return await self.meta_repository.update(model_id, query)

@@ -38,7 +38,7 @@ class DataFrameFileCRUD(FileCRUD):
         try:
             data = pd.read_csv(csv_path)
         except FileNotFoundError:
-            raise errors.ObjectFileNotFoundError(file_id)
+            raise errors.DataFrameFileNotFoundError(file_id)
         return data
 
     def save_csv(self, file_id: PydanticObjectId, data: pd.DataFrame):

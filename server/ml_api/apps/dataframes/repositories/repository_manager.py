@@ -82,6 +82,10 @@ class DataframeRepositoryManager:
     async def get_active_dataframes_meta(self) -> List[DataFrameMetadata]:
         return await self.meta_repository.get_active()
 
+    async def get_dataframe_metas_by_parent_id(
+            self, parent_id: PydanticObjectId) -> List[DataFrameMetadata]:
+        return await self.meta_repository.get_by_parent_id(parent_id)
+
     async def get_parent_id(self, dataframe_id: PydanticObjectId
                             ) -> Optional[PydanticObjectId]:
         dataframe_meta = await self.get_dataframe_meta(dataframe_id)
@@ -147,6 +151,12 @@ class DataframeRepositoryManager:
     async def set_target_feature(self, dataframe_id: PydanticObjectId,
                                  target_feature: str) -> DataFrameMetadata:
         query = {"$set": {DataFrameMetadata.target_feature: target_feature}}
+        return await self.meta_repository.update(dataframe_id, query)
+
+    async def set_pipeline(self, dataframe_id: PydanticObjectId,
+                           pipeline: List[schemas.ApplyMethodParams]
+                           ) -> DataFrameMetadata:
+        query = {"$set": {DataFrameMetadata.pipeline: pipeline}}
         return await self.meta_repository.update(dataframe_id, query)
 
     async def set_feature_importance_report(

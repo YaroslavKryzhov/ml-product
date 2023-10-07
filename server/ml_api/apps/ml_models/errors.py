@@ -1,194 +1,245 @@
 from typing import Dict, List
 
-from pydantic import ValidationError
 from fastapi import HTTPException, status
 from beanie import PydanticObjectId
 
-from ml_api.apps.ml_models import schemas, specs
+from ml_api.apps.ml_models import specs
 
 
-class FilenameExistsUserError(HTTPException):
-    """Raise when filename already exists in user's models"""
-    def __init__(self, filename: str):
-        super().__init__(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"A model with filename {filename} already exists."
-        )
-
-
+# REPOSITORY ERRORS------------------------------------------------------------
+# These exceptions indicate issues with accessing or managing models in a repository.
 class ModelNotFoundError(HTTPException):
-    """Raise when model not found"""
+    """
+    Exception raised when the specified model is not found in the repository.
+    """
     def __init__(self, model_id: PydanticObjectId):
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Model with id {model_id} not found."
+            detail=f"No model found with the id: {model_id}."
         )
 
 
-class ObjectFileNotFoundError(HTTPException):
-    """Raise when file not found"""
+class ModelFileNotFoundError(HTTPException):
+    """
+    Exception raised when the file corresponding to a model is not found.
+    """
     def __init__(self, file_id: PydanticObjectId):
         super().__init__(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"File of object with id {file_id} not found."
+            detail=f"CRITICAL: Model file with the id '{file_id}' is missing."
         )
 
 
+class FilenameExistsUserError(HTTPException):
+    """
+    Exception raised when a filename already exists in the user's repository.
+    """
+    def __init__(self, filename: str):
+        super().__init__(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"A model with the filename '{filename}' already exists in the repository."
+        )
+
+
+# MODEL METADATA VALIDATION ERRORS---------------------------------------------
+# These exceptions indicate issues with validating the metadata of models.
+
 class TargetNotFoundSupervisedLearningError(HTTPException):
-    """Raise when target column not found in dataframe_metadata
-    for classification/regression"""
+    """
+    Exception raised when the target column is not found in the metadata
+    for classification/regression tasks.
+    """
     def __init__(self, dataframe_id: PydanticObjectId):
         super().__init__(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Dataframe with id {dataframe_id} has no target column, "
-                   f"which is required for supervised learning "
-                   f"(classification/regression)."
+            detail=(
+                f"Dataframe with id '{dataframe_id}' lacks a target column. "
+                f"A target column is essential for supervised learning tasks."
+            )
         )
 
 
 class UnknownTaskTypeError(HTTPException):
-    """Raise when task type is not in specs.AvailableTaskTypes"""
+    """
+    Exception raised when the task type provided is not recognized.
+    """
     def __init__(self, task_type: str):
         super().__init__(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Unknown task type {task_type}."
-        )
-
-
-class UnknownParamsTypeError(HTTPException):
-    """Raise when params_type is not in specs.AvailableParamsTypes"""
-    def __init__(self, params_type: str):
-        super().__init__(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Unknown params_type {params_type}."
-        )
-
-
-class UnknownClassificationModelError(HTTPException):
-    """Raise when classification model is unknown"""
-    def __init__(self, model_type: str):
-        super().__init__(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Unknown classification model {model_type}."
-        )
-
-
-class UnknownRegressionModelError(HTTPException):
-    """Raise when regression model is unknown"""
-    def __init__(self, model_type: str):
-        super().__init__(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Unknown regression model {model_type}."
-        )
-
-
-class UnknownDimensionalityReductionModelError(HTTPException):
-    """Raise when dimensionality reduction model is unknown"""
-    def __init__(self, model_type: str):
-        super().__init__(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Unknown dimensionality reduction model {model_type}."
-        )
-
-
-class UnknownClusteringModelError(HTTPException):
-    """Raise when clustering model is unknown"""
-    def __init__(self, model_type: str):
-        super().__init__(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Unknown clustering model {model_type}."
-        )
-
-
-class UnknownOutlierDetectionModelError(HTTPException):
-    """Raise when outlier detection model is unknown"""
-    def __init__(self, model_type: str):
-        super().__init__(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Unknown outlier detection model {model_type}."
-        )
-
-
-class ModelParamsValidationError(HTTPException):
-    """Raise when model_params is not valid"""
-    def __init__(self, model_type: specs.AvailableModelTypes,
-                 model_params: Dict, error: ValidationError):
-        super().__init__(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Validation error for model {model_type.value} with \n"
-                   f"params {model_params}; \n"
-                   f"Error: \n {error.json()}."
-        )
-
-
-class HyperoptModelParamsValidationError(HTTPException):
-    """Raise when model_params is not valid after hyperopt"""
-    def __init__(self, model_params: schemas.ModelParams,
-                 error: ValidationError):
-        super().__init__(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"CRITICAL!!! "
-                   f"Validation error for model_params after HyperOpt: \n"
-                   f"{model_params.json()}; \n"
-                   f"Error: \n {error.json()}."
-        )
-
-
-class HyperoptTaskTypeError(HTTPException):
-    """Raise when trying to use hyperopt on wrong task type"""
-    def __init__(self, task_type: specs.AvailableTaskTypes):
-        super().__init__(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Can't use hyperopt parameters optimisation with "
-                   f"task_type of{task_type.value}"
-        )
-
-
-class ModelNotTrainedError(HTTPException):
-    """Raise when try to save not trained model"""
-    def __init__(self, model_id: PydanticObjectId):
-        super().__init__(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Try to save not trained model (status != TRAINED)"
-                   f" with id {model_id}."
-        )
-
-
-class OneClassClassificationError(HTTPException):
-    """Raise when try to train classification model with only one class"""
-    def __init__(self, dataframe_id: PydanticObjectId):
-        super().__init__(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Only one class label in dataframe with id {dataframe_id}",
-        )
-
-
-class TooManyClassesClassificationError(HTTPException):
-    """Raise when try to train classification model with too much classes"""
-    def __init__(self, limit: int, dataframe_id: PydanticObjectId):
-        super().__init__(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"More than {limit} class labels in dataframe "
-                   f"with id {dataframe_id}",
-        )
-
-
-class ReportNotFoundError(HTTPException):
-    """Raise when report not found"""
-    def __init__(self, report_id: PydanticObjectId):
-        super().__init__(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Report with id {report_id} not found."
+            detail=f"Task type '{task_type}' is not recognized."
         )
 
 
 class FeaturesNotEqualError(HTTPException):
-    """Raise when features in df for prediction and from 
-    model training dataframe are different"""
-    def __init__(self, features_list_model: List[str],
-                 features_list_input: List[str]):
+    """
+    Exception raised when there's a mismatch between features
+    in the provided dataframe and the model's training dataframe.
+    """
+    def __init__(self, features_list_model: List[str], features_list_input: List[str]):
         super().__init__(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Features from training model: {features_list_model}, "
-                   f"are not equal to input: {features_list_input}"
+            detail=(
+                f"Mismatch in features. Model was trained with: {features_list_model}. "
+                f"Provided dataframe has: {features_list_input}."
+            )
+        )
+
+
+# MODEL CONSTRUCTOR ERRORS-----------------------------------------------------
+# These exceptions indicate issues during the construction of machine learning models.
+class ModelConstructionError(HTTPException):
+    """
+    Exception raised when there's an error during model construction.
+    """
+    def __init__(self, err_desc: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Model construction failed: {err_desc}"
+        )
+
+
+# The following exceptions are raised when the provided model type is unrecognized
+# for various categories of machine learning tasks.
+class UnknownClassificationModelError(HTTPException):
+    def __init__(self, model_type: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Unrecognized classification model type: '{model_type}'."
+        )
+
+
+class UnknownRegressionModelError(HTTPException):
+    def __init__(self, model_type: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Unrecognized regression model type: '{model_type}'."
+        )
+
+
+class UnknownDimensionalityReductionModelError(HTTPException):
+    def __init__(self, model_type: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Unrecognized dimensionality reduction model type: '{model_type}'."
+        )
+
+
+class UnknownClusteringModelError(HTTPException):
+    def __init__(self, model_type: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Unrecognized clustering model type: '{model_type}'."
+        )
+
+
+class UnknownOutlierDetectionModelError(HTTPException):
+    def __init__(self, model_type: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Unrecognized outlier detection model type: '{model_type}'."
+        )
+
+# MODEL TRAINING ERRORS--------------------------------------------------------
+# These exceptions are associated with issues during model training.
+class ModelTrainingError(HTTPException):
+    """
+    Exception raised when there's an error during the model training process.
+    """
+    def __init__(self, err_desc: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Model training encountered an error: {err_desc}"
+        )
+
+
+class OneClassClassificationError(Exception):
+    """
+    Exception raised when an attempt is made to train a classification model
+    with only a single class label present.
+    """
+    def __init__(self, dataframe_id: PydanticObjectId):
+        error_message = (
+            f"Only one class label detected in dataframe with id {dataframe_id}. "
+            f"Classification models require at least two distinct class labels."
+        )
+        super().__init__(error_message)
+
+
+class TooManyClassesClassificationError(Exception):
+    """
+    Exception raised when an attempt is made to train a classification model
+    with an excessive number of class labels.
+    """
+    def __init__(self, limit: int, dataframe_id: PydanticObjectId):
+        error_message = (
+            f"Dataframe with id {dataframe_id} has more than {limit} class labels, "
+            f"which exceeds the allowable limit."
+        )
+        super().__init__(error_message)
+
+
+# MODEL PREDICTION ERRORS------------------------------------------------------
+# These exceptions pertain to issues encountered during model prediction.
+class ModelPredictionError(HTTPException):
+    """
+    Exception raised when there's an error during the prediction process.
+    """
+    def __init__(self, err_desc: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Error encountered during model prediction: {err_desc}."
+        )
+
+
+# PARAMETERS SEARCHING ERRORS--------------------------------------------------
+# These exceptions are related to errors during hyperparameter optimization.
+class ParamsSearchingError(HTTPException):
+    """
+    Exception raised during the hyperparameter optimization process.
+    """
+    def __init__(self, model_type:str, err_desc: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Error encountered during hyperparameter optimization for model "
+                   f"{model_type}: {err_desc}"
+        )
+
+
+class HyperoptTaskTypeError(HTTPException):
+    """
+    Exception raised when trying to use hyperopt on an unsuitable task type.
+    """
+    def __init__(self, task_type: specs.AvailableTaskTypes):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Hyperparameter optimization (hyperopt) is not supported for "
+                   f"task type: {task_type.value}."
+        )
+
+
+# PARAMETERS VALIDATION ERRORS-------------------------------------------------
+# These exceptions are associated with validation of model parameters.
+class UnknownParamsTypeError(HTTPException):
+    """
+    Exception raised when the parameter type provided is unrecognized.
+    """
+    def __init__(self, params_type: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"The parameter type '{params_type}' is not recognized."
+        )
+
+
+class ModelParamsValidationError(HTTPException):
+    """
+    Exception raised when model parameters are not valid.
+    """
+    def __init__(self, model_type: str, model_params: Dict, validation_err: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"Parameter validation error for model type '{model_type}':\n"
+                f"Provided Parameters: {model_params}\n"
+                f"Error Description: {validation_err}."
+            )
         )

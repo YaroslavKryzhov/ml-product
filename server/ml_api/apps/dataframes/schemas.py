@@ -2,7 +2,7 @@ from typing import List, Dict, Union, Optional, Any
 
 from pydantic import BaseModel, Field
 from ml_api.apps.dataframes.specs import FeatureSelectionMethods, \
-    BaseSklearnModels, AvailableMethods
+    BaseSklearnModels, AvailableMethods, ColumnType
 
 
 class ColumnTypes(BaseModel):
@@ -87,9 +87,40 @@ class ApplyMethodParams(BaseModel):
     params: Optional[Dict[str, Any]] = None
 
 
+class ChangeColumnsTypeParams(BaseModel):
+    new_type: ColumnType
+
+
 class FillCustomValueParams(BaseModel):
-    value: Union[int, float, str]
+    values_to_fill: List[Union[int, float, str]]
 
 
 class LeaveNValuesParams(BaseModel):
-    values_to_keep: List[str]
+    values_to_keep: List[List[str]]
+
+
+class OneHotEncoderParams(BaseModel):
+    categories_: List[List[Union[str]]]
+    drop_idx_: Optional[List[int]]
+    infrequent_enabled: bool
+    n_features_outs: List[int]
+
+
+class OrdinalEncodingParams(BaseModel):
+    categories_: List[List[Union[str]]]
+    missing_indices: Dict
+
+
+class StandardScalerParams(BaseModel):
+    mean_: List[float]
+    scale_: List[float]
+
+
+class MinMaxScalerParams(BaseModel):
+    min_: List[float]
+    scale_: List[float]
+
+
+class RobustScalerParams(BaseModel):
+    center_: List[float]
+    scale_: List[float]

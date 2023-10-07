@@ -31,7 +31,7 @@ class ModelFileCRUD(FileCRUD):
         try:
             model = joblib.load(joblib_path)
         except FileNotFoundError:
-            raise errors.ObjectFileNotFoundError(file_id)
+            raise errors.ModelFileNotFoundError(file_id)
         return model
 
     def save_model(self, file_id: PydanticObjectId, model):
@@ -58,8 +58,10 @@ class ModelFileCRUD(FileCRUD):
 #             )
 #         return model
 #
-#     def download_model(self, model_uuid: UUID, filename: str) -> FileResponse:
-#         file_response = self.download(file_uuid=model_uuid, filename=filename)
+#     def download_model(self, model_uuid: UUID, filename: str
+#     ) -> FileResponse:
+#         file_response = self.download(file_uuid=model_uuid,
+#         filename=filename)
 #         return file_response
 #
 #     def save_onnx(self, model_uuid: UUID, model):
@@ -69,7 +71,8 @@ class ModelFileCRUD(FileCRUD):
 #             f.write(model.SerializeToString())
 #
 #     """
-#     Some pickled models (like catboost) don't work properly after saving and load.
+#     Some pickled models (like catboost) don't work properly after saving
+#     and load.
 #     """
 #     def read_pickle(self, model_uuid: UUID):
 #         model_path = self._get_path(model_uuid)

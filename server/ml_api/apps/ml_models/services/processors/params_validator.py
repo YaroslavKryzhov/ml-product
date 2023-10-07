@@ -5,8 +5,8 @@ from pydantic import ValidationError
 from ml_api.apps.ml_models import specs, schemas, errors
 from ml_api.apps.ml_models.specs import AvailableModelTypes as Models
 from ml_api.apps.ml_models.specs import AvailableTaskTypes as TaskTypes
-from ml_api.apps.ml_models.services.params_searcher import HyperoptService
 from ml_api.apps.ml_models.models import ModelMetadata
+from ml_api.apps.ml_models.services.processors.params_searcher import HyperoptService
 from ml_api.apps.ml_models.models_specs.validation_params import \
     clustering_models_params as cluster_params, \
     classification_models_params as classif_params, \
@@ -139,7 +139,7 @@ class ParamsValidationService:
 
     def _validate_params(self, initial_params: Dict) -> Dict[str, Any]:
         if self.task_type not in self._task_to_models_params_map_map:
-            raise errors.UnknownTaskTypeError(self.task_type)
+            raise errors.UnknownTaskTypeError(self.task_type.value)
         model_params_map = self._task_to_models_params_map_map[self.task_type]
 
         if self.model_type not in model_params_map:
@@ -150,6 +150,6 @@ class ParamsValidationService:
         try:
             validated_params = model_params_class(**initial_params)
         except ValidationError as err:
-            raise errors.ModelParamsValidationError(self.model_type,
-                                                    initial_params, err)
+            raise errors.ModelParamsValidationError(
+                self.model_type.value, initial_params, str(err))
         return validated_params.dict()

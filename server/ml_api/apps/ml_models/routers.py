@@ -5,10 +5,9 @@ from fastapi import APIRouter, Depends
 
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.models import User
-from ml_api.apps.ml_models.repositories.repository_manager import ModelRepositoryManager
-from ml_api.apps.ml_models.services.models_service import ModelService
-from ml_api.apps.ml_models.services.fit_predict_service import ModelFitPredictService
 from ml_api.apps.ml_models import schemas, specs, models
+from ml_api.apps.ml_models.services.model_service import ModelService
+from ml_api.apps.ml_models.services.fit_predict_service import ModelFitPredictService
 # from ml_api.common.celery_tasks.celery_tasks import train_composition_celery
 
 models_file_router = APIRouter(
@@ -24,12 +23,11 @@ async def download_model(
     user: User = Depends(current_active_user),
 ):
     """
-        Скачивает модель в формате, указанном в параметре model_format.
+        Скачивает модель.
 
         - **model_id**: ID модели
-        - **model_format**: Формат модели, в котором она будет скачана.
     """
-    return await ModelRepositoryManager(user.id).download_model(model_id)
+    return await ModelService(user.id).download_model(model_id)
 
 
 @models_file_router.put("/rename", summary="Переименовать модель",
@@ -45,7 +43,7 @@ async def rename_model(
         - **model_id**: ID модели
         - **new_model_name**: новое имя модели
     """
-    return await ModelRepositoryManager(user.id).set_filename(
+    return await ModelService(user.id).set_filename(
         model_id, new_model_name)
 
 
@@ -60,7 +58,7 @@ async def delete_model(
 
         - **model_id**: ID модели
     """
-    return await ModelRepositoryManager(user.id).delete_file(model_id)
+    return await ModelService(user.id).delete_model(model_id)
 
 
 models_metadata_router = APIRouter(
@@ -81,7 +79,7 @@ async def read_model_info(
 
         - **model_id**: ID модели
     """
-    return await ModelRepositoryManager(user.id).get_model_meta(model_id)
+    return await ModelService(user.id).get_model_meta(model_id)
 
 
 @models_metadata_router.get("/all", response_model=List[models.ModelMetadata],
@@ -90,17 +88,23 @@ async def read_all_user_models(user: User = Depends(current_active_user)):
     """
         Возвращает информацию обо всех моделях пользователя
     """
-    return await ModelRepositoryManager(user.id).get_all_models_meta()
+    return await ModelService(user.id).get_all_models_meta()
 
 
 @models_metadata_router.get("/by_dataframe",
                             response_model=List[models.ModelMetadata],
     summary="Получить информацию обо всех моделях обученных на датафрейме")
-async def read_all_user_compositions(
+async def read_all_user_models_by_dataframe(
         dataframe_id: PydanticObjectId,
         user: User = Depends(current_active_user)
 ):
-    return await ModelRepositoryManager(
+    """
+        Возвращает информацию обо всех моделях пользователя,
+        обученных на данном датафрейме
+
+        - **dataframe_id**: ID датафрейма
+    """
+    return await ModelService(
         user.id).get_all_models_meta_by_dataframe(dataframe_id=dataframe_id)
 
 
@@ -121,20 +125,15 @@ async def train_model(model_name: str,
                 stratify: bool = None,
                 user: User = Depends(current_active_user)):
     """
-            # Обработка запускается ассинхронно в бэкграунд-режиме.
-        # Оповещение о конце процедуры обработки будет отправлено через Pub-Sub
-        # и будет получено пользователям, если он подключен к каналу по веб-сокету.
-        #
-        # В ответе возвращается ID бэкграунд-задачи и JWT для доступа к каналу.
-    :param model_name:
-    :param dataframe_id:
-    :param task_type:
-    :param model_params:
-    :param params_type:
-    :param test_size:
-    :param stratify:
-    :param user:
-    :return:
+        Запускает обучение модели.
+
+        - **model_name**: имя новой модели
+        - **dataframe_id**: ID датафрейма
+        - **task_type**: тип задачи
+        - **model_params**: тип и гиперпараметры модели
+        - **params_type**: тип подбора параметров (авто(hyperopt) только для классификации/регрессии/кластеризации)
+        - **test_size**: размер валидационной выборки (классификация/регрессия)
+        - **stratify**: делать ли стратификацию (при классификации)
     """
     model_meta = await ModelService(user.id).create_model(
         model_name=model_name,
@@ -156,7 +155,18 @@ async def predict_on_model(dataframe_id: PydanticObjectId,
             model_id: PydanticObjectId,
             apply_pipeline: bool = True,
             user: User = Depends(current_active_user)):
+    """
+        Делает предсказание на модели.
+
+        - **dataframe_id**: ID датафрейма
+        - **model_id**: ID модели
+        - **apply_pipeline**: применять ли пайплайн с выборки, на которой училась модель
+
+        Если данные в сыром виде, можно скопировать пайплайн с
+        оригинальной выборки перед предсказанием.
+        Если данные уже предобработаны, можно поставить параметр = False.
+    """
     return await ModelFitPredictService(user.id).predict_on_model(
-        source_dataframe_id=dataframe_id,
+        source_df_id=dataframe_id,
         model_id=model_id,
         apply_pipeline=apply_pipeline)

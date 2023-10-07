@@ -35,6 +35,7 @@ class AvailableMethods(Enum):
     DROP_DUPLICATES = 'drop_duplicates'
     DROP_NA = 'drop_na'
     DROP_COLUMNS = 'drop_columns'
+    CHANGE_COLUMNS_TYPE = 'change_columns_type'
 
     FILL_MEAN = 'fill_mean'
     FILL_MEDIAN = 'fill_median'

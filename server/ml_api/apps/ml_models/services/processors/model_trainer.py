@@ -1,3 +1,5 @@
+import traceback
+
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
@@ -53,11 +55,17 @@ class ModelTrainerService:
             except AttributeError:
                 return None
 
-    async def train_model(self, features, target) -> ModelTrainingResults:
+    async def train_model(self, model_meta, features, target) -> ModelTrainingResults:
         if self.task_type not in self._task_to_method_map.keys():
-            raise errors.UnknownTaskTypeError(self.task_type)
+            raise errors.UnknownTaskTypeError(self.task_type.value)
         process_train = self._task_to_method_map[self.task_type]
-        model_training_result = await process_train(features, target)
+        try:
+            model_training_result = await process_train(features, target)
+        except Exception as err:
+            print(traceback.format_exc())
+            error_type = type(err).__name__
+            error_description = str(err)
+            raise errors.ModelTrainingError(f"{error_type}: {error_description}")
         return model_training_result
 
     async def _process_classification(self, features, target) -> ModelTrainingResults:

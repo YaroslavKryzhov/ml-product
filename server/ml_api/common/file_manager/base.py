@@ -17,7 +17,7 @@ class FileCRUD:
         else:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"File {path.name} not found"
+                detail=f"CRITICAL: File {path.name} not found"
             )
 
     def _delete(self, path: Path):
@@ -26,5 +26,5 @@ class FileCRUD:
         else:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"File {path.name} not found"
+                detail=f"CRITICAL: File {path.name} not found"
             )

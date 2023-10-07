@@ -1,5 +1,4 @@
 import random
-from typing import List
 
 import pandas as pd
 
@@ -106,25 +105,14 @@ def _get_categorical_column_statistic_params(column: pd.Series
     return schemas.CategoricalColumnDescription(**result)
 
 
-def _convert_column_to_categorical(series: pd.Series) -> pd.Series:
-    """Converts column to categorical type."""
-    series = series.astype(str)
-    return series
-
-
-def _convert_column_to_numeric(series: pd.Series) -> pd.Series:
-    """Converts column to numeric type."""
-    return pd.to_numeric(series)
-
-
 def get_random_number():
     """Returns a random number between 10 and 99 (inclusive)."""
     return random.randint(10, 99)
 
 
 def convert_dtypes(df: pd.DataFrame) -> (pd.DataFrame, schemas.ColumnTypes):
-    """If numeric(int) column has only <10 unique values - it detects like
-    categorical"""
+    """If numeric(int) column has only <10 unique values - it transforms to
+    categorical(str)"""
     df = df.convert_dtypes()
     numeric_columns = df.select_dtypes(
         include=["integer", "floating"]).columns.to_list()
@@ -133,6 +121,7 @@ def convert_dtypes(df: pd.DataFrame) -> (pd.DataFrame, schemas.ColumnTypes):
 
     for column in numeric_columns.copy():
         if df[column].nunique() <= 10:
+            df[column] = df[column].astype(str)
             numeric_columns.remove(column)
             categorical_columns.append(column)
 

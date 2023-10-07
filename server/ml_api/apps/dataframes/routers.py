@@ -5,8 +5,6 @@ from fastapi import APIRouter, Depends, UploadFile, File
 
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.models import User
-from ml_api.apps.dataframes.repositories.repository_manager import DataframeRepositoryManager
-from ml_api.apps.dataframes.services.df_statistics_service import DataframeStatisticsService
 from ml_api.apps.dataframes.services.dataframe_service import DataframeService
 from ml_api.apps.dataframes.services.methods_service import DataframeMethodsService
 from ml_api.apps.dataframes import schemas, models, specs
@@ -47,7 +45,7 @@ async def download_dataframe(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeRepositoryManager(user.id).download_dataframe(dataframe_id)
+    return await DataframeService(user.id).download_dataframe(dataframe_id)
 
 
 @dataframes_file_router.put("/rename", summary="Переименовать csv-файл",
@@ -63,7 +61,7 @@ async def rename_dataframe(
         - **dataframe_id**: ID csv-файла(датафрейма)
         - **new_filename**: новое имя файла
     """
-    return await DataframeRepositoryManager(user.id).set_filename(
+    return await DataframeService(user.id).set_filename(
         dataframe_id, new_filename)
 
 
@@ -78,7 +76,23 @@ async def delete_dataframe(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeRepositoryManager(user.id).delete_dataframe(dataframe_id)
+    return await DataframeService(user.id).delete_dataframe(dataframe_id)
+
+
+@dataframes_file_router.delete("/prediction",  summary="Удалить предсказание модели",
+                           response_model=models.DataFrameMetadata)
+async def delete_model_prediction(
+    model_id: PydanticObjectId,
+    prediction_id: PydanticObjectId,
+    user: User = Depends(current_active_user),
+):
+    """
+        Удаляет предсказание модели.
+
+        - **model_id**: ID модели
+    """
+    return await DataframeService(user.id).delete_prediction(
+        model_id, prediction_id)
 
 
 dataframes_metadata_router = APIRouter(
@@ -99,7 +113,7 @@ async def read_dataframe_info(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeRepositoryManager(user.id).get_dataframe_meta(dataframe_id)
+    return await DataframeService(user.id).get_dataframe_meta(dataframe_id)
 
 
 @dataframes_metadata_router.get("/all", response_model=List[models.DataFrameMetadata],
@@ -108,7 +122,7 @@ async def read_all_user_dataframes(user: User = Depends(current_active_user)):
     """
         Возвращает информацию обо всех датафреймах пользователя
     """
-    return await DataframeRepositoryManager(user.id).get_active_dataframes_meta()
+    return await DataframeService(user.id).get_active_dataframes_meta()
 
 
 dataframes_content_router = APIRouter(
@@ -133,7 +147,7 @@ async def read_dataframe_with_pagination(
         - **page**: номер cтраницы (default=1)
         - **rows_on_page**: кол-во строк датафрейма на cтраницу (default=1)
     """
-    return await DataframeStatisticsService(
+    return await DataframeService(
         user.id).get_dataframe_with_pagination(dataframe_id, page, rows_on_page)
 
 
@@ -159,21 +173,21 @@ async def dataframe_columns_stat_info(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeStatisticsService(
+    return await DataframeService(
         user.id).get_dataframe_column_statistics(dataframe_id)
 
 
 @dataframes_content_router.get("/column_types",
                                response_model=schemas.ColumnTypes,
                                summary="Получить списки типов столбцов")
-async def get_column_names(dataframe_id: PydanticObjectId,
+async def get_column_types(dataframe_id: PydanticObjectId,
                            user: User = Depends(current_active_user)):
     """
-        Возвращает список имен столбцов датафрейма.
+        Возвращает списки типов столбцов датафрейма.
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeRepositoryManager(
+    return await DataframeService(
         user.id).get_feature_column_types(dataframe_id)
 
 
@@ -187,7 +201,7 @@ async def get_correlation_matrix(dataframe_id: PydanticObjectId,
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeStatisticsService(
+    return await DataframeService(
         user.id).get_correlation_matrix(dataframe_id)
 
 
@@ -228,24 +242,6 @@ async def unset_target_feature(dataframe_id: PydanticObjectId,
         user.id).unset_target_feature(dataframe_id=dataframe_id)
 
 
-@dataframes_methods_router.put("/change_type",
-                               summary="Сменить тип столбца",
-                               response_model=models.DataFrameMetadata)
-async def change_column_type(dataframe_id: PydanticObjectId,
-                             column_name: str,
-                             new_type: specs.ColumnType,
-                             user: User = Depends(current_active_user)):
-    """
-        Изменяет тип столбца на заданный (числовой/категориальный).
-
-        - **dataframe_id**: ID csv-файла(датафрейма)
-        - **column_name**: имя численного столбца
-        - **type**: тип столбца (числовой/категориальный)
-    """
-    return await DataframeService(user.id
-                                  ).convert_column_to_new_type(dataframe_id, column_name, new_type)
-
-
 @dataframes_methods_router.put("/move_to_root",
                                summary="Переместить в корень интерфейса",
                                response_model=models.DataFrameMetadata)
@@ -253,7 +249,6 @@ async def move_to_root(dataframe_id: PydanticObjectId,
                              user: User = Depends(current_active_user)):
     """
         Переносит датафрейм из вложенного уровня в корень интерфейса.
-        Либо переносит датафрейм из раздела предсказаний в корень интерфейса.
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
@@ -264,15 +259,16 @@ async def move_to_root(dataframe_id: PydanticObjectId,
 @dataframes_methods_router.put("/move_to_active",
                                summary="Переместить предсказание в активные",
                                response_model=models.DataFrameMetadata)
-async def move_to_root(dataframe_id: PydanticObjectId,
-                       user: User = Depends(current_active_user)):
+async def move_to_active(
+        model_id: PydanticObjectId,
+        dataframe_id: PydanticObjectId,
+        user: User = Depends(current_active_user)):
     """
-        Переносит датафрейм из вложенного уровня в корень интерфейса.
-        Либо переносит датафрейм из раздела предсказаний в корень интерфейса.
+        Переносит датафрейм из раздела предсказаний в корень интерфейса.
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeService(user.id).move_prediction_to_active(
+    return await DataframeService(user.id).move_prediction_to_active(model_id,
         dataframe_id)
 
 
@@ -288,18 +284,13 @@ async def feature_importances(dataframe_id: PydanticObjectId,
         На основе её, пользователь может выбрать какие признаки стоит удалять
 
         - **dataframe_id**: ID csv-файла(датафрейма)
+        - **task_type**: тип задачи (классификация/регрессия)
         - **selection_params**: параметры для функции
-
-        ScoreFunc для методов отбора:
-        * 'chi2'
-        * 'f_classif'
-        * 'f_regression'
 
         BaseSklearnModels для методов отбора:
         * 'linear_regression'
         * 'random_forest_regressor'
         * 'logistic_regression'
-        * 'linear_svc'
         * 'random_forest_classifier'
 
         Доступные методы:
@@ -336,7 +327,31 @@ async def delete_column(dataframe_id: PydanticObjectId,
         method_name=specs.AvailableMethods.DROP_COLUMNS,
         columns=column_names
     )
-    return await DataframeMethodsService(user.id).apply_methods(
+    return await DataframeMethodsService(user.id).apply_changing_methods(
+        dataframe_id, [method_params])
+
+
+@dataframes_methods_router.put("/change_columns_type",
+                               summary="Сменить тип столбца",
+                               response_model=models.DataFrameMetadata)
+async def change_column_type(dataframe_id: PydanticObjectId,
+                             column_names: List[str],
+                             new_type: specs.ColumnType,
+                             user: User = Depends(current_active_user)):
+    """
+        Изменяет тип столбцов на заданный (числовой/категориальный).
+        *То же самое, что /apply_method?change_columns_type*
+
+        - **dataframe_id**: ID csv-файла(датафрейма)
+        - **column_names**: имена столбцов
+        - **new_type**: новый тип столбца (числовой/категориальный)
+    """
+    method_params = schemas.ApplyMethodParams(
+        method_name=specs.AvailableMethods.CHANGE_COLUMNS_TYPE,
+        columns=column_names,
+        params={'new_type': new_type}
+    )
+    return await DataframeMethodsService(user.id).apply_change_columns_type(
         dataframe_id, [method_params])
 
 
@@ -352,29 +367,29 @@ async def apply_method(dataframe_id: PydanticObjectId,
         - **method_params**: параметры для функций
 
         Доступные методы:
-        * `drop_duplicates` - Remove duplicates
-        * `drop_na` - Remove NA values
-        * `drop_columns` - Remove columns
+        - **drop_duplicates** - Remove duplicates
+        - **drop_na** - Remove NA values
+        - **drop_columns** - Remove columns
 
-        * `fill_mean` - Replace NA values with the mean
-        * `fill_median` - Replace NA values with the median
-        * `fill_most_frequent` - Replace NA values with the most frequent value
-        * `fill_custom_value` - Replace NA values with a custom value
-        * `fill_bfill` - Fill NA values using backfill method
-        * `fill_ffill` - Fill NA values using forward fill method
-        * `fill_interpolation` - Fill NA values using interpolation
-        * `fill_linear_imputer` - Replace NA values using a linear imputer
-        * `fill_knn_imputer` - Replace NA values using a k-nearest neighbors imputer
+        - **fill_mean** - Replace NA values with the mean
+        - **fill_median** - Replace NA values with the median
+        - **fill_most_frequent** - Replace NA values with the most frequent value
+        - **fill_custom_value** - Replace NA values with a custom value
+        - **fill_bfill** - Fill NA values using backfill method
+        - **fill_ffill** - Fill NA values using forward fill method
+        - **fill_interpolation** - Fill NA values using interpolation
+        - **fill_linear_imputer** - Replace NA values using a linear imputer
+        - **fill_knn_imputer** - Replace NA values using a k-nearest neighbors imputer
 
-        * `leave_n_values_encoding` - Leave N values encoding
-        * `one_hot_encoding` - One-Hot encoding (OHE)
-        * `ordinal_encoding` - Ordinal encoding
+        - **leave_n_values_encoding** - Leave N values encoding
+        - **one_hot_encoding** - One-Hot encoding (OHE)
+        - **ordinal_encoding** - Ordinal encoding
 
-        * `standard_scaler` - Standardize numeric features
-        * `min_max_scaler` - Scale features to a given range
-        * `robust_scaler` - Scale features using statistics that are robust to outliers
+        - **standard_scaler** - Standardize numeric features
+        - **min_max_scaler** - Scale features to a given range
+        - **robust_scaler** - Scale features using statistics that are robust to outliers
     """
-    return await DataframeMethodsService(user.id).apply_methods(
+    return await DataframeMethodsService(user.id).apply_changing_methods(
         dataframe_id, method_params)
 
     # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id_from)
@@ -390,14 +405,6 @@ async def copy_pipeline(dataframe_id_from: PydanticObjectId,
                         user: User = Depends(current_active_user)):
     """
         Применяет пайплайн от одного документа к другому.
-
-        Обработка запускается ассинхронно в бэкграунд-режиме.
-        Оповещение о конце процедуры обработки будет отправлено через Pub-Sub
-        и будет получено пользователям, если он подключен к каналу по веб-сокету.
-
-        В ответе возвращается ID бэкграунд-задачи и JWT для доступа к каналу.
-        В случае возникновения ошибки в процессе - пайплайн не будет применен даже частично.
-        В текущей реализации на датафрейм нельзя скопировать пайплайн, если у него уже есть свой пайплайн.
 
         - **dataframe_id**: ID csv-файла(датафрейма) с которого копируется пайплайн
         - **dataframe_id**: ID csv-файла(датафрейма) на который применяется пайплайн

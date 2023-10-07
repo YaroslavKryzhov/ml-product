@@ -1,3 +1,4 @@
+import traceback
 from typing import Dict, Any, Callable
 
 from sklearn import ensemble, linear_model, svm, neighbors, neural_network, \
@@ -110,15 +111,20 @@ class ModelConstructorService:
         model_type = model_params.model_type
 
         if task_type not in self._task_to_models_map_map:
-            raise errors.UnknownTaskTypeError(task_type)
+            raise errors.UnknownTaskTypeError(task_type.value)
         model_map = self._task_to_models_map_map[task_type]
 
         if model_type not in model_map:
             unknown_model_err = self._task_to_model_error_map[task_type]
             raise unknown_model_err(model_type)
-        model = model_map[model_type](model_params.params)
+        try:
+            model = model_map[model_type](model_params.params)
+        except Exception as err:
+            print(traceback.format_exc())
+            error_type = type(err).__name__
+            error_description = str(err)
+            raise errors.ModelConstructionError(f"{error_type}: {error_description}")
         return model
-
 
     def _get_decision_tree_classifier(self, model_params: Dict[str, Any]):
         return tree.DecisionTreeClassifier(**model_params)

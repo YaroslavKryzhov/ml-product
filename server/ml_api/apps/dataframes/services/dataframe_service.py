@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from beanie import PydanticObjectId
 import pandas as pd
@@ -6,7 +6,8 @@ import pandas as pd
 from ml_api.apps.dataframes.repositories.repository_manager import \
     DataframeRepositoryManager
 from ml_api.apps.dataframes.models import DataFrameMetadata
-from ml_api.apps.dataframes import utils, specs, schemas, errors
+from ml_api.apps.dataframes import utils, schemas, errors
+from ml_api.apps.ml_models.services.for_dataframe_service import ModelForDataframeService
 
 
 class DataframeService:
@@ -17,11 +18,7 @@ class DataframeService:
     def __init__(self, user_id):
         self._user_id = user_id
         self.repository = DataframeRepositoryManager(self._user_id)
-
-    async def upload_new_dataframe(self, file,
-                                   filename: str) -> DataFrameMetadata:
-        dataframe_meta = await self.repository.upload_dataframe(file, filename)
-        return await self._define_initial_column_types(dataframe_meta.id)
+        self.models_service = ModelForDataframeService(self._user_id)
 
     async def _define_initial_column_types(self, dataframe_id: PydanticObjectId
                                            ) -> schemas.ColumnTypes:
@@ -32,6 +29,70 @@ class DataframeService:
         await self.repository.save_pandas_dataframe(dataframe_id, df)
         return await self.repository.set_feature_column_types(
             dataframe_id, column_types)
+
+    def _check_columns_consistency(self, df: pd.DataFrame, columns_list: List):
+        # Проверка на то, что DataFrame содержит ожидаемые столбцы
+        df_columns_list = df.columns.tolist()
+        if sorted(df_columns_list) != sorted(columns_list):
+            raise errors.ColumnsNotEqualCriticalError(df_columns_list,
+                                                      columns_list)
+
+    # 1: CREATE OPERATIONS ----------------------------------------------------
+    async def upload_new_dataframe(self, file,
+                                   filename: str) -> DataFrameMetadata:
+        dataframe_meta = await self.repository.upload_dataframe(file, filename)
+        return await self._define_initial_column_types(dataframe_meta.id)
+
+    async def save_transformed_dataframe(
+            self,
+            changed_df_meta: DataFrameMetadata,
+            new_df: pd.DataFrame, method_name: str = 'modified'
+    ) -> DataFrameMetadata:
+        changed_df_meta.parent_id = changed_df_meta.id
+        changed_df_meta.filename = f"{changed_df_meta.filename}_{method_name}"
+        while True:
+            try:
+                meta_created = await self.repository.save_as_new_dataframe(
+                    new_df, changed_df_meta)
+                return meta_created
+            except errors.FilenameExistsUserError:
+                changed_df_meta.filename = f"{changed_df_meta.filename}_{utils.get_random_number()}"
+
+    # 2: GET OPERATIONS -------------------------------------------------------
+    async def download_dataframe(self, dataframe_id):
+        return await self.repository.download_dataframe(dataframe_id)
+
+    async def get_dataframe_meta(self, dataframe_id) -> DataFrameMetadata:
+        return await self.repository.get_dataframe_meta(dataframe_id)
+
+    async def get_active_dataframes_meta(self) -> List[DataFrameMetadata]:
+        return await self.repository.get_active_dataframes_meta()
+
+    async def get_feature_column_types(self, dataframe_id):
+        return await self.repository.get_feature_column_types(dataframe_id)
+
+    async def get_dataframe_with_pagination(self, dataframe_id: PydanticObjectId,
+             page: int = 1, rows_on_page: int = 50) -> schemas.ReadDataFrameResponse:
+        df = await self.repository.read_pandas_dataframe(dataframe_id)
+        return utils._get_dataframe_with_pagination(df, page, rows_on_page)
+
+    async def get_dataframe_column_statistics(self, dataframe_id: PydanticObjectId,
+            bins: int = 10) -> List[schemas.ColumnDescription]:
+        result = []
+        df = await self.repository.read_pandas_dataframe(dataframe_id)
+        column_types = await self.repository.get_feature_column_types(dataframe_id)
+        for column_name in column_types.numeric:
+            result.append(utils._get_numeric_column_statistics(
+                df=df, column_name=column_name, bins=bins))
+        for column_name in column_types.categorical:
+            result.append(utils._get_categorical_column_statistics
+                          (df=df, column_name=column_name))
+        return result
+
+    async def get_correlation_matrix(self, dataframe_id: PydanticObjectId
+                                     ) -> Dict[str, Dict[str, float]]:
+        df = await self.repository.read_pandas_dataframe(dataframe_id)
+        return df.corr().to_dict()
 
     async def get_feature_target_column_names(self,
                                               dataframe_id: PydanticObjectId) -> (
@@ -50,14 +111,14 @@ class DataframeService:
                 column_types.categorical.remove(target_column)
             else:
                 # если его нет в ColumnTypes - поднимаем 500-ую
-                raise errors.TargetNotFoundCriticalError(dataframe_id)
+                raise errors.UnknownTargetCriticalError(dataframe_id)
         if len(column_types.categorical) > 0:
             # если среди столбцов остались категориальные
             # (после удаления таргета) - поднимаем 500-ую
-            raise errors.CategoricalColumnFoundCriticalError(
+            raise errors.CategoricalColumnFoundCriticalError(dataframe_id,
                 column_types.categorical)
         if len(column_types.categorical) == 0 and len(column_types.numeric) == 0:
-            raise errors.ColumnTypesNotDefined(dataframe_id)
+            raise errors.ColumnTypesNotDefinedCriticalError(dataframe_id)
         return column_types.numeric, target_column
 
     async def get_feature_target_df_supervised(self,
@@ -65,7 +126,7 @@ class DataframeService:
     pd.DataFrame, pd.Series):
         features, target = await self.get_feature_target_df(dataframe_id)
         if target is None:
-            raise errors.TargetNotFoundError(dataframe_id)
+            raise errors.TargetNotFoundSupervisedLearningError(dataframe_id)
         return features, target
 
     async def get_feature_target_df(self, dataframe_id: PydanticObjectId
@@ -85,63 +146,9 @@ class DataframeService:
             self._check_columns_consistency(df, feature_columns)
             return df, None
 
-    def _check_columns_consistency(self, df: pd.DataFrame, columns_list: List):
-        # Проверка на то, что DataFrame содержит ожидаемые столбцы
-        df_columns_list = df.columns.tolist()
-        if sorted(df_columns_list) != sorted(columns_list):
-            raise errors.ColumnsNotEqualCriticalError(df_columns_list,
-                                                      columns_list)
-
-    async def convert_column_to_new_type(
-            self, dataframe_id: PydanticObjectId,
-            column_name: str, new_type: specs.ColumnType
-    ) -> DataFrameMetadata:
-        column_types = await self.repository.get_feature_column_types(dataframe_id)
-        column_types = self._change_column_type(column_types, column_name, new_type)
-
-        df = await self.repository.read_pandas_dataframe(dataframe_id)
-        self._check_columns_consistency(df,
-                            column_types.numeric + column_types.categorical)
-        converted_column = self._convert_column_to_new_type(df[column_name],
-                                                            new_type)
-        df[column_name] = converted_column
-        await self.repository.save_pandas_dataframe(dataframe_id, df)
-        return await self.repository.set_feature_column_types(dataframe_id,
-                                                              column_types)
-
-    def _convert_column_to_new_type(self, column: pd.Series,
-                                    new_type: specs.ColumnType) -> pd.Series:
-        try:
-            if new_type == specs.ColumnType.CATEGORICAL:
-                converted_column = utils._convert_column_to_categorical(column)
-                if converted_column.nunique() > 1000:
-                    raise errors.ColumnCantBeParsedError(column.name,
-                                                         "categorical",
-                                                         "too many unique values")
-            else:  # new_type == specs.ColumnType.NUMERIC
-                converted_column = utils._convert_column_to_numeric(
-                    column)
-        except ValueError:
-            raise errors.ColumnCantBeParsedError(column.name, new_type.value,
-                                                 "invalid values")
-        return converted_column.convert_dtypes()
-
-    def _change_column_type(self, column_types: schemas.ColumnTypes,
-            column_name: str, new_type: specs.ColumnType) -> schemas.ColumnTypes:
-        # Определяем список исходного типа и типа, на который нужно изменить
-        source_list, target_list = (
-            (column_types.categorical, column_types.numeric)
-            if new_type == specs.ColumnType.NUMERIC
-            else (column_types.numeric, column_types.categorical)
-        )
-        # Пытаемся переместить column_name из source_list в target_list
-        try:
-            source_list.remove(column_name)
-            target_list.append(column_name)
-        except ValueError:
-            raise errors.ColumnNotFoundMetadataError(column_name,
-                 'categorical' if new_type == specs.ColumnType.NUMERIC else 'numeric')
-        return column_types
+    # 3: UPDATE OPERATIONS ----------------------------------------------------
+    async def set_filename(self, dataframe_id, new_filename):
+        return await self.repository.set_filename(dataframe_id, new_filename)
 
     async def set_target_feature(self, dataframe_id: PydanticObjectId,
                                  target_feature: str) -> DataFrameMetadata:
@@ -149,7 +156,8 @@ class DataframeService:
             dataframe_id)
         if not (target_feature in column_types.numeric or
                 target_feature in column_types.categorical):
-            raise errors.ColumnNotFoundMetadataError(target_feature)
+            raise errors.SetTargetNotFoundInMetadataError(
+                dataframe_id, target_feature)
         return await self.repository.set_target_feature(dataframe_id,
                                                         target_feature)
 
@@ -157,23 +165,8 @@ class DataframeService:
                                    ) -> DataFrameMetadata:
         target_feature = self.repository.get_target_feature(dataframe_id)
         if target_feature is None:
-            raise errors.TargetNotFoundError(dataframe_id)
+            raise errors.UnsetTargetFeatureError(dataframe_id)
         return await self.repository.set_target_feature(dataframe_id, None)
-
-    async def save_transformed_dataframe(
-            self,
-            changed_df_meta: DataFrameMetadata,
-            new_df: pd.DataFrame, method_name: str = 'modified'
-    ) -> DataFrameMetadata:
-        changed_df_meta.parent_id = changed_df_meta.id
-        changed_df_meta.filename = f"{changed_df_meta.filename}_{method_name}"
-        while True:
-            try:
-                meta_created = await self.repository.save_as_new_dataframe(
-                    new_df, changed_df_meta)
-                return meta_created
-            except errors.FilenameExistsUserError:
-                changed_df_meta.filename = f"{changed_df_meta.filename}_{utils.get_random_number()}"
 
     async def move_dataframe_to_root(self, dataframe_id: PydanticObjectId
                                      ) -> DataFrameMetadata:
@@ -186,23 +179,39 @@ class DataframeService:
                                                              None)
         return dataframe_meta
 
-    async def save_predictions_dataframe(self,
-                                         df_filename: str,
-                                         pred_df: pd.DataFrame,
-                                         ) -> DataFrameMetadata:
-        while True:
-            try:
-                meta_created = await self.repository.save_prediction_dataframe(
-                    pred_df, df_filename)
-                return meta_created
-            except errors.FilenameExistsUserError:
-                df_filename = f"{df_filename}_{utils.get_random_number()}"
-
-    async def move_prediction_to_active(self, dataframe_id: PydanticObjectId
-                                     ) -> DataFrameMetadata:
+    async def move_prediction_to_active(
+            self, model_id: PydanticObjectId, dataframe_id: PydanticObjectId
+    ) -> DataFrameMetadata:
         dataframe_meta = await self.repository.get_dataframe_meta(dataframe_id)
         if not dataframe_meta.is_prediction:
             raise errors.DataFrameIsNotPredictionError(dataframe_id)
+        await self.models_service._remove_from_model_predictions(
+            model_id, dataframe_id)
         dataframe_meta = await self.repository.set_is_prediction(
             dataframe_id, False)
         return await self._define_initial_column_types(dataframe_meta.id)
+
+    # 4: DELETE OPERATIONS ----------------------------------------------------
+    async def delete_dataframe(self, dataframe_id: PydanticObjectId
+                               ) -> DataFrameMetadata:
+        dataframe_meta = await self.repository.get_dataframe_meta(dataframe_id)
+        if dataframe_meta.is_prediction:
+            raise errors.DataFrameIsPredictionError(dataframe_id)
+        child_dataframes = await self.repository.get_dataframe_metas_by_parent_id(
+            dataframe_id)
+        for child_dataframe in child_dataframes:
+            await self.delete_dataframe(child_dataframe.id)
+        await self.models_service._delete_models_by_dataframe(dataframe_id)
+        dataframe_meta = await self.repository.delete_dataframe(dataframe_id)
+        return dataframe_meta
+
+    async def delete_prediction(self, model_id: PydanticObjectId,
+                                prediction_id: PydanticObjectId
+                                ) -> DataFrameMetadata:
+        dataframe_meta = await self.repository.get_dataframe_meta(prediction_id)
+        if not dataframe_meta.is_prediction:
+            raise errors.DataFrameIsNotPredictionError(prediction_id)
+        await self.models_service._remove_from_model_predictions(
+            model_id, prediction_id)
+        dataframe_meta = await self.repository.delete_dataframe(prediction_id)
+        return dataframe_meta

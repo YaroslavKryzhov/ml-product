@@ -2,7 +2,7 @@ from typing import List
 
 from sklearn import ensemble
 from ml_api.apps.ml_models import schemas, specs
-from ml_api.apps.ml_models.services.model_construstor import ModelConstructor
+from ml_api.apps.ml_models.services.processors.model_construstor import ModelConstructor
 
 
 class ConstructCompositionException(Exception):
@@ -61,7 +61,7 @@ class CompositionConstructor:
         for i, model in enumerate(self.composition_params):
             models.append(
                 (
-                    str(i) + "_" + model.model_type.value,
+                    str(i) + "_" + model.model_type.values_to_fill,
                     ModelConstructor(
                         task_type=self.task_type,
                         model_type=model.model_type,

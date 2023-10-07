@@ -29,6 +29,13 @@ class DataFrameMetaCRUD:
             DataFrameMetadata.is_prediction == True).to_list()
         return dataframe_metas
 
+    async def get_by_parent_id(self, parent_id: PydanticObjectId
+                               ) -> List[DataFrameMetadata]:
+        dataframe_metas = await DataFrameMetadata.find(
+            DataFrameMetadata.user_id == self.user_id).find(
+            DataFrameMetadata.parent_id == parent_id).to_list()
+        return dataframe_metas
+
     async def create(
             self,
             filename: str,
