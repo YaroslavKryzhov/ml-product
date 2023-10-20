@@ -14,23 +14,23 @@ class BinaryClassificationReport(BaseModel):
     recall: Optional[float]
     precision: Optional[float]
     f1: Optional[float]
-    roc_auc: float
+    roc_auc: Optional[float]
     fpr: Optional[List[float]]
     tpr: Optional[List[float]]
 
 
 class MulticlassClassificationReport(BaseModel):
     accuracy: float
-    recall: float
-    precision: float
-    f1: float
-    roc_auc_weighted: float
-    roc_auc_micro: float
-    roc_auc_macro: float
-    fpr_micro: List[float]
-    tpr_micro: List[float]
-    fpr_macro: List[float]
-    tpr_macro: List[float]
+    recall: Optional[float]
+    precision: Optional[float]
+    f1: Optional[float]
+    roc_auc_weighted: Optional[float]
+    roc_auc_micro: Optional[float]
+    roc_auc_macro: Optional[float]
+    fpr_micro: Optional[List[float]]
+    tpr_micro: Optional[List[float]]
+    fpr_macro: Optional[List[float]]
+    tpr_macro: Optional[List[float]]
 
 
 class RegressionReport(BaseModel):

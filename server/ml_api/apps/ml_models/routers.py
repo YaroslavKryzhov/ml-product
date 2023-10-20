@@ -150,6 +150,21 @@ async def train_model(model_name: str,
     # return task.id
 
 
+@models_processing_router.post("/build_composition")
+async def train_model(composition_name: str,
+                      model_ids: List[PydanticObjectId],
+                      composition_params: schemas.ModelParams,
+                user: User = Depends(current_active_user)):
+    composition_meta = await ModelService(user.id).create_composition(
+        composition_name=composition_name, model_ids=model_ids,
+        composition_params=composition_params)
+    return await ModelFitPredictService(
+        user.id).train_composition(composition_meta=composition_meta)
+    # task = train_composition_celery.delay(
+    #     str(user.id), str(model_info.id), params_type.value, test_size)
+    # return task.id
+
+
 @models_processing_router.put("/predict")
 async def predict_on_model(dataframe_id: PydanticObjectId,
             model_id: PydanticObjectId,

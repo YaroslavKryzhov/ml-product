@@ -14,6 +14,7 @@ class ModelMetadata(Document):
     filename: str
     user_id: PydanticObjectId
     dataframe_id: PydanticObjectId
+    is_composition: bool = False
     task_type: specs.AvailableTaskTypes
     model_params: ModelParams
     params_type: specs.AvailableParamsTypes
@@ -24,6 +25,7 @@ class ModelMetadata(Document):
     status: specs.ModelStatuses = specs.ModelStatuses.BUILDING
     metrics_report_ids: List[PydanticObjectId] = []
     model_prediction_ids: List[PydanticObjectId] = []
+    composition_model_ids: Optional[List[PydanticObjectId]] = None
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
     class Settings:

@@ -243,3 +243,124 @@ class ModelParamsValidationError(HTTPException):
                 f"Error Description: {validation_err}."
             )
         )
+
+
+# COMPOSITION CONSTRUCTION ERRORS----------------------------------------------
+class UnknownClassificationCompositionError(HTTPException):
+    """
+    Exception raised when the classification composition type provided is unrecognized.
+    """
+    def __init__(self, composition_type: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"Unrecognized classification composition type: '{composition_type}'."
+            )
+        )
+
+
+class UnknownRegressionCompositionError(HTTPException):
+    """
+    Exception raised when the regression composition type provided is unrecognized.
+    """
+    def __init__(self, composition_type: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Unrecognized regression composition type: '{composition_type}'."
+        )
+
+
+class CompositionConstructionError(HTTPException):
+    """
+    Exception raised when there's an error during composition construction.
+    """
+    def __init__(self, err_desc: str):
+        super.__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Composition construction failed: {err_desc}"
+        )
+
+
+class CompositionValidationError(HTTPException):
+    """
+    Exception raised when there's an error during composition validation.
+    """
+    def __init__(self, err_desc: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Composition validation failed: {err_desc}"
+        )
+
+
+class UnknownCompositionTypeError(HTTPException):
+    """
+    Exception raised when the composition type provided is unrecognized.
+    """
+    def __init__(self, composition_type: str):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Unrecognized composition type: '{composition_type}'."
+        )
+
+
+class DifferentDataFramesCompositionError(HTTPException):
+    """
+    Exception raised when the dataframes of the models in a composition
+    are not the same.
+    """
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Models in a composition must have the same dataframe."
+        )
+
+
+class WrongTaskTypesCompositionError(HTTPException):
+    """
+    Exception raised when the task type of a model in a composition
+    is not supported.
+    """
+    def __init__(self, value):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Task type {value} is not supported for composition."
+        )
+
+
+class DifferentTaskTypesCompositionError(HTTPException):
+    """
+    Exception raised when the task types of the models in a composition
+    are not the same.
+    """
+    def __init__(self, value1, value2):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Models in a composition must have the same task type. "
+                   f"Provided models have {value1} and {value2} task types."
+        )
+
+
+class DifferentFeatureColumnsCompositionError(HTTPException):
+    """
+    Exception raised when the feature columns of the models in a composition
+    are not the same.
+    """
+    def __init__(self, feature_columns1, feature_columns2):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Models in a composition must have the same feature columns."
+                   f"Provided models have {feature_columns1} and {feature_columns2}."
+        )
+
+
+class DifferentTargetColumnsCompositionError(HTTPException):
+    """
+    Exception raised when the target columns of the models in a composition
+    are not the same.
+    """
+    def __init__(self, target_column1, target_column2):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Models in a composition must have the same target column. "
+                   f"Provided models have {target_column1} and {target_column2}."
+        )

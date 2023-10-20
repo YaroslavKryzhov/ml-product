@@ -1,3 +1,5 @@
+from typing import List
+
 from beanie import PydanticObjectId
 from pandas import DataFrame
 
@@ -5,6 +7,7 @@ from pandas import DataFrame
 from ml_api.apps.ml_models import specs, schemas, errors
 from ml_api.apps.ml_models.models import ModelMetadata
 from ml_api.apps.ml_models.repositories.repository_manager import ModelRepositoryManager
+from ml_api.apps.ml_models.services.processors.composition_validator import CompositionParamsValidator
 from ml_api.apps.training_reports.models import Report
 from ml_api.apps.training_reports.repository import TrainingReportCRUD
 
@@ -19,6 +22,25 @@ class ModelService:
         self.report_crud = TrainingReportCRUD(self._user_id)
 
     # 1: CREATE OPERATIONS ----------------------------------------------------
+    def _check_for_same_params(self, first_model_meta,
+                               model_metas: List[ModelMetadata]):
+        for meta in model_metas:
+            if meta.dataframe_id != first_model_meta.dataframe_id:
+                raise errors.DifferentDataFramesCompositionError()
+            if meta.task_type not in (specs.AvailableTaskTypes.CLASSIFICATION,
+                                      specs.AvailableTaskTypes.REGRESSION):
+                raise errors.WrongTaskTypesCompositionError(
+                    meta.task_type.value)
+            if meta.task_type != first_model_meta.task_type:
+                raise errors.DifferentTaskTypesCompositionError(
+                    meta.task_type.value, first_model_meta.task_type.value)
+            if meta.feature_columns != first_model_meta.feature_columns:
+                raise errors.DifferentFeatureColumnsCompositionError(
+                    meta.feature_columns, first_model_meta.feature_columns)
+            if meta.target_column != first_model_meta.target_column:
+                raise errors.DifferentTargetColumnsCompositionError(
+                    meta.target_column, first_model_meta.target_column)
+
     async def create_model(self,
                            model_name: str,
                            dataframe_id: PydanticObjectId,
@@ -42,6 +64,7 @@ class ModelService:
         model_meta = await self.repository.create_model(
             model_name=model_name,
             dataframe_id=dataframe_id,
+            is_composition=False,
             task_type=task_type,
             model_params=model_params,
             params_type=params_type,
@@ -50,6 +73,31 @@ class ModelService:
             test_size=test_size,
             stratify=stratify)
         return model_meta
+
+    async def create_composition(self, composition_name: str,
+                                 model_ids: List[PydanticObjectId],
+                                 composition_params: schemas.ModelParams):
+        model_metas = []
+        for model_id in model_ids:
+            model_metas.append(await self.get_model_meta(model_id))
+
+        first_model_meta = model_metas[0]
+        self._check_for_same_params(first_model_meta, model_metas)
+
+        composition_meta = await self.repository.create_model(
+            model_name=composition_name,
+            dataframe_id=first_model_meta.dataframe_id,
+            is_composition=True,
+            task_type=first_model_meta.task_type,
+            model_params=composition_params,
+            params_type=specs.AvailableParamsTypes.CUSTOM,
+            feature_columns=first_model_meta.feature_columns,
+            target_column=first_model_meta.target_column,
+            test_size=first_model_meta.test_size,
+            stratify=first_model_meta.stratify,
+            composition_model_ids=model_ids
+        )
+        return composition_meta
 
     async def add_report(self, model_id: PydanticObjectId,
                          dataframe_id: PydanticObjectId,

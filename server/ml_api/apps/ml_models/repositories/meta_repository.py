@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from beanie import PydanticObjectId
 from pymongo.errors import DuplicateKeyError
@@ -32,24 +32,30 @@ class ModelMetaCRUD:
     async def create(self,
                      filename: str,
                      dataframe_id: PydanticObjectId,
+                     is_composition: bool,
                      task_type: specs.AvailableTaskTypes,
                      model_params: schemas.ModelParams,
                      params_type: specs.AvailableParamsTypes,
                      feature_columns: List[str],
                      target_column: str,
                      test_size: float,
-                     stratify: bool) -> ModelMetadata:
+                     stratify: bool,
+                     composition_model_ids: Optional[List[PydanticObjectId]] = None
+                     ) -> ModelMetadata:
         new_obj = ModelMetadata(
             filename=filename,
             user_id=self.user_id,
             dataframe_id=dataframe_id,
+            is_composition=is_composition,
             task_type=task_type,
             model_params=model_params,
             params_type=params_type,
             feature_columns=feature_columns,
             target_column=target_column,
             test_size=test_size,
-            stratify=stratify)
+            stratify=stratify,
+            composition_model_ids=composition_model_ids
+        )
         try:
             await new_obj.insert()
         except DuplicateKeyError:

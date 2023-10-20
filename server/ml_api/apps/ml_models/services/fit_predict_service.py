@@ -1,9 +1,12 @@
 import traceback
+from typing import List, Tuple, Any
 
 from beanie import PydanticObjectId
 
 from ml_api.apps.ml_models import specs, errors, schemas
 from ml_api.apps.ml_models.models import ModelMetadata
+from ml_api.apps.ml_models.services.processors.composition_trainer import \
+    CompositionValidationService
 from ml_api.apps.ml_models.services.processors.model_construstor import \
     ModelConstructorService
 from ml_api.apps.ml_models.services.processors.model_trainer import ModelTrainerService
@@ -11,6 +14,10 @@ from ml_api.apps.ml_models.services.processors.model_predictor import \
     ModelPredictorService
 from ml_api.apps.ml_models.services.processors.params_validator import \
     ParamsValidationService
+from ml_api.apps.ml_models.services.processors.composition_validator import \
+    CompositionParamsValidator
+from ml_api.apps.ml_models.services.processors.composition_constructor import \
+    CompositionConstructorService
 from ml_api.apps.ml_models.services.model_service import ModelService
 from ml_api.apps.ml_models.repositories.repository_manager import \
     ModelRepositoryManager
@@ -39,6 +46,36 @@ class ModelFitPredictService:
         new_meta = await self._save_training_results(model_meta,
                                                      training_results)
         return new_meta
+
+    async def train_composition(self, composition_meta: ModelMetadata
+                                ) -> ModelMetadata:
+        await self._set_status(composition_meta, specs.ModelStatuses.BUILDING)
+        validated_params = await self._prepare_params(composition_meta)
+        estimators = await self._load_models(composition_meta)
+        composition = await self._build_composition(
+            composition_meta, validated_params, estimators)
+        features, target = await self._prepare_fit_data(composition_meta)
+        validation_results = await self._validate_composition(
+            composition_meta, composition, features, target)
+        new_composition_meta = await self._save_training_results(
+            composition_meta, validation_results)
+        return new_composition_meta
+
+    async def _load_models(self, composition_meta: ModelMetadata):
+        models = await self._try_catch_operation(self._actual_load_models,
+                                                 composition_meta)
+        return models
+
+    async def _actual_load_models(self, composition_meta: ModelMetadata
+                           ) -> List[Tuple[str, Any]]:
+        model_ids = composition_meta.composition_model_ids
+        models = []
+        for i, model_id in enumerate(model_ids):
+            model_meta = await self.repository.get_model_meta(model_id)
+            model = await self.repository.load_model(model_id)
+            model_name = f"{i}_{model_meta.model_params.model_type}_{model_meta.filename}"
+            models.append((model_name, model))
+        return models
 
     async def predict_on_model(self, source_df_id: PydanticObjectId,
                                model_id: PydanticObjectId,
@@ -97,6 +134,29 @@ class ModelFitPredictService:
             filename = f"{model_meta.filename}_predictions_{report.report_type.value}"
             await self.model_service.add_predictions(model_meta.id, pred_df,
                                                      filename)
+
+    async def _prepare_params(self, composition_meta: ModelMetadata):
+        return await self._try_catch_operation(self._actual_prepare_params,
+                                               composition_meta)
+
+    async def _actual_prepare_params(self, composition_meta: ModelMetadata):
+        validated_params = await CompositionParamsValidator(
+            composition_meta).validate_params()
+        await self.repository.set_model_params(composition_meta.id, validated_params)
+        return validated_params
+
+    async def _build_composition(self, composition_meta: ModelMetadata,
+                                 validated_params, estimators):
+        return await self._try_catch_operation(
+            CompositionConstructorService().get_composition,
+            composition_meta, validated_params, estimators)
+
+    async def _validate_composition(self, composition_meta: ModelMetadata,
+                                    composition, features, target):
+        return await self._try_catch_operation(
+            CompositionValidationService(
+                self._user_id, composition_meta, composition).validate_composition,
+            composition_meta, features, target)
 
     async def _perform_prediction(self, model_meta, features):
         """Execute model prediction."""

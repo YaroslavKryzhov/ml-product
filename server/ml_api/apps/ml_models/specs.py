@@ -5,21 +5,14 @@ class AvailableTaskTypes(Enum):
     CLASSIFICATION = 'classification'
     REGRESSION = 'regression'
     CLUSTERING = 'clustering'
-    OUTLIER_DETECTION = 'oulier_detection'
-    DIMENSIONALITY_REDUCTION = 'demensionality_reduction'
+    OUTLIER_DETECTION = 'outlier_detection'
+    DIMENSIONALITY_REDUCTION = 'dimensionality_reduction'
 
 
 class AvailableParamsTypes(Enum):
     AUTO = 'auto'
     CUSTOM = 'custom'
     DEFAULT = 'default'
-
-
-class AvailableCompositionTypes(Enum):
-    NONE = 'none'
-    SIMPLE_VOTING = 'simple_voting'
-    WEIGHTED_VOTING = 'weighted_voting'
-    STACKING = 'stacking'
 
 
 class ModelStatuses(Enum):
@@ -106,8 +99,7 @@ class AvailableModelTypes(Enum):
     TRUNCATED_SVD = 'TruncatedSVD'
 
     # Ensembling methods
-    # VOTING_CLASSIFIER = 'VotingClassifier'
-    # VOTING_REGRESSOR = 'VotingRegressor'
-    # STACKING_CLASSIFIER = 'StackingClassifier'
-    # STACKING_REGRESSOR = 'StackingRegressor'
-
+    VOTING_CLASSIFIER = 'VotingClassifier'
+    VOTING_REGRESSOR = 'VotingRegressor'
+    STACKING_CLASSIFIER = 'StackingClassifier'
+    STACKING_REGRESSOR = 'StackingRegressor'

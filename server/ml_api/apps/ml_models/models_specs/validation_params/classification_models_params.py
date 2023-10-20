@@ -5,7 +5,6 @@ from typing import Literal
 
 class BaseTreeClassifierParams(BaseModel):
     criterion: Literal['gini', 'entropy'] = 'gini'
-    splitter: Literal['best', 'random'] = 'best'
     max_depth: Optional[conint(gt=0)] = None
     min_samples_split: conint(ge=2) = 2
     min_samples_leaf: conint(ge=1) = 1
@@ -19,6 +18,7 @@ class BaseTreeClassifierParams(BaseModel):
 
 
 class DecisionTreeClassifierParams(BaseTreeClassifierParams):
+    splitter: Literal['best', 'random'] = 'best'
     pass
 
 
@@ -42,7 +42,7 @@ class ExtraTreesClassifierParams(BaseTreeClassifierParams):
 
 
 class GradientBoostingClassifierParams(BaseModel):
-    loss: Literal['deviance', 'exponential'] = 'deviance'
+    loss: Literal['log_loss', 'exponential'] = 'log_loss'
     learning_rate: float = Field(0.1, gt=0.0)
     n_estimators: conint(ge=1) = 100
     subsample: float = Field(1.0, ge=0.0, le=1.0)

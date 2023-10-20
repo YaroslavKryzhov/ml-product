@@ -25,23 +25,29 @@ class ModelRepositoryManager:
     async def create_model(self,
                            model_name: str,
                            dataframe_id: PydanticObjectId,
+                           is_composition: bool,
                            task_type: specs.AvailableTaskTypes,
                            model_params: schemas.ModelParams,
                            params_type: specs.AvailableParamsTypes,
                            feature_columns: List[str],
                            target_column: str,
                            test_size: float,
-                           stratify: bool) -> ModelMetadata:
+                           stratify: bool,
+                           composition_model_ids: Optional[List[PydanticObjectId]] = None
+                           ) -> ModelMetadata:
         model_meta = await self.meta_repository.create(
             filename=model_name,
             dataframe_id=dataframe_id,
+            is_composition=is_composition,
             task_type=task_type,
             model_params=model_params,
             params_type=params_type,
             feature_columns=feature_columns,
             target_column=target_column,
             test_size=test_size,
-            stratify=stratify)
+            stratify=stratify,
+            composition_model_ids=composition_model_ids
+        )
         return model_meta
 
     async def save_new_model(self, model_id: PydanticObjectId, model
