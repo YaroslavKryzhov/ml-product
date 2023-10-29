@@ -5,10 +5,10 @@ from pandas import DataFrame
 
 
 from ml_api.apps.ml_models import specs, schemas, errors
-from ml_api.apps.ml_models.models import ModelMetadata
+from ml_api.apps.ml_models.model import ModelMetadata
 from ml_api.apps.ml_models.repositories.repository_manager import ModelRepositoryManager
 from ml_api.apps.ml_models.services.processors.composition_validator import CompositionParamsValidator
-from ml_api.apps.training_reports.models import Report
+from ml_api.apps.training_reports.model import Report
 from ml_api.apps.training_reports.repository import TrainingReportCRUD
 
 

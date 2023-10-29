@@ -4,10 +4,10 @@ from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, UploadFile, File
 
 from ml_api.apps.users.routers import current_active_user
-from ml_api.apps.users.models import User
+from ml_api.apps.users.model import User
 from ml_api.apps.dataframes.services.dataframe_service import DataframeService
 from ml_api.apps.dataframes.services.methods_service import DataframeMethodsService
-from ml_api.apps.dataframes import schemas, models, specs
+from ml_api.apps.dataframes import schemas, model, specs
 # from ml_api.common.celery_tasks.celery_tasks import apply_function_celery, \
 #     copy_pipeline_celery
 

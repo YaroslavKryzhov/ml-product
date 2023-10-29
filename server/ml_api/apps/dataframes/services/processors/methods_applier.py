@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from sklearn import impute, preprocessing
 from sklearn.experimental import enable_iterative_imputer  # noqa
 
-from ml_api.apps.dataframes import models, schemas, specs
+from ml_api.apps.dataframes import model, schemas, specs
 from ml_api.apps.dataframes.specs import AvailableMethods as Methods
 from ml_api.apps.dataframes import errors
 

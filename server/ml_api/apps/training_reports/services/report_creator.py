@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from ml_api.apps.ml_models.specs import AvailableTaskTypes
-from ml_api.apps.training_reports import models, schemas
+from ml_api.apps.training_reports import model, schemas
 from ml_api.apps.training_reports.specs import ReportTypes
 
 

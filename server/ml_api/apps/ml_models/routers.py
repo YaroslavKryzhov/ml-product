@@ -4,8 +4,8 @@ from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends
 
 from ml_api.apps.users.routers import current_active_user
-from ml_api.apps.users.models import User
-from ml_api.apps.ml_models import schemas, specs, models
+from ml_api.apps.users.model import User
+from ml_api.apps.ml_models import schemas, specs, model
 from ml_api.apps.ml_models.services.model_service import ModelService
 from ml_api.apps.ml_models.services.fit_predict_service import ModelFitPredictService
 # from ml_api.common.celery_tasks.celery_tasks import train_composition_celery

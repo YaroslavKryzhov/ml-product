@@ -3,7 +3,7 @@ from typing import Dict, Any, List, Tuple
 from pydantic import BaseModel
 
 from ml_api.apps.ml_models import specs
-from ml_api.apps.training_reports.models import Report
+from ml_api.apps.training_reports.model import Report
 
 
 class ModelParams(BaseModel):

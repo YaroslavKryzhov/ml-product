@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 
 from ml_api.apps.ml_models import errors, utils
 from ml_api.apps.ml_models.specs import AvailableTaskTypes as TaskTypes
-from ml_api.apps.ml_models.models import ModelMetadata
+from ml_api.apps.ml_models.model import ModelMetadata
 from ml_api.apps.ml_models.schemas import ModelTrainingResults
 from ml_api.apps.training_reports.services.report_creator import ReportCreatorService
 

@@ -11,7 +11,7 @@ from fastapi_users.authentication import (
 from fastapi_users.db import BeanieUserDatabase, ObjectIDIDMixin
 
 from ml_api import config
-from ml_api.apps.users.models import User
+from ml_api.apps.users.model import User
 
 SECRET = config.USER_SECRET
 

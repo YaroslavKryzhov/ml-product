@@ -4,7 +4,7 @@ from beanie import PydanticObjectId
 from pymongo.errors import DuplicateKeyError
 
 from ml_api.apps.ml_models import schemas, specs, errors
-from ml_api.apps.ml_models.models import ModelMetadata
+from ml_api.apps.ml_models.model import ModelMetadata
 
 
 class ModelMetaCRUD:

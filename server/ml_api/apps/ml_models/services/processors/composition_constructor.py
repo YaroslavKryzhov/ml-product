@@ -4,7 +4,7 @@ from typing import Dict, Any
 from sklearn import ensemble, linear_model
 
 from ml_api.apps.ml_models import schemas, errors
-from ml_api.apps.ml_models.models import ModelMetadata
+from ml_api.apps.ml_models.model import ModelMetadata
 from ml_api.apps.ml_models.specs import AvailableModelTypes as Models
 from ml_api.apps.ml_models.specs import AvailableTaskTypes as TaskTypes
 

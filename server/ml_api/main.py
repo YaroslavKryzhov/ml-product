@@ -18,10 +18,10 @@ from ml_api.apps.ml_models.routers import (
     models_processing_router)
 from ml_api.apps.training_reports.routers import reports_router
 
-from ml_api.apps.users.models import User
-from ml_api.apps.dataframes.models import DataFrameMetadata
-from ml_api.apps.ml_models.models import ModelMetadata
-from ml_api.apps.training_reports.models import Report
+from ml_api.apps.users.model import User
+from ml_api.apps.dataframes.model import DataFrameMetadata
+from ml_api.apps.ml_models.model import ModelMetadata
+from ml_api.apps.training_reports.model import Report
 
 if config.STAGE.upper() == 'PRODUCTION':
     docs_url = None

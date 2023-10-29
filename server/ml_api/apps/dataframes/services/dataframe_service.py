@@ -5,7 +5,7 @@ import pandas as pd
 
 from ml_api.apps.dataframes.repositories.repository_manager import \
     DataframeRepositoryManager
-from ml_api.apps.dataframes.models import DataFrameMetadata
+from ml_api.apps.dataframes.model import DataFrameMetadata
 from ml_api.apps.dataframes import utils, schemas, errors
 from ml_api.apps.ml_models.services.for_dataframe_service import ModelForDataframeService
 

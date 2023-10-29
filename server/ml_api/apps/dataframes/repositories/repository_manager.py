@@ -6,7 +6,7 @@ import pandas as pd
 
 from ml_api.apps.dataframes.repositories.meta_repository import DataFrameMetaCRUD
 from ml_api.apps.dataframes.repositories.file_repository import DataFrameFileCRUD
-from ml_api.apps.dataframes.models import DataFrameMetadata
+from ml_api.apps.dataframes.model import DataFrameMetadata
 from ml_api.apps.dataframes import schemas
 
 

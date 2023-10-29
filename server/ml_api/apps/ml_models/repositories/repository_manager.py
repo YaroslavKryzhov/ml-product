@@ -4,7 +4,7 @@ from beanie import PydanticObjectId
 from fastapi.responses import FileResponse
 
 from ml_api.apps.ml_models import specs, schemas
-from ml_api.apps.ml_models.models import ModelMetadata
+from ml_api.apps.ml_models.model import ModelMetadata
 from ml_api.apps.ml_models.repositories.meta_repository import ModelMetaCRUD
 from ml_api.apps.ml_models.repositories.file_repository import ModelFileCRUD
 

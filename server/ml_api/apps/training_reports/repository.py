@@ -2,7 +2,7 @@ from typing import List
 
 from beanie import PydanticObjectId
 
-from ml_api.apps.training_reports.models import Report
+from ml_api.apps.training_reports.model import Report
 from ml_api.apps.training_reports.errors import ReportNotFoundError
 
 

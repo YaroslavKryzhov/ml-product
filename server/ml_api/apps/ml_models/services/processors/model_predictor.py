@@ -2,7 +2,7 @@ import traceback
 
 import pandas as pd
 
-from ml_api.apps.ml_models.models import ModelMetadata
+from ml_api.apps.ml_models.model import ModelMetadata
 from ml_api.apps.ml_models import utils, errors
 
 

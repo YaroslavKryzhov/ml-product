@@ -4,7 +4,7 @@ from typing import List, Tuple, Any
 from beanie import PydanticObjectId
 
 from ml_api.apps.ml_models import specs, errors, schemas
-from ml_api.apps.ml_models.models import ModelMetadata
+from ml_api.apps.ml_models.model import ModelMetadata
 from ml_api.apps.ml_models.services.processors.composition_trainer import \
     CompositionValidationService
 from ml_api.apps.ml_models.services.processors.model_construstor import \

@@ -1,7 +1,7 @@
 from pydantic import ValidationError
 
 from ml_api.apps.ml_models import schemas, errors
-from ml_api.apps.ml_models.models import ModelMetadata
+from ml_api.apps.ml_models.model import ModelMetadata
 from ml_api.apps.ml_models.specs import AvailableModelTypes as Models
 from ml_api.apps.ml_models.specs import AvailableTaskTypes as TaskTypes
 from ml_api.apps.ml_models.models_specs.validation_params import \

@@ -4,9 +4,9 @@ from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends
 
 from ml_api.apps.users.routers import current_active_user
-from ml_api.apps.users.models import User
+from ml_api.apps.users.model import User
 from ml_api.apps.training_reports.repository import TrainingReportCRUD
-from ml_api.apps.training_reports.models import Report
+from ml_api.apps.training_reports.model import Report
 
 
 reports_router = APIRouter(
