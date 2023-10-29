@@ -7,7 +7,7 @@ from ml_api.apps.dataframes.repositories.repository_manager import \
     DataframeRepositoryManager
 from ml_api.apps.dataframes.model import DataFrameMetadata
 from ml_api.apps.dataframes import utils, schemas, errors
-from ml_api.apps.ml_models.services.for_dataframe_service import ModelForDataframeService
+from ml_api.apps.ml_models.facade import ModelServiceFacade
 
 
 class DataframeService:
@@ -18,7 +18,7 @@ class DataframeService:
     def __init__(self, user_id):
         self._user_id = user_id
         self.repository = DataframeRepositoryManager(self._user_id)
-        self.models_service = ModelForDataframeService(self._user_id)
+        self.models_service = ModelServiceFacade(self._user_id)
 
     async def _define_initial_column_types(self, dataframe_id: PydanticObjectId
                                            ) -> schemas.ColumnTypes:
@@ -185,7 +185,7 @@ class DataframeService:
         dataframe_meta = await self.repository.get_dataframe_meta(dataframe_id)
         if not dataframe_meta.is_prediction:
             raise errors.DataFrameIsNotPredictionError(dataframe_id)
-        await self.models_service._remove_from_model_predictions(
+        await self.models_service.remove_from_model_predictions(
             model_id, dataframe_id)
         dataframe_meta = await self.repository.set_is_prediction(
             dataframe_id, False)
@@ -201,7 +201,7 @@ class DataframeService:
             dataframe_id)
         for child_dataframe in child_dataframes:
             await self.delete_dataframe(child_dataframe.id)
-        await self.models_service._delete_models_by_dataframe(dataframe_id)
+        await self.models_service.delete_models_by_dataframe(dataframe_id)
         dataframe_meta = await self.repository.delete_dataframe(dataframe_id)
         return dataframe_meta
 
@@ -211,7 +211,7 @@ class DataframeService:
         dataframe_meta = await self.repository.get_dataframe_meta(prediction_id)
         if not dataframe_meta.is_prediction:
             raise errors.DataFrameIsNotPredictionError(prediction_id)
-        await self.models_service._remove_from_model_predictions(
+        await self.models_service.remove_from_model_predictions(
             model_id, prediction_id)
         dataframe_meta = await self.repository.delete_dataframe(prediction_id)
         return dataframe_meta

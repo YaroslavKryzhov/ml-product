@@ -18,7 +18,7 @@ from ml_api.apps.training_reports.specs import ReportTypes
 class ReportCreatorService:
 
     def score_regression(self, target,
-                         predictions, is_train=False) -> models.Report:
+                         predictions, is_train=False) -> model.Report:
         report_type = ReportTypes.TRAIN if is_train else ReportTypes.VALID
         mse = mean_squared_error(target, predictions)
         mae = mean_absolute_error(target, predictions)
@@ -27,12 +27,12 @@ class ReportCreatorService:
 
         body = schemas.RegressionReport(mse=mse, mae=mae, rmse=rmse,
                                        mape=mape,)
-        return models.Report(task_type=AvailableTaskTypes.REGRESSION,
+        return model.Report(task_type=AvailableTaskTypes.REGRESSION,
                              report_type=report_type,
                              body=body)
 
     def score_binary_classification(self, target, predictions, probabilities
-                                    , is_train=False) -> models.Report:
+                                    , is_train=False) -> model.Report:
         report_type = ReportTypes.TRAIN if is_train else ReportTypes.VALID
         accuracy = accuracy_score(target, predictions)
         try:
@@ -57,12 +57,12 @@ class ReportCreatorService:
                                                  precision=precision,
                                                  f1=f1, roc_auc=roc_auc,
                                                  fpr=fpr, tpr=tpr,)
-        return models.Report(task_type=AvailableTaskTypes.CLASSIFICATION,
+        return model.Report(task_type=AvailableTaskTypes.CLASSIFICATION,
                              report_type=report_type,
                              body=body)
 
     def score_multiclass_classification(self, classes, target, predictions,
-            probabilities, is_train=False) -> models.Report:
+            probabilities, is_train=False) -> model.Report:
         report_type = ReportTypes.TRAIN if is_train else ReportTypes.VALID
         accuracy = accuracy_score(target, predictions)
         recall = recall_score(target, predictions, average='weighted')
@@ -119,12 +119,12 @@ class ReportCreatorService:
             tpr_micro=tpr_micro,
             tpr_macro=tpr_macro)
 
-        return models.Report(task_type=AvailableTaskTypes.CLASSIFICATION,
+        return model.Report(task_type=AvailableTaskTypes.CLASSIFICATION,
                              report_type=report_type,
                              body=body)
 
     def score_clustering(self, features, labels, is_train=False
-                         ) -> models.Report:
+                         ) -> model.Report:
         report_type = ReportTypes.TRAIN if is_train else ReportTypes.VALID
 
         body = schemas.ClusteringReport(
@@ -133,28 +133,28 @@ class ReportCreatorService:
             two_dim_representation=self._get_two_dim_representation(
                 features, labels)
         )
-        return models.Report(task_type=AvailableTaskTypes.CLUSTERING,
+        return model.Report(task_type=AvailableTaskTypes.CLUSTERING,
                              report_type=report_type,
                              body=body)
 
     def score_outlier_detection(self, features, outliers, is_train=False
-                                ) -> models.Report:
+                                ) -> model.Report:
         report_type = ReportTypes.TRAIN if is_train else ReportTypes.VALID
 
         body = schemas.OutlierDetectionReport(
             contamination=float(np.sum(outliers)) / len(features),
             two_dim_representation=self._get_two_dim_representation(
                 features, outliers))
-        return models.Report(task_type=AvailableTaskTypes.OUTLIER_DETECTION,
+        return model.Report(task_type=AvailableTaskTypes.OUTLIER_DETECTION,
                              report_type=report_type,
                              body=body)
 
     def score_dimensionality_reduction(self, explained_variance_ratio, is_train=False
-                                       ) -> models.Report:
+                                       ) -> model.Report:
         report_type = ReportTypes.TRAIN if is_train else ReportTypes.VALID
         body = schemas.DimensionalityReductionReport(
             explained_variance=list(explained_variance_ratio))
-        return models.Report(task_type=AvailableTaskTypes.DIMENSIONALITY_REDUCTION,
+        return model.Report(task_type=AvailableTaskTypes.DIMENSIONALITY_REDUCTION,
                              report_type=report_type,
                              body=body)
 
@@ -170,7 +170,7 @@ class ReportCreatorService:
 
     def get_error_report(self, task_type, error_description):
         body = schemas.ErrorReport(error_description=error_description)
-        return models.Report(
+        return model.Report(
             task_type=task_type,
             report_type=ReportTypes.ERROR,
             body=body

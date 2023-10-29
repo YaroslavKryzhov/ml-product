@@ -9,8 +9,8 @@ from beanie.odm.fields import PydanticObjectId
 from ml_api.apps.ml_models import schemas, errors
 from ml_api.apps.ml_models.specs import AvailableTaskTypes as TaskTypes
 from ml_api.apps.ml_models.specs import AvailableModelTypes as ModelTypes
-from ml_api.apps.dataframes.services.for_model_service import \
-    DataframeForModelService
+from ml_api.apps.dataframes.facade import \
+    DataframeServiceFacade
 from ml_api.apps.ml_models.services.processors.model_construstor import \
     ModelConstructorService
 from ml_api.apps.ml_models.models_specs.hyperopt_params.\
@@ -65,10 +65,10 @@ class HyperoptService:
         # TODO: move data loading out of hyperopt service
         if task_type in [TaskTypes.CLASSIFICATION,
                          TaskTypes.REGRESSION]:
-            self.features, self.target = await DataframeForModelService(
+            self.features, self.target = await DataframeServiceFacade(
                 self.user_id).get_feature_target_df_supervised(self.dataframe_id)
         elif task_type == TaskTypes.CLUSTERING:
-            self.features, _ = await DataframeForModelService(
+            self.features, _ = await DataframeServiceFacade(
                 self.user_id).get_feature_target_df(self.dataframe_id)
         elif task_type in [TaskTypes.OUTLIER_DETECTION,
                          TaskTypes.DIMENSIONALITY_REDUCTION]:

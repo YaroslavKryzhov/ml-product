@@ -18,9 +18,9 @@ class MethodsApplier:
     """
 
     def __init__(self, df: pd.DataFrame,
-                 dataframe_meta: models.DataFrameMetadata):
+                 dataframe_meta: model.DataFrameMetadata):
         self._df: pd.DataFrame = df
-        self._meta: models.DataFrameMetadata = dataframe_meta
+        self._meta: model.DataFrameMetadata = dataframe_meta
         self._methods_map: Dict[Methods, Callable] = {
             Methods.DROP_DUPLICATES: self._drop_duplicates,
             Methods.DROP_COLUMNS: self._drop_columns,
@@ -93,7 +93,7 @@ class MethodsApplier:
     def get_df(self) -> pd.DataFrame:
         return self._df
 
-    def get_meta(self) -> models.DataFrameMetadata:
+    def get_meta(self) -> model.DataFrameMetadata:
         return self._meta
 
     def _get_column_types(self) -> schemas.ColumnTypes:

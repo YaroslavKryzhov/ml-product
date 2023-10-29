@@ -19,7 +19,7 @@ dataframes_file_router = APIRouter(
 
 
 @dataframes_file_router.post("", summary="Загрузить csv-файл",
-                             response_model=models.DataFrameMetadata)
+                             response_model=model.DataFrameMetadata)
 async def upload_dataframe(
     filename: str,
     file: UploadFile = File(...),
@@ -49,7 +49,7 @@ async def download_dataframe(
 
 
 @dataframes_file_router.put("/rename", summary="Переименовать csv-файл",
-                             response_model=models.DataFrameMetadata)
+                             response_model=model.DataFrameMetadata)
 async def rename_dataframe(
     dataframe_id: PydanticObjectId,
     new_filename: str,
@@ -66,7 +66,7 @@ async def rename_dataframe(
 
 
 @dataframes_file_router.delete("", summary="Удалить csv-файл",
-                               response_model=models.DataFrameMetadata)
+                               response_model=model.DataFrameMetadata)
 async def delete_dataframe(
     dataframe_id: PydanticObjectId,
     user: User = Depends(current_active_user),
@@ -80,7 +80,7 @@ async def delete_dataframe(
 
 
 @dataframes_file_router.delete("/prediction",  summary="Удалить предсказание модели",
-                           response_model=models.DataFrameMetadata)
+                           response_model=model.DataFrameMetadata)
 async def delete_model_prediction(
     model_id: PydanticObjectId,
     prediction_id: PydanticObjectId,
@@ -102,7 +102,7 @@ dataframes_metadata_router = APIRouter(
 )
 
 
-@dataframes_metadata_router.get("", response_model=models.DataFrameMetadata,
+@dataframes_metadata_router.get("", response_model=model.DataFrameMetadata,
     summary="Получить информацию о csv-файле (датафрейме)")
 async def read_dataframe_info(
     dataframe_id: PydanticObjectId,
@@ -116,7 +116,7 @@ async def read_dataframe_info(
     return await DataframeService(user.id).get_dataframe_meta(dataframe_id)
 
 
-@dataframes_metadata_router.get("/all", response_model=List[models.DataFrameMetadata],
+@dataframes_metadata_router.get("/all", response_model=List[model.DataFrameMetadata],
     summary="Получить информацию обо всех csv-файлах (датафреймах)")
 async def read_all_user_dataframes(user: User = Depends(current_active_user)):
     """
@@ -214,7 +214,7 @@ dataframes_methods_router = APIRouter(
 
 @dataframes_methods_router.put("/target",
                                summary="Задать целевой признак",
-                               response_model=models.DataFrameMetadata)
+                               response_model=model.DataFrameMetadata)
 async def set_target_feature(dataframe_id: PydanticObjectId,
                              target_column: str,
                              user: User = Depends(current_active_user)):
@@ -230,7 +230,7 @@ async def set_target_feature(dataframe_id: PydanticObjectId,
 
 @dataframes_methods_router.delete("/target",
                                summary="Очистить выбор целевого признака",
-                               response_model=models.DataFrameMetadata)
+                               response_model=model.DataFrameMetadata)
 async def unset_target_feature(dataframe_id: PydanticObjectId,
                              user: User = Depends(current_active_user)):
     """
@@ -244,7 +244,7 @@ async def unset_target_feature(dataframe_id: PydanticObjectId,
 
 @dataframes_methods_router.put("/move_to_root",
                                summary="Переместить в корень интерфейса",
-                               response_model=models.DataFrameMetadata)
+                               response_model=model.DataFrameMetadata)
 async def move_to_root(dataframe_id: PydanticObjectId,
                              user: User = Depends(current_active_user)):
     """
@@ -258,7 +258,7 @@ async def move_to_root(dataframe_id: PydanticObjectId,
 
 @dataframes_methods_router.put("/move_to_active",
                                summary="Переместить предсказание в активные",
-                               response_model=models.DataFrameMetadata)
+                               response_model=model.DataFrameMetadata)
 async def move_to_active(
         model_id: PydanticObjectId,
         dataframe_id: PydanticObjectId,
@@ -312,7 +312,7 @@ async def feature_importances(dataframe_id: PydanticObjectId,
 
 
 @dataframes_methods_router.delete("/columns", summary="Удалить столбцы",
-                                  response_model=models.DataFrameMetadata)
+                                  response_model=model.DataFrameMetadata)
 async def delete_column(dataframe_id: PydanticObjectId,
                         column_names: List[str],
                         user: User = Depends(current_active_user)):
@@ -333,7 +333,7 @@ async def delete_column(dataframe_id: PydanticObjectId,
 
 @dataframes_methods_router.put("/change_columns_type",
                                summary="Сменить тип столбца",
-                               response_model=models.DataFrameMetadata)
+                               response_model=model.DataFrameMetadata)
 async def change_column_type(dataframe_id: PydanticObjectId,
                              column_names: List[str],
                              new_type: specs.ColumnType,
@@ -356,7 +356,7 @@ async def change_column_type(dataframe_id: PydanticObjectId,
 
 
 @dataframes_methods_router.post("/apply_method",
-                                response_model=models.DataFrameMetadata)
+                                response_model=model.DataFrameMetadata)
 async def apply_method(dataframe_id: PydanticObjectId,
                        method_params: List[schemas.ApplyMethodParams],
                        user: User = Depends(current_active_user)):
@@ -399,7 +399,7 @@ async def apply_method(dataframe_id: PydanticObjectId,
 
 
 @dataframes_methods_router.post("/copy_pipeline",
-                                response_model=models.DataFrameMetadata)
+                                response_model=model.DataFrameMetadata)
 async def copy_pipeline(dataframe_id_from: PydanticObjectId,
                         dataframe_id_to: PydanticObjectId,
                         user: User = Depends(current_active_user)):

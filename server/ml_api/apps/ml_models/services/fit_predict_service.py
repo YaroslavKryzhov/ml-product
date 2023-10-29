@@ -22,8 +22,7 @@ from ml_api.apps.ml_models.services.model_service import ModelService
 from ml_api.apps.ml_models.repositories.repository_manager import \
     ModelRepositoryManager
 from ml_api.apps.training_reports.services.report_creator import ReportCreatorService
-from ml_api.apps.dataframes.services.for_model_service import DataframeForModelService
-from ml_api.apps.dataframes.services.methods_service import DataframeMethodsService
+from ml_api.apps.dataframes.facade import DataframeServiceFacade
 
 
 class ModelFitPredictService:
@@ -34,8 +33,7 @@ class ModelFitPredictService:
     def __init__(self, user_id):
         self._user_id = user_id
         self.repository = ModelRepositoryManager(self._user_id)
-        self.dataframe_service = DataframeForModelService(self._user_id)
-        self.dataframe_methods_service = DataframeMethodsService(self._user_id)
+        self.dataframe_service = DataframeServiceFacade(self._user_id)
         self.model_service = ModelService(self._user_id)
 
     async def train_model(self, model_meta: ModelMetadata) -> ModelMetadata:
@@ -170,7 +168,7 @@ class ModelFitPredictService:
     async def _prepare_predict_data(self, model_meta, dataframe_id, apply_pipeline):
         """Prepare data for model predictions."""
         if apply_pipeline:
-            features = await self.dataframe_methods_service.copy_pipeline_for_prediction(
+            features = await self.dataframe_service.copy_pipeline_for_prediction(
                 model_meta.dataframe_id, dataframe_id)
         else:
             features, _ = await self.dataframe_service.get_feature_target_df(

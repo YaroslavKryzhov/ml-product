@@ -11,7 +11,7 @@ from ml_api.apps.ml_models.services.fit_predict_service import ModelFitPredictSe
 # from ml_api.common.celery_tasks.celery_tasks import train_composition_celery
 
 models_file_router = APIRouter(
-    prefix="/models",
+    prefix="/model",
     tags=["Models"],
     responses={404: {"description": "Not found"}},
 )
@@ -31,7 +31,7 @@ async def download_model(
 
 
 @models_file_router.put("/rename", summary="Переименовать модель",
-                   response_model=models.ModelMetadata)
+                   response_model=model.ModelMetadata)
 async def rename_model(
     model_id: PydanticObjectId,
     new_model_name: str,
@@ -48,7 +48,7 @@ async def rename_model(
 
 
 @models_file_router.delete("",  summary="Удалить модель",
-                           response_model=models.ModelMetadata)
+                           response_model=model.ModelMetadata)
 async def delete_model(
     model_id: PydanticObjectId,
     user: User = Depends(current_active_user),
@@ -62,13 +62,13 @@ async def delete_model(
 
 
 models_metadata_router = APIRouter(
-    prefix="/models/metadata",
+    prefix="/model/metadata",
     tags=["Models Metadata"],
     responses={404: {"description": "Not found"}},
 )
 
 
-@models_metadata_router.get("", response_model=models.ModelMetadata,
+@models_metadata_router.get("", response_model=model.ModelMetadata,
     summary="Получить информацию о модели")
 async def read_model_info(
     model_id: PydanticObjectId,
@@ -82,7 +82,7 @@ async def read_model_info(
     return await ModelService(user.id).get_model_meta(model_id)
 
 
-@models_metadata_router.get("/all", response_model=List[models.ModelMetadata],
+@models_metadata_router.get("/all", response_model=List[model.ModelMetadata],
     summary="Получить информацию обо всех моделях пользователя")
 async def read_all_user_models(user: User = Depends(current_active_user)):
     """
@@ -92,7 +92,7 @@ async def read_all_user_models(user: User = Depends(current_active_user)):
 
 
 @models_metadata_router.get("/by_dataframe",
-                            response_model=List[models.ModelMetadata],
+                            response_model=List[model.ModelMetadata],
     summary="Получить информацию обо всех моделях обученных на датафрейме")
 async def read_all_user_models_by_dataframe(
         dataframe_id: PydanticObjectId,
@@ -109,7 +109,7 @@ async def read_all_user_models_by_dataframe(
 
 
 models_processing_router = APIRouter(
-    prefix="/models/processing",
+    prefix="/model/processing",
     tags=["Models Processing"],
     responses={404: {"description": "Not found"}},
 )

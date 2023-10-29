@@ -8,14 +8,16 @@ from ml_api.apps.dataframes.repositories.repository_manager import \
 from ml_api.apps.dataframes.model import DataFrameMetadata
 from ml_api.apps.dataframes import utils, errors
 from ml_api.apps.dataframes.services.dataframe_service import DataframeService
+from ml_api.apps.dataframes.services.methods_service import DataframeMethodsService
 
 
-class DataframeForModelService:
+class DataframeServiceFacade:
 
     def __init__(self, user_id):
         self._user_id = user_id
         self.repository = DataframeRepositoryManager(self._user_id)
         self.dataframe_service = DataframeService(self._user_id)
+        self.dataframe_methods_service = DataframeMethodsService(self._user_id)
 
     async def save_predictions_dataframe(
             self, df_filename: str, pred_df: pd.DataFrame) -> DataFrameMetadata:
@@ -43,3 +45,9 @@ class DataframeForModelService:
     async def get_feature_target_df(
             self, dataframe_id: PydanticObjectId) -> (pd.DataFrame, Optional[pd.Series]):
         return await self.dataframe_service.get_feature_target_df(dataframe_id)
+
+    async def copy_pipeline_for_prediction(self, id_from: PydanticObjectId,
+                            id_to: PydanticObjectId):
+        df = await self.dataframe_methods_service.copy_pipeline_for_prediction(
+            id_from, id_to)
+        return df

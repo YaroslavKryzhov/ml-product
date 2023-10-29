@@ -7,7 +7,6 @@ from pandas import DataFrame
 from ml_api.apps.ml_models import specs, schemas, errors
 from ml_api.apps.ml_models.model import ModelMetadata
 from ml_api.apps.ml_models.repositories.repository_manager import ModelRepositoryManager
-from ml_api.apps.ml_models.services.processors.composition_validator import CompositionParamsValidator
 from ml_api.apps.training_reports.model import Report
 from ml_api.apps.training_reports.repository import TrainingReportCRUD
 
@@ -49,9 +48,9 @@ class ModelService:
                            params_type: specs.AvailableParamsTypes,
                            test_size: float,
                            stratify: bool) -> ModelMetadata:
-        from ml_api.apps.dataframes.services.for_model_service import \
-            DataframeForModelService
-        feature_columns, target_column = await DataframeForModelService(
+        from ml_api.apps.dataframes.facade import \
+            DataframeServiceFacade
+        feature_columns, target_column = await DataframeServiceFacade(
             self._user_id).get_feature_target_column_names(
             dataframe_id=dataframe_id)
 
@@ -111,9 +110,9 @@ class ModelService:
     async def add_predictions(self, model_id: PydanticObjectId,
                               pred_df: DataFrame,
                               df_filename: str) -> ModelMetadata:
-        from ml_api.apps.dataframes.services.for_model_service import \
-            DataframeForModelService
-        pred_df_info = await DataframeForModelService(
+        from ml_api.apps.dataframes.facade import \
+            DataframeServiceFacade
+        pred_df_info = await DataframeServiceFacade(
             self._user_id).save_predictions_dataframe(
             df_filename, pred_df)
         return await self.repository.add_prediction(model_id, pred_df_info.id)
@@ -138,9 +137,9 @@ class ModelService:
 
     # 4: DELETE OPERATIONS ----------------------------------------------------
     async def delete_model(self, model_id: PydanticObjectId) -> ModelMetadata:
-        from ml_api.apps.dataframes.services.for_model_service import \
-            DataframeForModelService
-        dataframe_service = DataframeForModelService(self._user_id)
+        from ml_api.apps.dataframes.facade import \
+            DataframeServiceFacade
+        dataframe_service = DataframeServiceFacade(self._user_id)
         model_meta = await self.repository.get_model_meta(model_id)
         for prediction_id in model_meta.model_prediction_ids:
             await dataframe_service.delete_prediction(prediction_id)
