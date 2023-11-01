@@ -1,7 +1,7 @@
 from typing import List, Dict
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.model import User
@@ -32,6 +32,8 @@ async def upload_dataframe(
         - **filename**: сохраняемое имя файла
         - **file**: csv-файл
     """
+    if file.content_type != "text/csv":
+        raise errors.WrongFileTypeError(file.content_type)
     return await DataframeService(user.id).upload_new_dataframe(
         file=file.file, filename=filename)
 
@@ -431,22 +433,22 @@ dataframes_specs_router = APIRouter(
 )
 
 
-@dataframes_specs_router.get("/specs/column_types")
+@dataframes_specs_router.get("/column_types")
 def get_column_types():
     return {"types": [col_type.value for col_type in specs.ColumnType]}
 
 
-@dataframes_specs_router.get("/specs/feature_selection/task_types")
+@dataframes_specs_router.get("/feature_selection/task_types")
 def get_feature_selection_methods():
     return {"task_types": [task_type.value for task_type in specs.FeatureSelectionTaskType]}
 
 
-@dataframes_specs_router.get("/specs/feature_selection/methods")
+@dataframes_specs_router.get("/feature_selection/methods")
 def get_feature_selection_methods():
     return {"methods": [method.value for method in specs.FeatureSelectionMethods]}
 
 
-@dataframes_specs_router.get("/specs/feature_selection/methods/parameters/{method_name}")
+@dataframes_specs_router.get("/feature_selection/methods/parameters/{method_name}")
 def get_parameters_for_method(method_name: specs.FeatureSelectionMethods):
     if method_name == specs.FeatureSelectionMethods.VARIANCE_THRESHOLD:
         return schemas.VarianceThresholdParams.schema()
@@ -472,17 +474,17 @@ def get_parameters_for_method(method_name: specs.FeatureSelectionMethods):
         raise errors.SelectorMethodNotExistsError(method_name)
 
 
-@dataframes_specs_router.get("/specs/feature_selection/base_sklearn_models")
+@dataframes_specs_router.get("/feature_selection/base_sklearn_models")
 def get_base_sklearn_models():
     return {"models": [model.value for model in specs.BaseSklearnModels]}
 
 
-@dataframes_specs_router.get("/specs/apply_methods")
+@dataframes_specs_router.get("/apply_methods")
 def get_available_methods():
     return {"methods": [method.value for method in specs.AvailableMethods]}
 
 
-@dataframes_specs_router.get("/specs/apply_methods/parameters/{method_name}")
+@dataframes_specs_router.get("/apply_methods/parameters/{method_name}")
 def get_parameters_for_apply_method(method_name: specs.AvailableMethods):
     if method_name == specs.AvailableMethods.DROP_DUPLICATES or\
             method_name == specs.AvailableMethods.DROP_NA or\

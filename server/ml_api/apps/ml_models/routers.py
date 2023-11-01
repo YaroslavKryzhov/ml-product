@@ -195,27 +195,27 @@ models_specs_router = APIRouter(
 )
 
 
-@models_specs_router.get("/specs/task_types")
+@models_specs_router.get("/task_types")
 def get_available_task_types():
     return [task.value for task in specs.AvailableTaskTypes]
 
 
-@models_specs_router.get("/specs/params_types")
+@models_specs_router.get("/params_types")
 def get_available_params_types():
     return [param.value for param in specs.AvailableParamsTypes]
 
 
-@models_specs_router.get("/specs/model_statuses")
+@models_specs_router.get("/model_statuses")
 def get_model_statuses():
     return [status.value for status in specs.ModelStatuses]
 
 
-@models_specs_router.get("/specs/model_types")
+@models_specs_router.get("/model_types")
 def get_available_model_types():
     return [model.value for model in specs.AvailableModelTypes]
 
 
-@models_specs_router.get("/specs/model_types/parameters/{model_type}")
+@models_specs_router.get("/model_types/parameters/{model_type}")
 def get_parameters_for_model_type(model_type: specs.AvailableModelTypes):
     from ml_api.apps.ml_models.models_specs.validation_params import (
         classification_models_params,

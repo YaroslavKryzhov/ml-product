@@ -1,8 +1,9 @@
 from typing import List
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 
+from ml_api.apps.training_reports import specs, schemas
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.model import User
 from ml_api.apps.training_reports.repository import TrainingReportCRUD
@@ -65,4 +66,42 @@ async def read_reports_by_model(
         model_id)
     return result
 
+
+reports_specs_router = APIRouter(
+    prefix="/reports/specs",
+    tags=["Reports Specs"],
+    responses={404: {"description": "Not found"}},
+)
+
+
+@reports_specs_router.get("/report_types")
+def get_base_sklearn_models():
+    return {"report_types": [report_type.value for report_type in specs.ReportTypes]}
+
+
+@reports_specs_router.get("/report_task_types")
+def get_base_sklearn_models():
+    return {"report_task_types": [report_task_type.value for report_task_type
+                                  in specs.ReportTypes]}
+
+
+@reports_specs_router.get("/report_schemas/{report_task_type}")
+def get_report_schema(report_task_type: specs.ReportTaskTypes):
+    if report_task_type == specs.ReportTaskTypes.BINARY_CLASSIFICATION:
+        return schemas.BinaryClassificationReport.schema()
+    elif report_task_type == specs.ReportTaskTypes.MULTICLASS_CLASSIFICATION:
+        return schemas.MulticlassClassificationReport.schema()
+    elif report_task_type == specs.ReportTaskTypes.REGRESSION:
+        return schemas.RegressionReport.schema()
+    elif report_task_type == specs.ReportTaskTypes.CLUSTERING:
+        return schemas.ClusteringReport.schema()
+    elif report_task_type == specs.ReportTaskTypes.DIMENSIONALITY_REDUCTION:
+        return schemas.DimensionalityReductionReport.schema()
+    elif report_task_type == specs.ReportTaskTypes.OUTLIER_DETECTION:
+        return schemas.OutlierDetectionReport.schema()
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Unrecognized report type: '{report_task_type}'."
+        )
 
