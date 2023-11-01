@@ -34,17 +34,19 @@ class DataframeServiceFacade:
 
     async def get_feature_target_column_names(
             self, dataframe_id: PydanticObjectId) -> (List[str], Optional[str]):
-        return await self.dataframe_service.get_feature_target_column_names(
+        return await self.dataframe_methods_service.get_feature_target_column_names(
             dataframe_id)
 
     async def get_feature_target_df_supervised(
             self, dataframe_id: PydanticObjectId) -> (pd.DataFrame, pd.Series):
-        return await self.dataframe_service.get_feature_target_df_supervised(
+        return await self.dataframe_methods_service.get_feature_target_df_supervised(
             dataframe_id)
 
     async def get_feature_target_df(
-            self, dataframe_id: PydanticObjectId) -> (pd.DataFrame, Optional[pd.Series]):
-        return await self.dataframe_service.get_feature_target_df(dataframe_id)
+            self, dataframe_id: PydanticObjectId
+    ) -> (pd.DataFrame, Optional[pd.Series]):
+        return await self.dataframe_methods_service.get_feature_target_df(
+            dataframe_id)
 
     async def copy_pipeline_for_prediction(self, id_from: PydanticObjectId,
                             id_to: PydanticObjectId):

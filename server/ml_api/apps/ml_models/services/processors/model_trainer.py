@@ -11,8 +11,7 @@ from ml_api.apps.training_reports.services.report_creator import ReportCreatorSe
 
 
 class ModelTrainerService:
-    def __init__(self, user_id, model_meta: ModelMetadata, model):
-        self._user_id = user_id
+    def __init__(self, model_meta: ModelMetadata, model):
         self.model = model
         self.task_type = model_meta.task_type
         self.model_id = model_meta.id

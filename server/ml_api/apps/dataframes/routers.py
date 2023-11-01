@@ -48,8 +48,9 @@ async def download_dataframe(
     return await DataframeService(user.id).download_dataframe(dataframe_id)
 
 
-@dataframes_file_router.put("/rename", summary="Переименовать csv-файл",
-                             response_model=model.DataFrameMetadata)
+@dataframes_file_router.put("/rename",
+                            summary="Переименовать csv-файл",
+                            response_model=model.DataFrameMetadata)
 async def rename_dataframe(
     dataframe_id: PydanticObjectId,
     new_filename: str,
@@ -79,8 +80,9 @@ async def delete_dataframe(
     return await DataframeService(user.id).delete_dataframe(dataframe_id)
 
 
-@dataframes_file_router.delete("/prediction",  summary="Удалить предсказание модели",
-                           response_model=model.DataFrameMetadata)
+@dataframes_file_router.delete("/prediction",
+                               summary="Удалить предсказание модели",
+                               response_model=model.DataFrameMetadata)
 async def delete_model_prediction(
     model_id: PydanticObjectId,
     prediction_id: PydanticObjectId,
@@ -116,7 +118,8 @@ async def read_dataframe_info(
     return await DataframeService(user.id).get_dataframe_meta(dataframe_id)
 
 
-@dataframes_metadata_router.get("/all", response_model=List[model.DataFrameMetadata],
+@dataframes_metadata_router.get("/all",
+                                response_model=List[model.DataFrameMetadata],
     summary="Получить информацию обо всех csv-файлах (датафреймах)")
 async def read_all_user_dataframes(user: User = Depends(current_active_user)):
     """
@@ -148,7 +151,8 @@ async def read_dataframe_with_pagination(
         - **rows_on_page**: кол-во строк датафрейма на cтраницу (default=1)
     """
     return await DataframeService(
-        user.id).get_dataframe_with_pagination(dataframe_id, page, rows_on_page)
+        user.id).get_dataframe_with_pagination(
+        dataframe_id, page, rows_on_page)
 
 
 @dataframes_content_router.get("/statistics",
@@ -246,7 +250,7 @@ async def unset_target_feature(dataframe_id: PydanticObjectId,
                                summary="Переместить в корень интерфейса",
                                response_model=model.DataFrameMetadata)
 async def move_to_root(dataframe_id: PydanticObjectId,
-                             user: User = Depends(current_active_user)):
+                       user: User = Depends(current_active_user)):
     """
         Переносит датафрейм из вложенного уровня в корень интерфейса.
 
@@ -308,7 +312,8 @@ async def feature_importances(dataframe_id: PydanticObjectId,
     """
     # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id)
     return await DataframeMethodsService(
-        user.id).process_feature_importances(dataframe_id, task_type, selection_params)
+        user.id).process_feature_importances(
+        dataframe_id, task_type, selection_params)
 
 
 @dataframes_methods_router.delete("/columns", summary="Удалить столбцы",

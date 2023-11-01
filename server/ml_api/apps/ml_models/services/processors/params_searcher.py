@@ -26,7 +26,7 @@ class HyperoptService:
         self.target = None
         self.features = None
         self.dataframe_id = dataframe_id
-        self.user_id = user_id
+        self.dataframe_service = DataframeServiceFacade(user_id)
 
         self._task_to_searcher_params_map = {
             TaskTypes.CLASSIFICATION: CLASSIFICATION_SEARCH_SPACE_CONFIG,
@@ -62,14 +62,13 @@ class HyperoptService:
         return schemas.ModelParams(model_type=model_type, params=best_params)
 
     async def _prepare_data(self, task_type: TaskTypes):
-        # TODO: move data loading out of hyperopt service
         if task_type in [TaskTypes.CLASSIFICATION,
                          TaskTypes.REGRESSION]:
-            self.features, self.target = await DataframeServiceFacade(
-                self.user_id).get_feature_target_df_supervised(self.dataframe_id)
+            self.features, self.target = await self.dataframe_service.\
+                get_feature_target_df_supervised(self.dataframe_id)
         elif task_type == TaskTypes.CLUSTERING:
-            self.features, _ = await DataframeServiceFacade(
-                self.user_id).get_feature_target_df(self.dataframe_id)
+            self.features, _ = await self.dataframe_service.\
+                get_feature_target_df(self.dataframe_id)
         elif task_type in [TaskTypes.OUTLIER_DETECTION,
                          TaskTypes.DIMENSIONALITY_REDUCTION]:
             raise errors.HyperoptTaskTypeError(task_type)

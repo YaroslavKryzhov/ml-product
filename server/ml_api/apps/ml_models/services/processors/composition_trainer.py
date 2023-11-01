@@ -11,8 +11,7 @@ from ml_api.apps.training_reports.services.report_creator import ReportCreatorSe
 
 
 class CompositionValidationService:
-    def __init__(self, user_id, composition_meta: ModelMetadata, composition):
-        self._user_id = user_id
+    def __init__(self, composition_meta: ModelMetadata, composition):
         self.composition = composition
         self.task_type = composition_meta.task_type
         self.composition_type = composition_meta.model_params.model_type

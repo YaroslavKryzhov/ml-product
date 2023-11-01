@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 from beanie import PydanticObjectId
@@ -29,10 +29,72 @@ class DataframeMethodsService:
         if await self.repository.get_is_prediction(dataframe_id):
             raise errors.DataFrameIsPredictionError(dataframe_id)
 
+    def _check_columns_consistency(self, df: pd.DataFrame, columns_list: List):
+        # Проверка на то, что DataFrame содержит ожидаемые столбцы
+        df_columns_list = df.columns.tolist()
+        if sorted(df_columns_list) != sorted(columns_list):
+            raise errors.ColumnsNotEqualCriticalError(df_columns_list,
+                                                      columns_list)
+
     async def _get_df_and_meta(self, dataframe_id: PydanticObjectId):
         dataframe_meta = await self.repository.get_dataframe_meta(dataframe_id)
         df = await self.repository.read_pandas_dataframe(dataframe_id)
+        columns_list = dataframe_meta.feature_columns_types.numeric + \
+            dataframe_meta.feature_columns_types.categorical
+        self._check_columns_consistency(df, columns_list)
         return dataframe_meta, df
+
+    async def get_feature_target_column_names(self,
+                                              dataframe_id: PydanticObjectId
+                                              ) -> (List[str], Optional[str]):
+        """Returns list of feature columns and target column name.
+        If target column is not set, returns None instead of target column name.
+        If feature columns contain categorical column, raises ColumnNotNumericError."""
+        dataframe_meta = await self.repository.get_dataframe_meta(dataframe_id)
+        column_types = dataframe_meta.feature_columns_types
+        target_column = dataframe_meta.target_feature
+        if target_column is not None:
+            # если целевой признак задан, убираем его из ColumnTypes
+            if target_column in column_types.numeric:
+                column_types.numeric.remove(target_column)
+            elif target_column in column_types.categorical:
+                column_types.categorical.remove(target_column)
+            else:
+                # если его нет в ColumnTypes - поднимаем 500-ую
+                raise errors.UnknownTargetCriticalError(dataframe_id)
+        if len(column_types.categorical) > 0:
+            # если среди столбцов остались категориальные
+            # (после удаления таргета) - поднимаем 500-ую
+            raise errors.CategoricalColumnFoundCriticalError(dataframe_id,
+                column_types.categorical)
+        if len(column_types.categorical) == 0 and len(column_types.numeric) == 0:
+            raise errors.ColumnTypesNotDefinedCriticalError(dataframe_id)
+        return column_types.numeric, target_column
+
+    async def get_feature_target_df_supervised(self,
+                                               dataframe_id: PydanticObjectId
+                                               ) -> (pd.DataFrame, pd.Series):
+        features, target = await self.get_feature_target_df(dataframe_id)
+        if target is None:
+            raise errors.TargetNotFoundSupervisedLearningError(dataframe_id)
+        return features, target
+
+    async def get_feature_target_df(self, dataframe_id: PydanticObjectId
+                                    ) -> (pd.DataFrame, Optional[pd.Series]):
+        feature_columns, target_column = await self.get_feature_target_column_names(
+            dataframe_id=dataframe_id)
+        df = await self.repository.read_pandas_dataframe(dataframe_id)
+        if target_column is not None:
+            # если есть таргет - возвращаем его отдельно
+            df_columns_list = feature_columns + [target_column]
+            self._check_columns_consistency(df, df_columns_list)
+            features = df[feature_columns]
+            target = df[target_column]
+            return features, target
+        else:
+            # если таргета нет - возвращаем вместо него None
+            self._check_columns_consistency(df, feature_columns)
+            return df, None
 
     async def process_feature_importances(
             self,
@@ -41,7 +103,7 @@ class DataframeMethodsService:
             feature_selection_params: List[schemas.SelectorMethodParams]
     ) -> schemas.FeatureSelectionSummary:
         await self._ensure_not_prediction(dataframe_id)
-        features, target = await self.dataframe_service.get_feature_target_df_supervised(
+        features, target = await self.get_feature_target_df_supervised(
             dataframe_id)
         selector = FeatureSelector(
             features, target, task_type, feature_selection_params)
