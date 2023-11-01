@@ -38,13 +38,13 @@ class AvailableModelTypes(Enum):
     BAGGING_CLASSIFIER = 'BaggingClassifier'
     XGB_CLASSIFIER = 'XGBClassifier'
     LGBM_CLASSIFIER = 'LGBMClassifier'
-    CAT_BOOST_CLASSIFIER = 'CatBoostClassifier'
+    CATBOOST_CLASSIFIER = 'CatBoostClassifier'
     SGD_CLASSIFIER = 'SGDClassifier'
     LINEAR_SVC = 'LinearSVC'
     SVC = 'SVC'
     LOGISTIC_REGRESSION = 'LogisticRegression'
     PASSIVE_AGGRESSIVE_CLASSIFIER = 'PassiveAggressiveClassifier'
-    K_NEIGHBORS_CLASSIFIER = 'KNeighborsClassifier'
+    KNEIGHBORS_CLASSIFIER = 'KNeighborsClassifier'
     RADIUS_NEIGHBORS_CLASSIFIER = 'RadiusNeighborsClassifier'
     MLP_CLASSIFIER = 'MLPClassifier'
 
@@ -57,7 +57,7 @@ class AvailableModelTypes(Enum):
     BAGGING_REGRESSOR = 'BaggingRegressor'
     XGB_REGRESSOR = 'XGBRegressor'
     LGBM_REGRESSOR = 'LGBMRegressor'
-    CAT_BOOST_REGRESSOR = 'CatBoostRegressor'
+    CATBOOST_REGRESSOR = 'CatBoostRegressor'
     SGD_REGRESSOR = 'SGDRegressor'
     LINEAR_SVR = 'LinearSVR'
     SVR = 'SVR'
@@ -71,7 +71,7 @@ class AvailableModelTypes(Enum):
     MLP_REGRESSOR = 'MLPRegressor'
 
     # Clustering models
-    K_MEANS = 'KMeans'
+    KMEANS = 'KMeans'
     MINI_BATCH_KMEANS = 'MiniBatchKMeans'
     AFFINITY_PROPAGATION = 'AffinityPropagation'
     MEAN_SHIFT = 'MeanShift'
@@ -93,7 +93,7 @@ class AvailableModelTypes(Enum):
     # Dimensionality reduction models
     PCA = 'PCA'
     LINEAR_DISCRIMINANT_ANALYSIS = 'LinearDiscriminantAnalysis'
-    T_SNE = 'TSNE'
+    TSNE = 'TSNE'
     ISOMAP = 'Isomap'
     NMF = 'NMF'
     TRUNCATED_SVD = 'TruncatedSVD'

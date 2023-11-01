@@ -49,7 +49,7 @@ REGRESSION_SEARCH_SPACE_CONFIG = {
         'max_depth': hp.quniform('max_depth', 1, 10, 1),
     },
 
-    Models.CAT_BOOST_REGRESSOR: {
+    Models.CATBOOST_REGRESSOR: {
         'iterations': hp.quniform('iterations', 50, 200, 1),
         'learning_rate': hp.loguniform('learning_rate', -5, 0),
         'depth': hp.quniform('depth', 1, 10, 1),

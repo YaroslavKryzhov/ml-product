@@ -36,13 +36,13 @@ class ParamsValidationService:
             Models.BAGGING_CLASSIFIER: classif_params.BaggingClassifierParams,
             Models.XGB_CLASSIFIER: classif_params.XGBClassifierParams,
             Models.LGBM_CLASSIFIER: classif_params.LGBMClassifierParams,
-            Models.CAT_BOOST_CLASSIFIER: classif_params.CatBoostClassifierParams,
+            Models.CATBOOST_CLASSIFIER: classif_params.CatBoostClassifierParams,
             Models.SGD_CLASSIFIER: classif_params.SGDClassifierParams,
             Models.LINEAR_SVC: classif_params.LinearSVCParams,
             Models.SVC: classif_params.SVCParams,
             Models.LOGISTIC_REGRESSION: classif_params.LogisticRegressionParams,
             Models.PASSIVE_AGGRESSIVE_CLASSIFIER: classif_params.PassiveAggressiveClassifierParams,
-            Models.K_NEIGHBORS_CLASSIFIER: classif_params.KNeighborsClassifierParams,
+            Models.KNEIGHBORS_CLASSIFIER: classif_params.KNeighborsClassifierParams,
             Models.RADIUS_NEIGHBORS_CLASSIFIER: classif_params.RadiusNeighborsClassifierParams,
             Models.MLP_CLASSIFIER: classif_params.MLPClassifierParams,
         }
@@ -56,7 +56,7 @@ class ParamsValidationService:
             Models.BAGGING_REGRESSOR: regr_params.BaggingRegressorParams,
             Models.XGB_REGRESSOR: regr_params.XGBRegressorParams,
             Models.LGBM_REGRESSOR: regr_params.LGBMRegressorParams,
-            Models.CAT_BOOST_REGRESSOR: regr_params.CatBoostRegressorParams,
+            Models.CATBOOST_REGRESSOR: regr_params.CatBoostRegressorParams,
             Models.SGD_REGRESSOR: regr_params.SGDRegressorParams,
             Models.LINEAR_SVR: regr_params.LinearSVRParams,
             Models.SVR: regr_params.SVRParams,
@@ -71,7 +71,7 @@ class ParamsValidationService:
         }
 
         self._clustering_models_params_map = {
-            Models.K_MEANS: cluster_params.KMeansParams,
+            Models.KMEANS: cluster_params.KMeansParams,
             Models.MINI_BATCH_KMEANS: cluster_params.MiniBatchKMeansParams,
             Models.AFFINITY_PROPAGATION: cluster_params.AffinityPropagationParams,
             Models.MEAN_SHIFT: cluster_params.MeanShiftParams,
@@ -95,7 +95,7 @@ class ParamsValidationService:
         self._dimensionality_reduction_models_params_map = {
             Models.PCA: dim_red_params.PCAParams,
             Models.LINEAR_DISCRIMINANT_ANALYSIS: dim_red_params.LinearDiscriminantAnalysisParams,
-            Models.T_SNE: dim_red_params.TSNEParams,
+            Models.TSNE: dim_red_params.TSNEParams,
             Models.ISOMAP: dim_red_params.IsomapParams,
             Models.NMF: dim_red_params.NMFParams,
             Models.TRUNCATED_SVD: dim_red_params.TruncatedSVDParams

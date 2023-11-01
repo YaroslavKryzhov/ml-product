@@ -33,7 +33,7 @@ class ModelConstructorService:
             Models.SVC: self._get_svc,
             Models.LOGISTIC_REGRESSION: self._get_logistic_regression,
             Models.PASSIVE_AGGRESSIVE_CLASSIFIER: self._get_passive_aggressive_classifier,
-            Models.K_NEIGHBORS_CLASSIFIER: self._get_k_neighbors_classifier,
+            Models.KNEIGHBORS_CLASSIFIER: self._get_k_neighbors_classifier,
             Models.RADIUS_NEIGHBORS_CLASSIFIER: self._get_radius_neighbors_classifier,
             Models.MLP_CLASSIFIER: self._get_mlp_classifier,
         }
@@ -61,7 +61,7 @@ class ModelConstructorService:
         }
 
         self._clustering_models_map: Dict[Models, Callable] = {
-            Models.K_MEANS: self._get_kmeans,
+            Models.KMEANS: self._get_kmeans,
             Models.MINI_BATCH_KMEANS: self._get_mini_batch_kmeans,
             Models.AFFINITY_PROPAGATION: self._get_affinity_propagation,
             Models.MEAN_SHIFT: self._get_mean_shift,
@@ -84,7 +84,7 @@ class ModelConstructorService:
         self._dimensionality_reduction_models_map: Dict[Models, Callable] = {
             Models.PCA: self._get_pca,
             Models.LINEAR_DISCRIMINANT_ANALYSIS: self._get_linear_discriminant_analysis,
-            Models.T_SNE: self._get_tsne,
+            Models.TSNE: self._get_tsne,
             Models.ISOMAP: self._get_isomap,
             Models.NMF: self._get_nmf,
             Models.TRUNCATED_SVD: self._get_truncated_svd,

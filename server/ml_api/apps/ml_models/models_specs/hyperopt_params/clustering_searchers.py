@@ -3,7 +3,7 @@ from ml_api.apps.ml_models.specs import AvailableModelTypes as Models
 
 # Определяем search_space
 CLUSTERING_SEARCH_SPACE_CONFIG = {
-    Models.K_MEANS: {
+    Models.KMEANS: {
         'n_clusters': hp.quniform('n_clusters', 2, 20, 1),
         'init': hp.choice('init', ['k-means++', 'random']),
     },

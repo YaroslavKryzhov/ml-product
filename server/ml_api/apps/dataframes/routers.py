@@ -7,7 +7,8 @@ from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.model import User
 from ml_api.apps.dataframes.services.dataframe_service import DataframeService
 from ml_api.apps.dataframes.services.methods_service import DataframeMethodsService
-from ml_api.apps.dataframes import schemas, model, specs
+from ml_api.apps.dataframes import schemas, model, specs, errors
+
 # from ml_api.common.celery_tasks.celery_tasks import apply_function_celery, \
 #     copy_pipeline_celery
 
@@ -422,3 +423,94 @@ async def copy_pipeline(dataframe_id_from: PydanticObjectId,
     # task = copy_pipeline_celery.delay(str(user.id),
     #                                   dataframe_id_from, dataframe_id_to)
     # return task.id
+
+dataframes_specs_router = APIRouter(
+    prefix="/dataframe/specs",
+    tags=["Dataframe Specs"],
+    responses={404: {"description": "Not found"}},
+)
+
+
+@dataframes_specs_router.get("/specs/column_types")
+def get_column_types():
+    return {"types": [col_type.value for col_type in specs.ColumnType]}
+
+
+@dataframes_specs_router.get("/specs/feature_selection/task_types")
+def get_feature_selection_methods():
+    return {"task_types": [task_type.value for task_type in specs.FeatureSelectionTaskType]}
+
+
+@dataframes_specs_router.get("/specs/feature_selection/methods")
+def get_feature_selection_methods():
+    return {"methods": [method.value for method in specs.FeatureSelectionMethods]}
+
+
+@dataframes_specs_router.get("/specs/feature_selection/methods/parameters/{method_name}")
+def get_parameters_for_method(method_name: specs.FeatureSelectionMethods):
+    if method_name == specs.FeatureSelectionMethods.VARIANCE_THRESHOLD:
+        return schemas.VarianceThresholdParams.schema()
+    elif method_name == specs.FeatureSelectionMethods.SELECT_K_BEST:
+        return schemas.SelectKBestParams.schema()
+    elif method_name == specs.FeatureSelectionMethods.SELECT_PERCENTILE:
+        return schemas.SelectPercentileParams.schema()
+    elif method_name == specs.FeatureSelectionMethods.SELECT_FPR:
+        return schemas.SelectFprFdrFweParams.schema()
+    elif method_name == specs.FeatureSelectionMethods.SELECT_FDR:
+        return schemas.SelectFprFdrFweParams.schema()
+    elif method_name == specs.FeatureSelectionMethods.SELECT_FWE:
+        return schemas.SelectFprFdrFweParams.schema()
+    elif method_name == specs.FeatureSelectionMethods.RECURSIVE_FEATURE_ELIMINATION:
+        return schemas.RFEParams.schema()
+    elif method_name == specs.FeatureSelectionMethods.SEQUENTIAL_FORWARD_SELECTION:
+        return schemas.SfsSbsParams.schema()
+    elif method_name == specs.FeatureSelectionMethods.SEQUENTIAL_BACKWARD_SELECTION:
+        return schemas.SfsSbsParams.schema()
+    elif method_name == specs.FeatureSelectionMethods.SELECT_FROM_MODEL:
+        return schemas.SelectFromModelParams.schema()
+    else:
+        raise errors.SelectorMethodNotExistsError(method_name)
+
+
+@dataframes_specs_router.get("/specs/feature_selection/base_sklearn_models")
+def get_base_sklearn_models():
+    return {"models": [model.value for model in specs.BaseSklearnModels]}
+
+
+@dataframes_specs_router.get("/specs/apply_methods")
+def get_available_methods():
+    return {"methods": [method.value for method in specs.AvailableMethods]}
+
+
+@dataframes_specs_router.get("/specs/apply_methods/parameters/{method_name}")
+def get_parameters_for_apply_method(method_name: specs.AvailableMethods):
+    if method_name == specs.AvailableMethods.DROP_DUPLICATES or\
+            method_name == specs.AvailableMethods.DROP_NA or\
+            method_name == specs.AvailableMethods.DROP_COLUMNS or \
+            method_name == specs.AvailableMethods.FILL_MEAN or\
+            method_name == specs.AvailableMethods.FILL_MEDIAN or\
+            method_name == specs.AvailableMethods.FILL_MOST_FREQUENT or\
+            method_name == specs.AvailableMethods.FILL_BFILL or\
+            method_name == specs.AvailableMethods.FILL_FFILL or\
+            method_name == specs.AvailableMethods.FILL_INTERPOLATION or\
+            method_name == specs.AvailableMethods.FILL_LINEAR_IMPUTER or\
+            method_name == specs.AvailableMethods.FILL_KNN_IMPUTER:
+        return {}
+    elif method_name == specs.AvailableMethods.CHANGE_COLUMNS_TYPE:
+        return schemas.ChangeColumnsTypeParams.schema()
+    elif method_name == specs.AvailableMethods.FILL_CUSTOM_VALUE:
+        return schemas.FillCustomValueParams.schema()
+    elif method_name == specs.AvailableMethods.LEAVE_N_VALUES_ENCODING:
+        return schemas.LeaveNValuesParams.schema()
+    elif method_name == specs.AvailableMethods.ONE_HOT_ENCODING:
+        return {}
+    elif method_name == specs.AvailableMethods.ORDINAL_ENCODING:
+        return {}
+    elif method_name == specs.AvailableMethods.STANDARD_SCALER:
+        return {}
+    elif method_name == specs.AvailableMethods.MIN_MAX_SCALER:
+        return {}
+    elif method_name == specs.AvailableMethods.ROBUST_SCALER:
+        return {}
+    else:
+        raise errors.ApplyingMethodNotExistsError(method_name)

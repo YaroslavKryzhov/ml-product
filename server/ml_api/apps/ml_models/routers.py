@@ -1,11 +1,11 @@
 from typing import List
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.model import User
-from ml_api.apps.ml_models import schemas, specs, model
+from ml_api.apps.ml_models import schemas, specs, model, errors
 from ml_api.apps.ml_models.services.model_service import ModelService
 from ml_api.apps.ml_models.services.fit_predict_service import ModelFitPredictService
 # from ml_api.common.celery_tasks.celery_tasks import train_composition_celery
@@ -187,3 +187,191 @@ async def predict_on_model(dataframe_id: PydanticObjectId,
         source_df_id=dataframe_id,
         model_id=model_id,
         apply_pipeline=apply_pipeline)
+
+models_specs_router = APIRouter(
+    prefix="/model/specs",
+    tags=["Models Specs"],
+    responses={404: {"description": "Not found"}},
+)
+
+
+@models_specs_router.get("/specs/task_types")
+def get_available_task_types():
+    return [task.value for task in specs.AvailableTaskTypes]
+
+
+@models_specs_router.get("/specs/params_types")
+def get_available_params_types():
+    return [param.value for param in specs.AvailableParamsTypes]
+
+
+@models_specs_router.get("/specs/model_statuses")
+def get_model_statuses():
+    return [status.value for status in specs.ModelStatuses]
+
+
+@models_specs_router.get("/specs/model_types")
+def get_available_model_types():
+    return [model.value for model in specs.AvailableModelTypes]
+
+
+@models_specs_router.get("/specs/model_types/parameters/{model_type}")
+def get_parameters_for_model_type(model_type: specs.AvailableModelTypes):
+    from ml_api.apps.ml_models.models_specs.validation_params import (
+        classification_models_params,
+        regression_models_params,
+        clustering_models_params,
+        dimensionality_reduction_models_params,
+        outlier_detection_models_params,
+        classification_compositions_params,
+        regression_compositions_params
+    )
+    # Classification models
+    if model_type == specs.AvailableModelTypes.DECISION_TREE_CLASSIFIER:
+           return classification_models_params.DecisionTreeClassifierParams.schema()
+    if model_type == specs.AvailableModelTypes.DECISION_TREE_CLASSIFIER:
+        return classification_models_params.DecisionTreeClassifierParams.schema()
+    elif model_type == specs.AvailableModelTypes.RANDOM_FOREST_CLASSIFIER:
+        return classification_models_params.RandomForestClassifierParams.schema()
+    elif model_type == specs.AvailableModelTypes.EXTRA_TREES_CLASSIFIER:
+        return classification_models_params.ExtraTreesClassifierParams.schema()
+    elif model_type == specs.AvailableModelTypes.GRADIENT_BOOSTING_CLASSIFIER:
+        return classification_models_params.GradientBoostingClassifierParams.schema()
+    elif model_type == specs.AvailableModelTypes.ADABOOST_CLASSIFIER:
+        return classification_models_params.AdaBoostClassifierParams.schema()
+    elif model_type == specs.AvailableModelTypes.BAGGING_CLASSIFIER:
+        return classification_models_params.BaggingClassifierParams.schema()
+    elif model_type == specs.AvailableModelTypes.XGB_CLASSIFIER:
+        return classification_models_params.XGBClassifierParams.schema()
+    elif model_type == specs.AvailableModelTypes.LGBM_CLASSIFIER:
+        return classification_models_params.LGBMClassifierParams.schema()
+    elif model_type == specs.AvailableModelTypes.CATBOOST_CLASSIFIER:
+        return classification_models_params.CatBoostClassifierParams.schema()
+    elif model_type == specs.AvailableModelTypes.SGD_CLASSIFIER:
+        return classification_models_params.SGDClassifierParams.schema()
+    elif model_type == specs.AvailableModelTypes.LINEAR_SVC:
+        return classification_models_params.LinearSVCParams.schema()
+    elif model_type == specs.AvailableModelTypes.SVC:
+        return classification_models_params.SVCParams.schema()
+    elif model_type == specs.AvailableModelTypes.LOGISTIC_REGRESSION:
+        return classification_models_params.LogisticRegressionParams.schema()
+    elif model_type == specs.AvailableModelTypes.PASSIVE_AGGRESSIVE_CLASSIFIER:
+        return classification_models_params.PassiveAggressiveClassifierParams.schema()
+    elif model_type == specs.AvailableModelTypes.KNEIGHBORS_CLASSIFIER:
+        return classification_models_params.KNeighborsClassifierParams.schema()
+    elif model_type == specs.AvailableModelTypes.RADIUS_NEIGHBORS_CLASSIFIER:
+        return classification_models_params.RadiusNeighborsClassifierParams.schema()
+    elif model_type == specs.AvailableModelTypes.MLP_CLASSIFIER:
+        return classification_models_params.MLPClassifierParams.schema()
+
+    # Regression models
+    elif model_type == specs.AvailableModelTypes.DECISION_TREE_REGRESSOR:
+        return regression_models_params.DecisionTreeRegressorParams.schema()
+    elif model_type == specs.AvailableModelTypes.RANDOM_FOREST_REGRESSOR:
+        return regression_models_params.RandomForestRegressorParams.schema()
+    elif model_type == specs.AvailableModelTypes.EXTRA_TREES_REGRESSOR:
+        return regression_models_params.ExtraTreesRegressorParams.schema()
+    elif model_type == specs.AvailableModelTypes.GRADIENT_BOOSTING_REGRESSOR:
+        return regression_models_params.GradientBoostingRegressorParams.schema()
+    elif model_type == specs.AvailableModelTypes.ADABOOST_REGRESSOR:
+        return regression_models_params.AdaBoostRegressorParams.schema()
+    elif model_type == specs.AvailableModelTypes.BAGGING_REGRESSOR:
+        return regression_models_params.BaggingRegressorParams.schema()
+    elif model_type == specs.AvailableModelTypes.XGB_REGRESSOR:
+        return regression_models_params.XGBRegressorParams.schema()
+    elif model_type == specs.AvailableModelTypes.LGBM_REGRESSOR:
+        return regression_models_params.LGBMRegressorParams.schema()
+    elif model_type == specs.AvailableModelTypes.CATBOOST_REGRESSOR:
+        return regression_models_params.CatBoostRegressorParams.schema()
+    elif model_type == specs.AvailableModelTypes.SGD_REGRESSOR:
+        return regression_models_params.SGDRegressorParams.schema()
+    elif model_type == specs.AvailableModelTypes.LINEAR_SVR:
+        return regression_models_params.LinearSVRParams.schema()
+    elif model_type == specs.AvailableModelTypes.SVR:
+        return regression_models_params.SVRParams.schema()
+    elif model_type == specs.AvailableModelTypes.LINEAR_REGRESSION:
+        return regression_models_params.LinearRegressionParams.schema()
+    elif model_type == specs.AvailableModelTypes.RIDGE:
+        return regression_models_params.RidgeParams.schema()
+    elif model_type == specs.AvailableModelTypes.LASSO:
+        return regression_models_params.LassoParams.schema()
+    elif model_type == specs.AvailableModelTypes.ELASTIC_NET:
+        return regression_models_params.ElasticNetParams.schema()
+    elif model_type == specs.AvailableModelTypes.PASSIVE_AGGRESSIVE_REGRESSOR:
+        return regression_models_params.PassiveAggressiveRegressorParams.schema()
+    elif model_type == specs.AvailableModelTypes.K_NEIGHBORS_REGRESSOR:
+        return regression_models_params.KNeighborsRegressorParams.schema()
+    elif model_type == specs.AvailableModelTypes.RADIUS_NEIGHBORS_REGRESSOR:
+        return regression_models_params.RadiusNeighborsRegressorParams.schema()
+    elif model_type == specs.AvailableModelTypes.MLP_REGRESSOR:
+        return regression_models_params.MLPRegressorParams.schema()
+
+    # Clustering models
+    elif model_type == specs.AvailableModelTypes.KMEANS:
+        return clustering_models_params.KMeansParams.schema()
+    elif model_type == specs.AvailableModelTypes.MINI_BATCH_KMEANS:
+        return clustering_models_params.MiniBatchKMeansParams.schema()
+    elif model_type == specs.AvailableModelTypes.AFFINITY_PROPAGATION:
+        return clustering_models_params.AffinityPropagationParams.schema()
+    elif model_type == specs.AvailableModelTypes.MEAN_SHIFT:
+        return clustering_models_params.MeanShiftParams.schema()
+    elif model_type == specs.AvailableModelTypes.SPECTRAL_CLUSTERING:
+        return clustering_models_params.SpectralClusteringParams.schema()
+    elif model_type == specs.AvailableModelTypes.WARD:
+        return clustering_models_params.WardParams.schema()
+    elif model_type == specs.AvailableModelTypes.AGGLOMERATIVE_CLUSTERING:
+        return clustering_models_params.AgglomerativeClusteringParams.schema()
+    elif model_type == specs.AvailableModelTypes.DBSCAN:
+        return clustering_models_params.DBSCANParams.schema()
+    elif model_type == specs.AvailableModelTypes.OPTICS:
+        return clustering_models_params.OPTICSParams.schema()
+    elif model_type == specs.AvailableModelTypes.BIRCH:
+        return clustering_models_params.BirchParams.schema()
+    elif model_type == specs.AvailableModelTypes.GAUSSIAN_MIXTURE:
+        return clustering_models_params.GaussianMixtureParams.schema()
+
+    # Outlier detection models
+    elif model_type == specs.AvailableModelTypes.ONE_CLASS_SVM:
+        return outlier_detection_models_params.OneClassSVMParams.schema()
+    elif model_type == specs.AvailableModelTypes.SGD_ONE_CLASS_SVM:
+        return outlier_detection_models_params.SGDOneClassSVMParams.schema()
+    elif model_type == specs.AvailableModelTypes.ELLIPTIC_ENVELOPE:
+        return outlier_detection_models_params.EllipticEnvelopeParams.schema()
+    elif model_type == specs.AvailableModelTypes.LOCAL_OUTLIER_FACTOR:
+        return outlier_detection_models_params.LocalOutlierFactorParams.schema()
+    elif model_type == specs.AvailableModelTypes.ISOLATION_FOREST:
+        return outlier_detection_models_params.IsolationForestParams.schema()
+
+    # Dimensionality reduction models
+    elif model_type == specs.AvailableModelTypes.PCA:
+        return dimensionality_reduction_models_params.PCAParams.schema()
+    elif model_type == specs.AvailableModelTypes.LINEAR_DISCRIMINANT_ANALYSIS:
+        return dimensionality_reduction_models_params.LinearDiscriminantAnalysisParams.schema()
+    elif model_type == specs.AvailableModelTypes.TSNE:
+        return dimensionality_reduction_models_params.TSNEParams.schema()
+    elif model_type == specs.AvailableModelTypes.ISOMAP:
+        return dimensionality_reduction_models_params.IsomapParams.schema()
+    elif model_type == specs.AvailableModelTypes.NMF:
+        return dimensionality_reduction_models_params.NMFParams.schema()
+    elif model_type == specs.AvailableModelTypes.TRUNCATED_SVD:
+        return dimensionality_reduction_models_params.TruncatedSVDParams.schema()
+
+    # Classification composition models
+    elif model_type == specs.AvailableModelTypes.VOTING_CLASSIFIER:
+        return classification_compositions_params.VotingClassifierParams.schema()
+    elif model_type == specs.AvailableModelTypes.STACKING_CLASSIFIER:
+        return classification_compositions_params.StackingClassifierParams.schema()
+
+    # Regression composition models
+    elif model_type == specs.AvailableModelTypes.VOTING_REGRESSOR:
+        return regression_compositions_params.VotingRegressorParams.schema()
+    elif model_type == specs.AvailableModelTypes.STACKING_REGRESSOR:
+        return regression_compositions_params.StackingRegressorParams.schema()
+
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Unrecognized model type: '{model_type}'."
+        )
+
+

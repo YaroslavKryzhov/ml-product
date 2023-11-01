@@ -11,11 +11,13 @@ from ml_api.apps.dataframes.routers import (
     dataframes_file_router,
     dataframes_metadata_router,
     dataframes_content_router,
-    dataframes_methods_router)
+    dataframes_methods_router,
+    dataframes_specs_router)
 from ml_api.apps.ml_models.routers import (
     models_file_router,
     models_metadata_router,
-    models_processing_router)
+    models_processing_router,
+    models_specs_router)
 from ml_api.apps.training_reports.routers import reports_router
 
 from ml_api.apps.users.model import User
@@ -76,4 +78,6 @@ api_router.include_router(models_file_router)
 api_router.include_router(models_metadata_router)
 api_router.include_router(models_processing_router)
 api_router.include_router(reports_router)
+api_router.include_router(dataframes_specs_router)
+api_router.include_router(models_specs_router)
 app.include_router(api_router)

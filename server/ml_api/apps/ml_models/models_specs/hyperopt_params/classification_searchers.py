@@ -41,7 +41,7 @@ CLASSIFICATION_SEARCH_SPACE_CONFIG = {
         'learning_rate': hp.loguniform('learning_rate', -5, 0),
         'max_depth': scope.int(hp.quniform('max_depth', 1, 10, 1))
     },
-    Models.CAT_BOOST_CLASSIFIER: {
+    Models.CATBOOST_CLASSIFIER: {
         'iterations': scope.int(hp.quniform('iterations', 50, 200, 1)),
         'learning_rate': hp.loguniform('learning_rate', -5, 0),
         'depth': scope.int(hp.quniform('depth', 1, 10, 1))
@@ -69,7 +69,7 @@ CLASSIFICATION_SEARCH_SPACE_CONFIG = {
         'C': hp.loguniform('C', -5, 0),
         'loss': hp.choice('loss', ['hinge', 'squared_hinge'])
     },
-    Models.K_NEIGHBORS_CLASSIFIER: {
+    Models.KNEIGHBORS_CLASSIFIER: {
         'n_neighbors': scope.int(hp.quniform('n_neighbors', 1, 20, 1)),
         'weights': hp.choice('weights', ['uniform', 'distance']),
         'algorithm': hp.choice('algorithm', ['auto', 'ball_tree', 'kd_tree', 'brute'])
