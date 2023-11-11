@@ -19,8 +19,6 @@ class ModelService:
         self._user_id = user_id
         self.repository = ModelRepositoryManager(self._user_id)
         self.report_crud = TrainingReportCRUD(self._user_id)
-        from ml_api.apps.dataframes.facade import DataframeServiceFacade
-        self.dataframe_service = DataframeServiceFacade(self._user_id)
 
     def _check_composition_metas_for_same_params(self, first_model_meta,
             model_metas: List[ModelMetadata]):
@@ -50,7 +48,10 @@ class ModelService:
                            params_type: specs.AvailableParamsTypes,
                            test_size: float,
                            stratify: bool) -> ModelMetadata:
-        feature_columns, target_column = await self.dataframe_service.\
+        from ml_api.apps.dataframes.facade import DataframeServiceFacade
+
+        dataframe_service = DataframeServiceFacade(self._user_id)
+        feature_columns, target_column = await dataframe_service.\
             get_feature_target_column_names(dataframe_id=dataframe_id)
 
         if (task_type == specs.AvailableTaskTypes.CLASSIFICATION or
@@ -109,7 +110,10 @@ class ModelService:
     async def add_predictions(self, model_id: PydanticObjectId,
                               pred_df: DataFrame,
                               df_filename: str) -> ModelMetadata:
-        pred_df_info = await self.dataframe_service.save_predictions_dataframe(
+        from ml_api.apps.dataframes.facade import DataframeServiceFacade
+
+        dataframe_service = DataframeServiceFacade(self._user_id)
+        pred_df_info = await dataframe_service.save_predictions_dataframe(
             df_filename, pred_df)
         return await self.repository.add_prediction(model_id, pred_df_info.id)
 
@@ -133,9 +137,12 @@ class ModelService:
 
     # 4: DELETE OPERATIONS ----------------------------------------------------
     async def delete_model(self, model_id: PydanticObjectId) -> ModelMetadata:
+        from ml_api.apps.dataframes.facade import DataframeServiceFacade
+
+        dataframe_service = DataframeServiceFacade(self._user_id)
         model_meta = await self.repository.get_model_meta(model_id)
         for prediction_id in model_meta.model_prediction_ids:
-            await self.dataframe_service.delete_prediction(prediction_id)
+            await dataframe_service.delete_prediction(prediction_id)
         for report_id in model_meta.metrics_report_ids:
             await self.report_crud.delete(report_id)
         model_meta = await self.repository.delete_model(model_id)

@@ -106,8 +106,8 @@ def _get_categorical_column_statistic_params(column: pd.Series
 
 
 def get_random_number():
-    """Returns a random number between 10 and 99 (inclusive)."""
-    return random.randint(10, 99)
+    """Returns a random number between 100 and 999 (inclusive)."""
+    return random.randint(100, 999)
 
 
 def convert_dtypes(df: pd.DataFrame) -> (pd.DataFrame, schemas.ColumnTypes):

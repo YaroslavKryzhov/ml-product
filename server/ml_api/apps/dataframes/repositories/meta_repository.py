@@ -36,6 +36,12 @@ class DataFrameMetaCRUD:
             DataFrameMetadata.parent_id == parent_id).to_list()
         return dataframe_metas
 
+    async def get_by_filename(self, filename: str) -> DataFrameMetadata:
+        dataframe_meta = await DataFrameMetadata.find_one(
+            DataFrameMetadata.filename == filename,
+            DataFrameMetadata.user_id == self.user_id)
+        return dataframe_meta
+
     async def create(
             self,
             filename: str,

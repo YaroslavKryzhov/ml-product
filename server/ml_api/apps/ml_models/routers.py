@@ -169,6 +169,7 @@ async def train_model(composition_name: str,
 @models_processing_router.put("/predict")
 async def predict_on_model(dataframe_id: PydanticObjectId,
             model_id: PydanticObjectId,
+            prediction_name: str,
             apply_pipeline: bool = True,
             user: User = Depends(current_active_user)):
     """
@@ -183,9 +184,12 @@ async def predict_on_model(dataframe_id: PydanticObjectId,
         оригинальной выборки перед предсказанием.
         Если данные уже предобработаны, можно поставить параметр = False.
     """
+    await ModelFitPredictService(user.id).check_prediction_filename(
+        prediction_name)
     return await ModelFitPredictService(user.id).predict_on_model(
         source_df_id=dataframe_id,
         model_id=model_id,
+        prediction_name=prediction_name,
         apply_pipeline=apply_pipeline)
 
 models_specs_router = APIRouter(

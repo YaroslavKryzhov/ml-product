@@ -54,7 +54,7 @@ class ModelTrainerService:
             except AttributeError:
                 return None
 
-    async def train_model(self, model_meta, features, target) -> ModelTrainingResults:
+    async def train_model(self, features, target) -> ModelTrainingResults:
         if self.task_type not in self._task_to_method_map.keys():
             raise errors.UnknownTaskTypeError(self.task_type.value)
         process_train = self._task_to_method_map[self.task_type]

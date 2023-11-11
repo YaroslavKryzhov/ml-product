@@ -253,6 +253,7 @@ async def unset_target_feature(dataframe_id: PydanticObjectId,
                                summary="Переместить в корень интерфейса",
                                response_model=model.DataFrameMetadata)
 async def move_to_root(dataframe_id: PydanticObjectId,
+                       new_filename: str,
                        user: User = Depends(current_active_user)):
     """
         Переносит датафрейм из вложенного уровня в корень интерфейса.
@@ -260,7 +261,7 @@ async def move_to_root(dataframe_id: PydanticObjectId,
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
     return await DataframeService(user.id).move_dataframe_to_root(
-        dataframe_id)
+        dataframe_id, new_filename)
 
 
 @dataframes_methods_router.put("/move_to_active",
@@ -269,6 +270,7 @@ async def move_to_root(dataframe_id: PydanticObjectId,
 async def move_to_active(
         model_id: PydanticObjectId,
         dataframe_id: PydanticObjectId,
+        new_filename: str,
         user: User = Depends(current_active_user)):
     """
         Переносит датафрейм из раздела предсказаний в корень интерфейса.
@@ -276,7 +278,7 @@ async def move_to_active(
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
     return await DataframeService(user.id).move_prediction_to_active(model_id,
-        dataframe_id)
+        dataframe_id, new_filename)
 
 
 @dataframes_methods_router.post("/feature_importances",
@@ -323,6 +325,7 @@ async def feature_importances(dataframe_id: PydanticObjectId,
                                   response_model=model.DataFrameMetadata)
 async def delete_column(dataframe_id: PydanticObjectId,
                         column_names: List[str],
+                        new_filename: str,
                         user: User = Depends(current_active_user)):
     """
         Удаляет столбцы из датафрейма.
@@ -336,7 +339,7 @@ async def delete_column(dataframe_id: PydanticObjectId,
         columns=column_names
     )
     return await DataframeMethodsService(user.id).apply_changing_methods(
-        dataframe_id, [method_params])
+        dataframe_id, [method_params], new_filename)
 
 
 @dataframes_methods_router.put("/change_columns_type",
@@ -367,6 +370,7 @@ async def change_column_type(dataframe_id: PydanticObjectId,
                                 response_model=model.DataFrameMetadata)
 async def apply_method(dataframe_id: PydanticObjectId,
                        method_params: List[schemas.ApplyMethodParams],
+                       new_filename: str = None,
                        user: User = Depends(current_active_user)):
     """
         Применяет метод обработки к датафрейму.
@@ -398,7 +402,7 @@ async def apply_method(dataframe_id: PydanticObjectId,
         - **robust_scaler** - Scale features using statistics that are robust to outliers
     """
     return await DataframeMethodsService(user.id).apply_changing_methods(
-        dataframe_id, method_params)
+        dataframe_id, method_params, new_filename)
 
     # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id_from)
     # task = apply_function_celery.delay(str(user.id),
@@ -410,6 +414,7 @@ async def apply_method(dataframe_id: PydanticObjectId,
                                 response_model=model.DataFrameMetadata)
 async def copy_pipeline(dataframe_id_from: PydanticObjectId,
                         dataframe_id_to: PydanticObjectId,
+                        new_filename: str = None,
                         user: User = Depends(current_active_user)):
     """
         Применяет пайплайн от одного документа к другому.
@@ -418,7 +423,7 @@ async def copy_pipeline(dataframe_id_from: PydanticObjectId,
         - **dataframe_id**: ID csv-файла(датафрейма) на который применяется пайплайн
     """
     return await DataframeMethodsService(user.id).copy_pipeline(
-        dataframe_id_from, dataframe_id_to)
+        dataframe_id_from, dataframe_id_to, new_filename)
 
     # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id_from)
     # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id_to)

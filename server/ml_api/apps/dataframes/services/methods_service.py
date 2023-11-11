@@ -134,17 +134,19 @@ class DataframeMethodsService:
         return await self.repository.set_pipeline(
             dataframe_id, new_meta.pipeline)
 
-    async def apply_changing_methods(self, dataframe_id: PydanticObjectId,
-                                     method_params: List[schemas.ApplyMethodParams]
-                                     ) -> DataFrameMetadata:
+    async def apply_changing_methods(
+            self, dataframe_id: PydanticObjectId,
+            method_params: List[schemas.ApplyMethodParams],
+            new_filename: str = None) -> DataFrameMetadata:
         await self._ensure_not_prediction(dataframe_id)
+        await self.dataframe_service._check_filename_exists(new_filename)
         dataframe_meta, df = await self._get_df_and_meta(dataframe_id)
 
         new_df, new_meta = await self._apply_methods_to_df(
             df, dataframe_meta, method_params)
 
         return await self.dataframe_service.save_transformed_dataframe(
-            changed_df_meta=new_meta, new_df=new_df)
+            changed_df_meta=new_meta, new_df=new_df, new_filename=new_filename)
 
     async def _apply_methods_to_df(
             self,
@@ -158,10 +160,12 @@ class DataframeMethodsService:
         return methods_applier.get_df(), methods_applier.get_meta()
 
     async def copy_pipeline(self, id_from: PydanticObjectId,
-                            id_to: PydanticObjectId) -> DataFrameMetadata:
+                            id_to: PydanticObjectId,
+                            new_filename: str) -> DataFrameMetadata:
+        await self.dataframe_service._check_filename_exists(new_filename)
         new_df, new_meta = await self._copy_pipeline_common(id_from, id_to)
         return await self.dataframe_service.save_transformed_dataframe(
-            changed_df_meta=new_meta, new_df=new_df)
+            changed_df_meta=new_meta, new_df=new_df, new_filename=new_filename)
 
     async def copy_pipeline_for_prediction(self, id_from: PydanticObjectId,
                             id_to: PydanticObjectId) -> pd.DataFrame:

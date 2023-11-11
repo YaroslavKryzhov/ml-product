@@ -74,6 +74,8 @@ class DataframeRepositoryManager:
         return dataframe_meta
 
     # 2: GET METADATA OPERATIONS ----------------------------------------------
+    async def get_by_filename(self, filename: str) -> DataFrameMetadata:
+        return await self.meta_repository.get_by_filename(filename)
 
     async def get_dataframe_meta(self, dataframe_id: PydanticObjectId
                                  ) -> DataFrameMetadata:

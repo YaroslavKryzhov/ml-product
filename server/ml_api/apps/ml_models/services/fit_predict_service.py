@@ -59,10 +59,13 @@ class ModelFitPredictService:
         await self.model_service.add_report(model_meta.id,
                                             model_meta.dataframe_id, report)
 
+    async def check_prediction_filename(self, filename: str):
+        return await self.dataframe_service.check_prediction_filename(filename)
+
     @handle_exceptions
     async def train_model(self, model_meta: ModelMetadata) -> ModelMetadata:
         await self._set_status(model_meta, specs.ModelStatuses.BUILDING)
-        validated_params = self._prepare_params(model_meta)
+        validated_params = await self._prepare_params(model_meta)
         await self.repository.set_model_params(model_meta.id, validated_params)
         model = await self._prepare_model(model_meta, validated_params)
         features, target = await self._prepare_fit_data(model_meta)
@@ -161,15 +164,15 @@ class ModelFitPredictService:
 
     async def predict_on_model(self, source_df_id: PydanticObjectId,
                                model_id: PydanticObjectId,
+                               prediction_name: str,
                                apply_pipeline: bool = True) -> ModelMetadata:
         model_meta = await self.repository.get_model_meta(model_id)
         model = await self.repository.load_model(model_meta.id)
         features = await self._prepare_predict_data(
             model_meta, source_df_id, apply_pipeline)
         pred_df = await self._perform_prediction(model_meta, model, features)
-        filename = f"{model_meta.filename}_predictions"
-        new_meta = await self.model_service.add_predictions(model_meta.id,
-                                                        pred_df, filename)
+        new_meta = await self.model_service.add_predictions(
+            model_meta.id, pred_df, prediction_name)
         return new_meta
 
     def _check_features_equality(self, features, feature_columns):

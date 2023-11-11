@@ -21,13 +21,12 @@ class DataframeServiceFacade:
 
     async def save_predictions_dataframe(
             self, df_filename: str, pred_df: pd.DataFrame) -> DataFrameMetadata:
-        while True:
-            try:
-                meta_created = await self.repository.save_prediction_dataframe(
+        meta_created = await self.repository.save_prediction_dataframe(
                     pred_df, df_filename)
-                return meta_created
-            except errors.FilenameExistsUserError:
-                df_filename = f"{df_filename}_{utils.get_random_number()}"
+        return meta_created
+
+    async def check_prediction_filename(self, filename: str):
+        await self.dataframe_service._check_filename_exists(filename)
 
     async def delete_prediction(self, prediction_id: PydanticObjectId):
         await self.repository.delete_dataframe(prediction_id)

@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict
+from typing import List, Dict
 
 from beanie import PydanticObjectId
 import pandas as pd
@@ -28,26 +28,27 @@ class DataframeService:
         return await self.repository.set_feature_column_types(
             dataframe_id, column_types)
 
+    async def _check_filename_exists(self, filename: str):
+        existing_document = await self.repository.get_by_filename(filename)
+        if existing_document is not None:
+            raise errors.FilenameExistsUserError(filename)
+
     # 1: CREATE OPERATIONS ----------------------------------------------------
     async def upload_new_dataframe(self, file,
                                    filename: str) -> DataFrameMetadata:
+        await self._check_filename_exists(filename)
         dataframe_meta = await self.repository.upload_dataframe(file, filename)
         return await self._define_initial_column_types(dataframe_meta.id)
 
     async def save_transformed_dataframe(
-            self,
-            changed_df_meta: DataFrameMetadata,
-            new_df: pd.DataFrame, method_name: str = 'modified'
-    ) -> DataFrameMetadata:
+            self, changed_df_meta: DataFrameMetadata,
+            new_df: pd.DataFrame, new_filename: str) -> DataFrameMetadata:
+        await self._check_filename_exists(new_filename)
         changed_df_meta.parent_id = changed_df_meta.id
-        changed_df_meta.filename = f"{changed_df_meta.filename}_{method_name}"
-        while True:
-            try:
-                meta_created = await self.repository.save_as_new_dataframe(
-                    new_df, changed_df_meta)
-                return meta_created
-            except errors.FilenameExistsUserError:
-                changed_df_meta.filename = f"{changed_df_meta.filename}_{utils.get_random_number()}"
+        changed_df_meta.filename = new_filename
+        meta_created = await self.repository.save_as_new_dataframe(
+            new_df, changed_df_meta)
+        return meta_created
 
     # 2: GET OPERATIONS -------------------------------------------------------
     async def download_dataframe(self, dataframe_id):
@@ -107,23 +108,26 @@ class DataframeService:
             raise errors.UnsetTargetFeatureError(dataframe_id)
         return await self.repository.set_target_feature(dataframe_id, None)
 
-    async def move_dataframe_to_root(self, dataframe_id: PydanticObjectId
-                                     ) -> DataFrameMetadata:
+    async def move_dataframe_to_root(self, dataframe_id: PydanticObjectId,
+                                     new_filename: str) -> DataFrameMetadata:
+        await self._check_filename_exists(new_filename)
         dataframe_meta = await self.repository.get_dataframe_meta(dataframe_id)
         if dataframe_meta.is_prediction:
             raise errors.DataFrameIsPredictionError(dataframe_id)
         if dataframe_meta.parent_id is None:
             raise errors.DataFrameAlreadyRootError(dataframe_id)
-        dataframe_meta = await self.repository.set_parent_id(dataframe_id,
-                                                             None)
+        await self.repository.set_filename(dataframe_id, new_filename)
+        dataframe_meta = await self.repository.set_parent_id(dataframe_id, None)
         return dataframe_meta
 
     async def move_prediction_to_active(
-            self, model_id: PydanticObjectId, dataframe_id: PydanticObjectId
-    ) -> DataFrameMetadata:
+            self, model_id: PydanticObjectId, dataframe_id: PydanticObjectId,
+            new_filename: str) -> DataFrameMetadata:
+        await self._check_filename_exists(new_filename)
         dataframe_meta = await self.repository.get_dataframe_meta(dataframe_id)
         if not dataframe_meta.is_prediction:
             raise errors.DataFrameIsNotPredictionError(dataframe_id)
+        await self.repository.set_filename(dataframe_id, new_filename)
         await self.models_service.remove_from_model_predictions(
             model_id, dataframe_id)
         dataframe_meta = await self.repository.set_is_prediction(

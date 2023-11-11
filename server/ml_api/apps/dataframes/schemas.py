@@ -47,7 +47,7 @@ class SelectorMethodParams(BaseModel):
 
 
 class FeatureSelectionSummary(BaseModel):
-    result: Dict[str, Dict[str, Optional[bool]]]
+    result: Dict[str, Dict[str, Optional[Any]]]
 
 
 class VarianceThresholdParams(BaseModel):

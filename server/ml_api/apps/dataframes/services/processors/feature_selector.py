@@ -1,6 +1,7 @@
 import traceback
 from typing import List, Dict, Any, Callable, Optional
 
+import numpy as np
 from pydantic import ValidationError
 from sklearn.feature_selection import VarianceThreshold, SelectKBest
 from sklearn.feature_selection import f_classif, f_regression
@@ -146,18 +147,36 @@ class FeatureSelector:
         selector.fit(self.X, self.y)
         return selector.get_support()
 
+    # def _recursive_feature_elimination(self, params: schemas.RFEParams):
+    #     estimator = self._get_estimator(params.estimator)
+    #     selector = RFE(estimator, step=params.step,
+    #                    n_features_to_select=params.n_features_to_select)
+    #     selector.fit(self.X, self.y)
+    #     return selector.get_support()
+
     def _recursive_feature_elimination(self, params: schemas.RFEParams):
         estimator = self._get_estimator(params.estimator)
-        selector = RFE(estimator, step=params.step,
-                       n_features_to_select=params.n_features_to_select)
+        selector = RFE(estimator, step=params.step)
         selector.fit(self.X, self.y)
-        return selector.get_support()
+        return selector.ranking_
+
+    # def _select_from_model(self, params: schemas.SelectFromModelParams):
+    #     estimator = self._get_estimator(params.estimator)
+    #     estimator.fit(self.X, self.y)
+    #     selector = SelectFromModel(estimator, prefit=True)
+    #     return selector.get_support()
 
     def _select_from_model(self, params: schemas.SelectFromModelParams):
         estimator = self._get_estimator(params.estimator)
         estimator.fit(self.X, self.y)
-        selector = SelectFromModel(estimator, prefit=True)
-        return selector.get_support()
+        if hasattr(estimator, 'feature_importances_'):
+            feature_weights = estimator.feature_importances_
+        elif hasattr(estimator, 'coef_'):
+            feature_weights = estimator.coef_[0] if len(
+                estimator.coef_.shape) > 1 else estimator.coef_
+        else:
+            feature_weights = np.zeros(self.X.shape[1])
+        return feature_weights
 
     def _sequential_forward_selection(self, params: schemas.SfsSbsParams):
         estimator = self._get_estimator(params.estimator)
