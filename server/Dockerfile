@@ -10,10 +10,7 @@ RUN apt-get clean
 
 RUN python -m pip --no-cache-dir install --upgrade pip
 RUN python -m pip install poetry && \
-    poetry config virtualenvs.create true && \
-    poetry config virtualenvs.path /virtualenv && \
-    poetry config virtualenvs.in-project false
-
+    poetry config virtualenvs.create false
 
 WORKDIR /server
 

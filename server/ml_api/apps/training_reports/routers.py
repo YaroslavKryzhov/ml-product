@@ -75,12 +75,12 @@ reports_specs_router = APIRouter(
 
 
 @reports_specs_router.get("/report_types")
-def get_base_sklearn_models():
+def get_report_types():
     return {"report_types": [report_type.value for report_type in specs.ReportTypes]}
 
 
 @reports_specs_router.get("/report_task_types")
-def get_base_sklearn_models():
+def get_report_task_types():
     return {"report_task_types": [report_task_type.value for report_task_type
                                   in specs.ReportTypes]}
 

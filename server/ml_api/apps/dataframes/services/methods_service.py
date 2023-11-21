@@ -25,10 +25,6 @@ class DataframeMethodsService:
         self.repository = DataframeRepositoryManager(self._user_id)
         self.dataframe_service = DataframeService(self._user_id)
 
-    async def _ensure_not_prediction(self, dataframe_id: PydanticObjectId):
-        if await self.repository.get_is_prediction(dataframe_id):
-            raise errors.DataFrameIsPredictionError(dataframe_id)
-
     def _check_columns_consistency(self, df: pd.DataFrame, columns_list: List):
         # Проверка на то, что DataFrame содержит ожидаемые столбцы
         df_columns_list = df.columns.tolist()
@@ -102,7 +98,7 @@ class DataframeMethodsService:
             task_type: specs.FeatureSelectionTaskType,
             feature_selection_params: List[schemas.SelectorMethodParams]
     ) -> schemas.FeatureSelectionSummary:
-        await self._ensure_not_prediction(dataframe_id)
+        await self.dataframe_service._ensure_not_prediction(dataframe_id)
         features, target = await self.get_feature_target_df_supervised(
             dataframe_id)
         selector = FeatureSelector(
@@ -122,7 +118,7 @@ class DataframeMethodsService:
     async def apply_change_columns_type(self, dataframe_id: PydanticObjectId,
                             method_params: List[schemas.ApplyMethodParams]
                             ) -> DataFrameMetadata:
-        await self._ensure_not_prediction(dataframe_id)
+        await self.dataframe_service._ensure_not_prediction(dataframe_id)
         dataframe_meta, df = await self._get_df_and_meta(dataframe_id)
 
         new_df, new_meta = await self._apply_methods_to_df(
@@ -138,7 +134,7 @@ class DataframeMethodsService:
             self, dataframe_id: PydanticObjectId,
             method_params: List[schemas.ApplyMethodParams],
             new_filename: str = None) -> DataFrameMetadata:
-        await self._ensure_not_prediction(dataframe_id)
+        await self.dataframe_service._ensure_not_prediction(dataframe_id)
         await self.dataframe_service._check_filename_exists(new_filename)
         dataframe_meta, df = await self._get_df_and_meta(dataframe_id)
 
@@ -173,8 +169,8 @@ class DataframeMethodsService:
         return new_df
 
     async def _copy_pipeline_common(self, id_from, id_to):
-        await self._ensure_not_prediction(id_from)
-        await self._ensure_not_prediction(id_to)
+        await self.dataframe_service._ensure_not_prediction(id_from)
+        await self.dataframe_service._ensure_not_prediction(id_to)
         pipeline_from_source_df = await self.repository.get_pipeline(id_from)
         dataframe_meta, df = await self._get_df_and_meta(id_to)
         new_df, new_meta = await self._apply_methods_to_df(

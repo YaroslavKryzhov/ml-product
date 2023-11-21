@@ -22,7 +22,7 @@ from ml_api.apps.ml_models.services.processors.composition_constructor import \
 from ml_api.apps.ml_models.services.model_service import ModelService
 from ml_api.apps.ml_models.repositories.repository_manager import \
     ModelRepositoryManager
-from ml_api.apps.training_reports.services.report_creator import ReportCreatorService
+from ml_api.apps.training_reports.services import ReportCreatorService
 from ml_api.apps.dataframes.facade import DataframeServiceFacade
 
 
@@ -59,8 +59,10 @@ class ModelFitPredictService:
         await self.model_service.add_report(model_meta.id,
                                             model_meta.dataframe_id, report)
 
-    async def check_prediction_filename(self, filename: str):
-        return await self.dataframe_service.check_prediction_filename(filename)
+    async def check_prediction_params(self,
+            dataframe_id: PydanticObjectId, filename: str):
+        await self.dataframe_service.get_feature_target_column_names(dataframe_id)
+        await self.dataframe_service.check_prediction_filename(filename)
 
     @handle_exceptions
     async def train_model(self, model_meta: ModelMetadata) -> ModelMetadata:

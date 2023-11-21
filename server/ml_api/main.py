@@ -20,11 +20,14 @@ from ml_api.apps.ml_models.routers import (
     models_specs_router)
 from ml_api.apps.training_reports.routers import (
     reports_router, reports_specs_router)
+from ml_api.apps.jobs.routers import (
+    jobs_router, jobs_specs_router)
 
 from ml_api.apps.users.model import User
 from ml_api.apps.dataframes.model import DataFrameMetadata
 from ml_api.apps.ml_models.model import ModelMetadata
 from ml_api.apps.training_reports.model import Report
+from ml_api.apps.jobs.model import BackgroundJob
 
 if config.STAGE.upper() == 'PRODUCTION':
     docs_url = None
@@ -64,7 +67,8 @@ async def app_init():
                                 uuidRepresentation="standard")[config.MONGO_DEFAULT_DB_NAME]
     try:
         await init_beanie(app.db,
-            document_models=[User, DataFrameMetadata, ModelMetadata, Report])
+            document_models=[User, DataFrameMetadata, ModelMetadata, Report,
+                             BackgroundJob])
     except ServerSelectionTimeoutError as sste:
         print(sste)
 
@@ -79,7 +83,9 @@ api_router.include_router(models_file_router)
 api_router.include_router(models_metadata_router)
 api_router.include_router(models_processing_router)
 api_router.include_router(reports_router)
+api_router.include_router(jobs_router)
 api_router.include_router(dataframes_specs_router)
 api_router.include_router(models_specs_router)
 api_router.include_router(reports_specs_router)
+api_router.include_router(jobs_specs_router)
 app.include_router(api_router)

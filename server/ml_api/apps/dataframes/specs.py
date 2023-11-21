@@ -6,6 +6,11 @@ class ColumnType(Enum):
     CATEGORICAL = 'categorical'
 
 
+class TaskStatuses(Enum):
+    COMPLETE = "complete"
+    ERROR = "error"
+
+
 class FeatureSelectionTaskType(Enum):
     CLASSIFICATION = 'classification'
     REGRESSION = 'regression'

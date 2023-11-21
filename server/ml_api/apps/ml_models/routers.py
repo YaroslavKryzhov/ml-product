@@ -1,14 +1,16 @@
 from typing import List
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi.responses import JSONResponse
 
+from ml_api import config
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.model import User
-from ml_api.apps.ml_models import schemas, specs, model, errors
+from ml_api.apps.ml_models import schemas, specs, model
 from ml_api.apps.ml_models.services.model_service import ModelService
 from ml_api.apps.ml_models.services.fit_predict_service import ModelFitPredictService
-# from ml_api.common.celery_tasks.celery_tasks import train_composition_celery
+from ml_api.apps.ml_models.services.jobs_manager import ModelJobsManager
 
 models_file_router = APIRouter(
     prefix="/model",
@@ -121,6 +123,7 @@ async def train_model(model_name: str,
                 task_type: specs.AvailableTaskTypes,
                 model_params: schemas.ModelParams,
                 params_type: specs.AvailableParamsTypes,
+                background_tasks: BackgroundTasks,
                 test_size: float = None,
                 stratify: bool = None,
                 user: User = Depends(current_active_user)):
@@ -144,32 +147,48 @@ async def train_model(model_name: str,
         params_type=params_type,
         test_size=test_size,
         stratify=stratify)
-    return await ModelFitPredictService(
-        user.id).train_model(model_meta=model_meta)
-    # task = train_composition_celery.delay(
-    #     str(user.id), str(model_info.id), params_type.value, test_size)
-    # return task.id
+
+    if config.RUN_ASYNC_TASKS:
+        background_tasks.add_task(
+            ModelJobsManager(user.id).train_model_async, model_meta)
+        return JSONResponse(
+            status_code=202,
+            content={
+                "message": "Задача принята и выполняется в фоновом режиме"}
+        )
+    else:
+        return await ModelFitPredictService(
+            user.id).train_model(model_meta=model_meta)
 
 
 @models_processing_router.post("/build_composition")
-async def train_model(composition_name: str,
+async def build_composition(composition_name: str,
                       model_ids: List[PydanticObjectId],
                       composition_params: schemas.ModelParams,
+                background_tasks: BackgroundTasks,
                 user: User = Depends(current_active_user)):
     composition_meta = await ModelService(user.id).create_composition(
         composition_name=composition_name, model_ids=model_ids,
         composition_params=composition_params)
-    return await ModelFitPredictService(
-        user.id).train_composition(composition_meta=composition_meta)
-    # task = train_composition_celery.delay(
-    #     str(user.id), str(model_info.id), params_type.value, test_size)
-    # return task.id
+
+    if config.RUN_ASYNC_TASKS:
+        background_tasks.add_task(
+            ModelJobsManager(user.id).build_composition_async, composition_meta)
+        return JSONResponse(
+            status_code=202,
+            content={
+                "message": "Задача принята и выполняется в фоновом режиме"}
+        )
+    else:
+        return await ModelFitPredictService(
+            user.id).train_composition(composition_meta=composition_meta)
 
 
 @models_processing_router.put("/predict")
 async def predict_on_model(dataframe_id: PydanticObjectId,
             model_id: PydanticObjectId,
             prediction_name: str,
+            background_tasks: BackgroundTasks,
             apply_pipeline: bool = True,
             user: User = Depends(current_active_user)):
     """
@@ -184,13 +203,25 @@ async def predict_on_model(dataframe_id: PydanticObjectId,
         оригинальной выборки перед предсказанием.
         Если данные уже предобработаны, можно поставить параметр = False.
     """
-    await ModelFitPredictService(user.id).check_prediction_filename(
-        prediction_name)
-    return await ModelFitPredictService(user.id).predict_on_model(
-        source_df_id=dataframe_id,
-        model_id=model_id,
-        prediction_name=prediction_name,
-        apply_pipeline=apply_pipeline)
+    if config.RUN_ASYNC_TASKS:
+        await ModelService(user.id).get_model_meta(model_id)
+        await ModelFitPredictService(user.id).check_prediction_params(
+            dataframe_id, prediction_name)
+        background_tasks.add_task(
+            ModelJobsManager(user.id).predict_on_model_async,
+            dataframe_id, model_id, prediction_name, apply_pipeline)
+        return JSONResponse(
+            status_code=202,
+            content={
+                "message": "Задача принята и выполняется в фоновом режиме"}
+        )
+    else:
+        return await ModelFitPredictService(user.id).predict_on_model(
+            source_df_id=dataframe_id,
+            model_id=model_id,
+            prediction_name=prediction_name,
+            apply_pipeline=apply_pipeline)
+
 
 models_specs_router = APIRouter(
     prefix="/model/specs",

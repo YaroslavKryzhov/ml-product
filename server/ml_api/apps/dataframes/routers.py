@@ -1,16 +1,17 @@
 from typing import List, Dict
 
 from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, BackgroundTasks
+from fastapi.responses import JSONResponse
 
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.model import User
 from ml_api.apps.dataframes.services.dataframe_service import DataframeService
-from ml_api.apps.dataframes.services.methods_service import DataframeMethodsService
+from ml_api.apps.dataframes.services.methods_service import \
+    DataframeMethodsService
+from ml_api.apps.dataframes.services.jobs_manager import DataframeJobsManager
 from ml_api.apps.dataframes import schemas, model, specs, errors
-
-# from ml_api.common.celery_tasks.celery_tasks import apply_function_celery, \
-#     copy_pipeline_celery
+from ml_api import config
 
 dataframes_file_router = APIRouter(
     prefix="/dataframe",
@@ -22,9 +23,9 @@ dataframes_file_router = APIRouter(
 @dataframes_file_router.post("", summary="Загрузить csv-файл",
                              response_model=model.DataFrameMetadata)
 async def upload_dataframe(
-    filename: str,
-    file: UploadFile = File(...),
-    user: User = Depends(current_active_user),
+        filename: str,
+        file: UploadFile = File(...),
+        user: User = Depends(current_active_user),
 ):
     """
         Загружает файл в систему
@@ -40,8 +41,8 @@ async def upload_dataframe(
 
 @dataframes_file_router.get("/download", summary="Скачать csv-файл")
 async def download_dataframe(
-    dataframe_id: PydanticObjectId,
-    user: User = Depends(current_active_user),
+        dataframe_id: PydanticObjectId,
+        user: User = Depends(current_active_user),
 ):
     """
         Скачивает csv-файл пользователя
@@ -55,9 +56,9 @@ async def download_dataframe(
                             summary="Переименовать csv-файл",
                             response_model=model.DataFrameMetadata)
 async def rename_dataframe(
-    dataframe_id: PydanticObjectId,
-    new_filename: str,
-    user: User = Depends(current_active_user),
+        dataframe_id: PydanticObjectId,
+        new_filename: str,
+        user: User = Depends(current_active_user),
 ):
     """
         Переименовывает csv-файл
@@ -72,8 +73,8 @@ async def rename_dataframe(
 @dataframes_file_router.delete("", summary="Удалить csv-файл",
                                response_model=model.DataFrameMetadata)
 async def delete_dataframe(
-    dataframe_id: PydanticObjectId,
-    user: User = Depends(current_active_user),
+        dataframe_id: PydanticObjectId,
+        user: User = Depends(current_active_user),
 ):
     """
         Удаляет csv-файл
@@ -87,9 +88,9 @@ async def delete_dataframe(
                                summary="Удалить предсказание модели",
                                response_model=model.DataFrameMetadata)
 async def delete_model_prediction(
-    model_id: PydanticObjectId,
-    prediction_id: PydanticObjectId,
-    user: User = Depends(current_active_user),
+        model_id: PydanticObjectId,
+        prediction_id: PydanticObjectId,
+        user: User = Depends(current_active_user),
 ):
     """
         Удаляет предсказание модели.
@@ -108,10 +109,10 @@ dataframes_metadata_router = APIRouter(
 
 
 @dataframes_metadata_router.get("", response_model=model.DataFrameMetadata,
-    summary="Получить информацию о csv-файле (датафрейме)")
+                                summary="Получить информацию о csv-файле (датафрейме)")
 async def read_dataframe_info(
-    dataframe_id: PydanticObjectId,
-    user: User = Depends(current_active_user),
+        dataframe_id: PydanticObjectId,
+        user: User = Depends(current_active_user),
 ):
     """
         Возвращает информацию о датафрейме
@@ -123,7 +124,7 @@ async def read_dataframe_info(
 
 @dataframes_metadata_router.get("/all",
                                 response_model=List[model.DataFrameMetadata],
-    summary="Получить информацию обо всех csv-файлах (датафреймах)")
+                                summary="Получить информацию обо всех csv-файлах (датафреймах)")
 async def read_all_user_dataframes(user: User = Depends(current_active_user)):
     """
         Возвращает информацию обо всех датафреймах пользователя
@@ -141,10 +142,10 @@ dataframes_content_router = APIRouter(
                                response_model=schemas.ReadDataFrameResponse,
                                summary="Прочитать датафрейм")
 async def read_dataframe_with_pagination(
-    dataframe_id: PydanticObjectId,
-    page: int = 1,
-    rows_on_page: int = 50,
-    user: User = Depends(current_active_user),
+        dataframe_id: PydanticObjectId,
+        page: int = 1,
+        rows_on_page: int = 50,
+        user: User = Depends(current_active_user),
 ):
     """
         Возвращает содержимое csv-файла (датафрейма) с пагинацией
@@ -159,11 +160,11 @@ async def read_dataframe_with_pagination(
 
 
 @dataframes_content_router.get("/statistics",
-    response_model=List[schemas.ColumnDescription],
-    summary="Получить описание столбцов")
+                               response_model=List[schemas.ColumnDescription],
+                               summary="Получить описание столбцов")
 async def dataframe_columns_stat_info(
-    dataframe_id: PydanticObjectId,
-    user: User = Depends(current_active_user),
+        dataframe_id: PydanticObjectId,
+        user: User = Depends(current_active_user),
 ):
     """
         Возвращает описание для всех столбцов датафрейма:
@@ -236,10 +237,10 @@ async def set_target_feature(dataframe_id: PydanticObjectId,
 
 
 @dataframes_methods_router.delete("/target",
-                               summary="Очистить выбор целевого признака",
-                               response_model=model.DataFrameMetadata)
+                                  summary="Очистить выбор целевого признака",
+                                  response_model=model.DataFrameMetadata)
 async def unset_target_feature(dataframe_id: PydanticObjectId,
-                             user: User = Depends(current_active_user)):
+                               user: User = Depends(current_active_user)):
     """
         Убирает отметку столбца датафрейма как целевого (Y).
 
@@ -278,16 +279,19 @@ async def move_to_active(
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
     return await DataframeService(user.id).move_prediction_to_active(model_id,
-        dataframe_id, new_filename)
+                                                                     dataframe_id,
+                                                                     new_filename)
 
 
 @dataframes_methods_router.post("/feature_importances",
                                 summary="Провести отбор признаков",
                                 response_model=schemas.FeatureSelectionSummary)
 async def feature_importances(dataframe_id: PydanticObjectId,
-                            task_type: specs.FeatureSelectionTaskType,
-                            selection_params: List[schemas.SelectorMethodParams],
-                            user: User = Depends(current_active_user)):
+                              task_type: specs.FeatureSelectionTaskType,
+                              selection_params: List[
+                                  schemas.SelectorMethodParams],
+                              background_tasks: BackgroundTasks,
+                              user: User = Depends(current_active_user)):
     """
         Применяет методы отбора признаков к датафрейму. Возвращает таблицу результатов.
         На основе её, пользователь может выбрать какие признаки стоит удалять
@@ -315,10 +319,22 @@ async def feature_importances(dataframe_id: PydanticObjectId,
         * 'select_from_model: 'estimator'
 
     """
-    # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id)
-    return await DataframeMethodsService(
-        user.id).process_feature_importances(
-        dataframe_id, task_type, selection_params)
+    if config.RUN_ASYNC_TASKS:
+        await DataframeService(user.id).get_dataframe_meta(dataframe_id)
+        await DataframeService(user.id)._ensure_not_prediction(
+            dataframe_id)
+        background_tasks.add_task(
+            DataframeJobsManager(user.id).process_feature_importances_async,
+            dataframe_id, task_type, selection_params)
+        return JSONResponse(
+            status_code=202,
+            content={
+                "message": "Задача принята и выполняется в фоновом режиме"}
+        )
+    else:
+        return await DataframeMethodsService(
+            user.id).process_feature_importances(
+            dataframe_id, task_type, selection_params)
 
 
 @dataframes_methods_router.delete("/columns", summary="Удалить столбцы",
@@ -366,11 +382,11 @@ async def change_column_type(dataframe_id: PydanticObjectId,
         dataframe_id, [method_params])
 
 
-@dataframes_methods_router.post("/apply_method",
-                                response_model=model.DataFrameMetadata)
+@dataframes_methods_router.post("/apply_method")
 async def apply_method(dataframe_id: PydanticObjectId,
                        method_params: List[schemas.ApplyMethodParams],
-                       new_filename: str = None,
+                       new_filename: str,
+                       background_tasks: BackgroundTasks,
                        user: User = Depends(current_active_user)):
     """
         Применяет метод обработки к датафрейму.
@@ -401,20 +417,29 @@ async def apply_method(dataframe_id: PydanticObjectId,
         - **min_max_scaler** - Scale features to a given range
         - **robust_scaler** - Scale features using statistics that are robust to outliers
     """
-    return await DataframeMethodsService(user.id).apply_changing_methods(
-        dataframe_id, method_params, new_filename)
+    if config.RUN_ASYNC_TASKS:
+        await DataframeService(user.id).get_dataframe_meta(dataframe_id)
+        await DataframeService(user.id)._check_filename_exists(new_filename)
+        await DataframeService(user.id)._ensure_not_prediction(
+            dataframe_id)
+        background_tasks.add_task(
+            DataframeJobsManager(user.id).apply_changing_methods_async,
+            dataframe_id, method_params, new_filename)
+        return JSONResponse(
+            status_code=202,
+            content={
+                "message": "Задача принята и выполняется в фоновом режиме"}
+        )
+    else:
+        return await DataframeMethodsService(user.id).apply_changing_methods(
+            dataframe_id, method_params, new_filename)
 
-    # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id_from)
-    # task = apply_function_celery.delay(str(user.id),
-    #     str(dataframe_id), function_name.value, params)
-    # return task.id
 
-
-@dataframes_methods_router.post("/copy_pipeline",
-                                response_model=model.DataFrameMetadata)
+@dataframes_methods_router.post("/copy_pipeline")
 async def copy_pipeline(dataframe_id_from: PydanticObjectId,
                         dataframe_id_to: PydanticObjectId,
-                        new_filename: str = None,
+                        new_filename: str,
+                        background_tasks: BackgroundTasks,
                         user: User = Depends(current_active_user)):
     """
         Применяет пайплайн от одного документа к другому.
@@ -422,14 +447,26 @@ async def copy_pipeline(dataframe_id_from: PydanticObjectId,
         - **dataframe_id**: ID csv-файла(датафрейма) с которого копируется пайплайн
         - **dataframe_id**: ID csv-файла(датафрейма) на который применяется пайплайн
     """
-    return await DataframeMethodsService(user.id).copy_pipeline(
-        dataframe_id_from, dataframe_id_to, new_filename)
+    if config.RUN_ASYNC_TASKS:
+        await DataframeService(user.id).get_dataframe_meta(dataframe_id_from)
+        await DataframeService(user.id).get_dataframe_meta(dataframe_id_to)
+        await DataframeService(user.id)._check_filename_exists(new_filename)
+        await DataframeService(user.id)._ensure_not_prediction(
+            dataframe_id_from)
+        await DataframeService(user.id)._ensure_not_prediction(
+            dataframe_id_to)
+        background_tasks.add_task(
+            DataframeJobsManager(user.id).copy_pipeline_async,
+            dataframe_id_from, dataframe_id_to, new_filename)
+        return JSONResponse(
+            status_code=202,
+            content={
+                "message": "Задача принята и выполняется в фоновом режиме"}
+        )
+    else:
+        return await DataframeMethodsService(user.id).copy_pipeline(
+            dataframe_id_from, dataframe_id_to, new_filename)
 
-    # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id_from)
-    # await DataframeMetadataManagerService(user.id).get_dataframe_meta(dataframe_id_to)
-    # task = copy_pipeline_celery.delay(str(user.id),
-    #                                   dataframe_id_from, dataframe_id_to)
-    # return task.id
 
 dataframes_specs_router = APIRouter(
     prefix="/dataframe/specs",
@@ -445,15 +482,18 @@ def get_column_types():
 
 @dataframes_specs_router.get("/feature_selection/task_types")
 def get_feature_selection_methods():
-    return {"task_types": [task_type.value for task_type in specs.FeatureSelectionTaskType]}
+    return {"task_types": [task_type.value for task_type in
+                           specs.FeatureSelectionTaskType]}
 
 
 @dataframes_specs_router.get("/feature_selection/methods")
 def get_feature_selection_methods():
-    return {"methods": [method.value for method in specs.FeatureSelectionMethods]}
+    return {
+        "methods": [method.value for method in specs.FeatureSelectionMethods]}
 
 
-@dataframes_specs_router.get("/feature_selection/methods/parameters/{method_name}")
+@dataframes_specs_router.get(
+    "/feature_selection/methods/parameters/{method_name}")
 def get_parameters_for_method(method_name: specs.FeatureSelectionMethods):
     if method_name == specs.FeatureSelectionMethods.VARIANCE_THRESHOLD:
         return schemas.VarianceThresholdParams.schema()
@@ -491,16 +531,16 @@ def get_available_methods():
 
 @dataframes_specs_router.get("/apply_methods/parameters/{method_name}")
 def get_parameters_for_apply_method(method_name: specs.AvailableMethods):
-    if method_name == specs.AvailableMethods.DROP_DUPLICATES or\
-            method_name == specs.AvailableMethods.DROP_NA or\
+    if method_name == specs.AvailableMethods.DROP_DUPLICATES or \
+            method_name == specs.AvailableMethods.DROP_NA or \
             method_name == specs.AvailableMethods.DROP_COLUMNS or \
-            method_name == specs.AvailableMethods.FILL_MEAN or\
-            method_name == specs.AvailableMethods.FILL_MEDIAN or\
-            method_name == specs.AvailableMethods.FILL_MOST_FREQUENT or\
-            method_name == specs.AvailableMethods.FILL_BFILL or\
-            method_name == specs.AvailableMethods.FILL_FFILL or\
-            method_name == specs.AvailableMethods.FILL_INTERPOLATION or\
-            method_name == specs.AvailableMethods.FILL_LINEAR_IMPUTER or\
+            method_name == specs.AvailableMethods.FILL_MEAN or \
+            method_name == specs.AvailableMethods.FILL_MEDIAN or \
+            method_name == specs.AvailableMethods.FILL_MOST_FREQUENT or \
+            method_name == specs.AvailableMethods.FILL_BFILL or \
+            method_name == specs.AvailableMethods.FILL_FFILL or \
+            method_name == specs.AvailableMethods.FILL_INTERPOLATION or \
+            method_name == specs.AvailableMethods.FILL_LINEAR_IMPUTER or \
             method_name == specs.AvailableMethods.FILL_KNN_IMPUTER:
         return {}
     elif method_name == specs.AvailableMethods.CHANGE_COLUMNS_TYPE:

@@ -7,9 +7,9 @@
         <script src="https://cdn.jsdelivr.net/gh/centrifugal/centrifuge-js@2.7.3/dist/centrifuge.min.js"></script>
         <script type="text/javascript">
             const container = document.getElementById('counter')
-            const centrifuge = new Centrifuge("ws://localhost:6060/centrifugo/connection/websocket");
+            const centrifuge = new Centrifuge("ws://localhost:8086/connection/websocket");
             // token with {"sub": user_id}
-            centrifuge.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjZWExYjQ2Yi1mM2QxLTRhNjQtYWE4OC0yMjU2ZjU2YTNkMmEifQ.U-d6Y6FitiA-RPEKMLFA-87UYHZ_TsSYzpL4YJTAKc8");
+            centrifuge.setToken("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI2NTM4MTljNDY1NjI3OTUyYjBkYTYxNDQifQ.Fm3Otyxf7thgaQxK4wXAirDJ_NATgg29PHJPiwSlqHY");
 
             centrifuge.on('connect', function(ctx) {
                 console.log("connected", ctx);
@@ -20,7 +20,7 @@
             });
 
             // channel special for user with user_id
-            centrifuge.subscribe("INFO#cea1b46b-f3d1-4a64-aa88-2256f56a3d2a", function(ctx) {
+            centrifuge.subscribe("INFO#653819c465627952b0da6144", function(ctx) {
                 container.innerHTML = ctx.data.value;
                 document.title = ctx.data.value;
             });

@@ -1,5 +1,5 @@
 try:
-	docker-compose up --build --force-recreate
+	docker-compose up --build --force-recreate --remove-orphans
 
 up:
 	docker-compose up --build -d --force-recreate

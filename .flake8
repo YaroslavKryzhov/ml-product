@@ -1,8 +1,0 @@
-[flake8]
-exclude =
-    .git,
-    __pycache__,
-    .venv,
-    .idea,
-    .vscode
-max-line-length = 99

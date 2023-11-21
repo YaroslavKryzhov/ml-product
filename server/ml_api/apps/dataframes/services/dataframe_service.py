@@ -33,6 +33,10 @@ class DataframeService:
         if existing_document is not None:
             raise errors.FilenameExistsUserError(filename)
 
+    async def _ensure_not_prediction(self, dataframe_id: PydanticObjectId):
+        if await self.repository.get_is_prediction(dataframe_id):
+            raise errors.DataFrameIsPredictionError(dataframe_id)
+
     # 1: CREATE OPERATIONS ----------------------------------------------------
     async def upload_new_dataframe(self, file,
                                    filename: str) -> DataFrameMetadata:
@@ -87,7 +91,8 @@ class DataframeService:
         return df.corr().to_dict()
 
     # 3: UPDATE OPERATIONS ----------------------------------------------------
-    async def set_filename(self, dataframe_id, new_filename):
+    async def set_filename(self, dataframe_id: PydanticObjectId,
+                           new_filename: str):
         return await self.repository.set_filename(dataframe_id, new_filename)
 
     async def set_target_feature(self, dataframe_id: PydanticObjectId,

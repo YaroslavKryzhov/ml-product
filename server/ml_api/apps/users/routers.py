@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from ml_api.apps.users.schemas import UserCreate, UserRead
 from ml_api.apps.users.model import User
 from ml_api.apps.users.services import fastapi_users, auth_backend, current_active_user
-from ml_api.common.security.token_utils import create_centrifugo_token
+from ml_api.common.pubsub.token_utils import create_centrifugo_token
 
 
 users_router = APIRouter(
