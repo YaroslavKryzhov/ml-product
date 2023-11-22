@@ -70,9 +70,11 @@ class DataframeMethodsService:
     async def get_feature_target_df_supervised(self,
                                                dataframe_id: PydanticObjectId
                                                ) -> (pd.DataFrame, pd.Series):
+        await self.dataframe_service._check_for_target_feature(dataframe_id)
         features, target = await self.get_feature_target_df(dataframe_id)
         if target is None:
-            raise errors.TargetNotFoundSupervisedLearningError(dataframe_id)
+            raise errors.TargetNotFoundSupervisedLearningCRITICALError(
+                dataframe_id)
         return features, target
 
     async def get_feature_target_df(self, dataframe_id: PydanticObjectId

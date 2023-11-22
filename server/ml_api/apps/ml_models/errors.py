@@ -6,6 +6,17 @@ from beanie import PydanticObjectId
 from ml_api.apps.ml_models import specs
 
 
+class HyperoptNotAvailableError(HTTPException):
+    """
+    Exception raised when hyperopt is turned off.
+    """
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Hyperopt params searching is turned off."
+        )
+
+
 # REPOSITORY ERRORS------------------------------------------------------------
 # These exceptions indicate issues with accessing or managing models in a repository.
 class ModelNotFoundError(HTTPException):

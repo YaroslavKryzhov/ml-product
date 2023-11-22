@@ -29,18 +29,11 @@ from ml_api.apps.ml_models.model import ModelMetadata
 from ml_api.apps.training_reports.model import Report
 from ml_api.apps.jobs.model import BackgroundJob
 
-if config.STAGE.upper() == 'PRODUCTION':
-    docs_url = None
-    openapi_url = None
-else:
-    docs_url = config.DOCS_URL
-    openapi_url = config.OPENAPI_URL
-
 app = FastAPI(
     title=config.PROJECT_NAME,
     version=config.VERSION,
-    docs_url=docs_url,
-    openapi_url=openapi_url,
+    docs_url=config.DOCS_URL,
+    openapi_url=config.OPENAPI_URL,
 )
 
 app.add_middleware(

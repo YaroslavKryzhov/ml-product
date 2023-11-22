@@ -10,9 +10,9 @@ class AvailableTaskTypes(Enum):
 
 
 class AvailableParamsTypes(Enum):
-    AUTO = 'auto'
-    CUSTOM = 'custom'
     DEFAULT = 'default'
+    CUSTOM = 'custom'
+    HYPEROPT = 'hyperopt'
 
 
 class ModelStatuses(Enum):

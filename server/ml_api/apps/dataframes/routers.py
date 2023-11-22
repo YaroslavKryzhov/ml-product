@@ -323,6 +323,7 @@ async def feature_importances(dataframe_id: PydanticObjectId,
         await DataframeService(user.id).get_dataframe_meta(dataframe_id)
         await DataframeService(user.id)._ensure_not_prediction(
             dataframe_id)
+        await DataframeService(user.id)._check_for_target_feature(dataframe_id)
         background_tasks.add_task(
             DataframeJobsManager(user.id).process_feature_importances_async,
             dataframe_id, task_type, selection_params)
@@ -359,9 +360,9 @@ async def delete_column(dataframe_id: PydanticObjectId,
 
 
 @dataframes_methods_router.put("/change_columns_type",
-                               summary="Сменить тип столбца",
+                               summary="Сменить тип столбцов",
                                response_model=model.DataFrameMetadata)
-async def change_column_type(dataframe_id: PydanticObjectId,
+async def change_columns_type(dataframe_id: PydanticObjectId,
                              column_names: List[str],
                              new_type: specs.ColumnType,
                              user: User = Depends(current_active_user)):

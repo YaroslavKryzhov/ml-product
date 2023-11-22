@@ -20,6 +20,11 @@ class ModelService:
         self.repository = ModelRepositoryManager(self._user_id)
         self.report_crud = TrainingReportCRUD(self._user_id)
 
+    async def _check_filename_exists(self, filename: str):
+        existing_model = await self.repository.get_by_filename(filename)
+        if existing_model is not None:
+            raise errors.FilenameExistsUserError(filename)
+
     def _check_composition_metas_for_same_params(self, first_model_meta,
             model_metas: List[ModelMetadata]):
         for meta in model_metas:
@@ -133,6 +138,7 @@ class ModelService:
 
     # 3: UPDATE OPERATIONS ----------------------------------------------------
     async def set_filename(self, model_id, new_model_name):
+        await self._check_filename_exists(new_model_name)
         return await self.repository.set_filename(model_id, new_model_name)
 
     # 4: DELETE OPERATIONS ----------------------------------------------------

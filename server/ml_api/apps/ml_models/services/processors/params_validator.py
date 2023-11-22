@@ -131,7 +131,7 @@ class ParamsValidationService:
             return {}
         if self.params_type == specs.AvailableParamsTypes.CUSTOM:
             return self.model_params
-        if self.params_type == specs.AvailableParamsTypes.AUTO:
+        if self.params_type == specs.AvailableParamsTypes.HYPEROPT:
             hyperopt_model_params = await HyperoptService(self._user_id, self.dataframe_id
                 ).search_params(self.task_type, self.model_type)
             return hyperopt_model_params.params

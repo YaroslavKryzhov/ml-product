@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from ml_api import config
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.model import User
-from ml_api.apps.ml_models import schemas, specs, model
+from ml_api.apps.ml_models import schemas, specs, model, errors
 from ml_api.apps.ml_models.services.model_service import ModelService
 from ml_api.apps.ml_models.services.fit_predict_service import ModelFitPredictService
 from ml_api.apps.ml_models.services.jobs_manager import ModelJobsManager
@@ -139,6 +139,9 @@ async def train_model(model_name: str,
         - **test_size**: размер валидационной выборки (классификация/регрессия)
         - **stratify**: делать ли стратификацию (при классификации)
     """
+    if not config.USE_HYPEROPT and params_type == specs.AvailableParamsTypes.HYPEROPT:
+        raise errors.HyperoptNotAvailableError()
+
     model_meta = await ModelService(user.id).create_model(
         model_name=model_name,
         dataframe_id=dataframe_id,

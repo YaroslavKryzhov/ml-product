@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from sklearn.feature_selection import VarianceThreshold, SelectKBest
 from sklearn.feature_selection import f_classif, f_regression
 from sklearn.feature_selection import SelectPercentile, SelectFpr, SelectFdr, \
-    SelectFwe, RFE, SelectFromModel, SequentialFeatureSelector
+    SelectFwe, RFE, SequentialFeatureSelector
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 import pandas as pd
@@ -73,7 +73,7 @@ class FeatureSelector:
             try:
                 support = self._methods_map[method_name](params)
             except Exception as err:
-                print(traceback.format_exc())
+                # print(traceback.format_exc())
                 error_type = type(err).__name__
                 error_description = str(err)
                 raise errors.SelectorProcessingError(

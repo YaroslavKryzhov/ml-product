@@ -2,8 +2,9 @@ from typing import List, Optional
 
 from beanie import PydanticObjectId
 from fastapi.responses import FileResponse
+from pymongo.errors import DuplicateKeyError
 
-from ml_api.apps.ml_models import specs, schemas
+from ml_api.apps.ml_models import specs, schemas, errors
 from ml_api.apps.ml_models.model import ModelMetadata
 from ml_api.apps.ml_models.repositories.meta_repository import ModelMetaCRUD
 from ml_api.apps.ml_models.repositories.file_repository import ModelFileCRUD
@@ -73,6 +74,8 @@ class ModelRepositoryManager:
         return model_meta
 
     # 2: GET METADATA OPERATIONS ----------------------------------------------
+    async def get_by_filename(self, filename: str) -> ModelMetadata:
+        return await self.meta_repository.get_by_filename(filename)
 
     async def get_model_meta(self, model_id: PydanticObjectId
                              ) -> ModelMetadata:

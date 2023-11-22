@@ -61,7 +61,7 @@ class ModelTrainerService:
         try:
             model_training_result = await process_train(features, target)
         except Exception as err:
-            print(traceback.format_exc())
+            # print(traceback.format_exc())
             error_type = type(err).__name__
             error_description = str(err)
             raise errors.ModelTrainingError(f"{error_type}: {error_description}")

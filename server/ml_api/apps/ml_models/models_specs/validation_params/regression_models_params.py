@@ -78,7 +78,6 @@ class BaggingRegressorParams(BaseModel):
 
 class XGBRegressorParams(BaseModel):
     booster: Literal['gbtree', 'gblinear', 'dart'] = 'gbtree'
-    verbosity: conint(ge=0, le=3) = 1
     gamma: confloat(ge=0) = 0
     max_depth: conint(ge=1) = 6
     min_child_weight: confloat(ge=0) = 1
@@ -135,7 +134,6 @@ class SGDRegressorParams(BaseModel):
     max_iter: Optional[conint(ge=1)] = None
     tol: Optional[confloat(ge=0)] = None
     shuffle: bool = True
-    # verbose: int = 0
     epsilon: confloat(ge=0) = 0.1
     random_state: Optional[int] = None
     learning_rate: Literal['constant', 'optimal', 'invscaling', 'adaptive'] = 'optimal'

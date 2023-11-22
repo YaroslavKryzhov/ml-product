@@ -53,7 +53,7 @@ class HyperoptService:
         try:
             best_params = space_eval(search_space, best)
         except Exception as err:
-            print(traceback.format_exc())
+            # print(traceback.format_exc())
             error_type = type(err).__name__
             error_description = str(err)
             raise errors.ParamsSearchingError(

@@ -1,7 +1,7 @@
 import traceback
 
 from beanie import PydanticObjectId
-
+from fastapi import HTTPException
 
 from ml_api.apps.jobs.services import BackgroundJobsService
 from ml_api.apps.jobs.model import BackgroundJob
@@ -17,8 +17,17 @@ class JobsManager:
     def _publish_job(self, job_info: BackgroundJob):
         self.pubsub.publish_to_channel(job_info)
 
-    async def _process_error(self, err, job):
-        print(traceback.format_exc())
+    async def _process_http_exception(self, err: HTTPException,
+                                      job: BackgroundJob):
+        # print(traceback.format_exc())
+        error_type = type(err).__name__
+        error_description = str(err.detail)
+        message = f"{error_type}: {error_description}"
+        job_info = await self.job_service.error(job.id, message)
+        return job_info
+
+    async def _process_exception(self, err: Exception, job: BackgroundJob):
+        # print(traceback.format_exc())
         error_type = type(err).__name__
         error_description = str(err)
         message = f"{error_type}: {error_description}"

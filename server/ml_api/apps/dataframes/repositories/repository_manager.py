@@ -3,11 +3,12 @@ from typing import List, Optional
 from beanie import PydanticObjectId
 from fastapi.responses import FileResponse
 import pandas as pd
+from pymongo.errors import DuplicateKeyError
 
 from ml_api.apps.dataframes.repositories.meta_repository import DataFrameMetaCRUD
 from ml_api.apps.dataframes.repositories.file_repository import DataFrameFileCRUD
 from ml_api.apps.dataframes.model import DataFrameMetadata
-from ml_api.apps.dataframes import schemas
+from ml_api.apps.dataframes import schemas, errors
 
 
 class DataframeRepositoryManager:

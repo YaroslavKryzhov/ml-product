@@ -29,6 +29,12 @@ class ModelMetaCRUD:
             ModelMetadata.dataframe_id == dataframe_id).to_list()
         return models
 
+    async def get_by_filename(self, filename: str) -> ModelMetadata:
+        model_meta = await ModelMetadata.find_one(
+            ModelMetadata.filename == filename,
+            ModelMetadata.user_id == self.user_id)
+        return model_meta
+
     async def create(self,
                      filename: str,
                      dataframe_id: PydanticObjectId,

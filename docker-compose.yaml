@@ -6,50 +6,34 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    command: "poetry run uvicorn ml_api.main:app --host 0.0.0.0 --port 8006 --reload"
-#    env_file:
-#      - .env
-    ports:
-      - "8006:8006"
+    command: "poetry run uvicorn ml_api.main:app --workers 17 --host 0.0.0.0 --port 8006 --reload"
+#    command: "poetry run gunicorn -w 6 -k uvicorn.workers.UvicornWorker ml_api.main:app --bind 0.   0.0.0:8006 --reload"
+    env_file:
+      - .env
     volumes:
       - ./volumes/server_data:/data/
       - ./server:/server
     depends_on:
       - mongo_db
+      - centrifugo
     networks:
       - ml-net
     restart: unless-stopped
 
-#  worker:
-#    container_name: "ml-product-celery-worker"
-#    build:
-#      context: ./server
-#      dockerfile: Dockerfile
-#    command: "poetry run celery -A ml_api.celery_worker.app_celery worker --loglevel=info"
-##    env_file:
-##      - .env
-#    volumes:
-#      - ./volumes/server_data:/data/
-#      - ./server:/server
-#    networks:
-#      - ml-net
-#    restart: unless-stopped
-
-#  worker:
-#    container_name: "ml-product-worker"
-#    build:
-#      context: ./server
-#      dockerfile: Dockerfile
-#    command: "taskiq worker ml_api.common.taskiq.broker:broker"
-##    command: [ taskiq, worker, ml_api.taskiq.broker:broker ]
-##    env_file:
-##      - .env
-#    volumes:
-#      - ./volumes/server_data:/data/
-#      - ./server:/server
-#    networks:
-#      - ml-net
-#    restart: unless-stopped
+  mongo_db:
+    container_name: "ml-product-mongo"
+    build:
+      context: ./deploy/mongodb
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./volumes/mongo_data:/data/db
+    ports:
+      - "${MONGO_PORT_OUT}:27017"
+    networks:
+      - ml-net
+    restart: unless-stopped
 
   centrifugo:
     container_name: "ml-product-centrifugo"
@@ -57,8 +41,8 @@ services:
     volumes:
       - ./deploy/centrifugo/config.json:/centrifugo/config.json
     command: centrifugo -c config.json
-    ports:
-      - "8086:8000"
+    env_file:
+      - .env
     ulimits:
       nofile:
         soft: 65535
@@ -66,38 +50,7 @@ services:
     networks:
       - ml-net
 
-  mongo_db:
-    image: mongo:5.0.3-focal
-    container_name: "ml-product-mongo"
-    logging:
-      driver: "none"
-    environment:
-      - MONGO_INITDB_db=think_mongo
-      - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=Abrakadabrasdhjbvnse
-#    env_file:
-#      - .env # TODO: настроить энвы
-    volumes:
-      - ./deploy/mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
-      - ./volumes/mongo_data:/data/db
-    ports:
-      - "27018:27017"
-    networks:
-      - ml-net
-    restart: unless-stopped
-
-#  redis:
-#    container_name: "ml-product-redis"
-#    image: redis:6-alpine
-##    env_file:
-##      - .env
-#    ports:
-#      - "6379:6379"
-#    networks:
-#      - ml-net
-#    restart: unless-stopped
-##
-#  client:
+  #  client:
 #    container_name: "ml-product-client"
 #    build:
 #      context: ./client
@@ -113,6 +66,8 @@ services:
       context: ./deploy/nginx
       dockerfile: Dockerfile
     container_name: "ml-product-nginx"
+    env_file:
+      - .env
     depends_on:
       - server
 #      - client
@@ -121,7 +76,7 @@ services:
       - ./volumes/client:/usr/share/nginx/html:ro
     command: "/bin/sh -c 'while :; do sleep 5h & wait $${!}; nginx -s reload; done & nginx-debug -g \"daemon off;\"'"
     ports:
-      - "6060:80"
+      - "${API_PORT_OUT}:80"
     networks:
       - ml-net
 

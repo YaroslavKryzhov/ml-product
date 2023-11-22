@@ -16,7 +16,6 @@ class PubSub:
     def _publish(self, channel_name: str, user_id: str, job_type: str,
                  object_id: str, status: str, message: str) -> None:
         channel = f"{channel_name}#{user_id}"
-        logger.error(channel)
         data = {
             "job_type": job_type,
             "object_id": object_id,

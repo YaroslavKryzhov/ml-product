@@ -7,9 +7,8 @@ from pydantic import ValidationError
 from sklearn import impute, preprocessing
 from sklearn.experimental import enable_iterative_imputer  # noqa
 
-from ml_api.apps.dataframes import model, schemas, specs
+from ml_api.apps.dataframes import model, schemas, specs, errors
 from ml_api.apps.dataframes.specs import AvailableMethods as Methods
-from ml_api.apps.dataframes import errors
 
 
 class MethodsApplier:
@@ -77,7 +76,7 @@ class MethodsApplier:
             final_params = self._methods_map[method_name](
                 method_columns, validated_params)
         except Exception as err:
-            print(traceback.format_exc())
+            # print(traceback.format_exc())
             error_type = type(err).__name__
             error_description = str(err)
             raise errors.ApplyingMethodError(

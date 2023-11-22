@@ -54,7 +54,7 @@ class CompositionValidationService:
         try:
             composition_validation_result = await process_validation(features, target)
         except Exception as err:
-            print(traceback.format_exc())
+            # print(traceback.format_exc())
             error_type = type(err).__name__
             error_description = str(err)
             raise errors.CompositionValidationError(f"{error_type}: {error_description}")

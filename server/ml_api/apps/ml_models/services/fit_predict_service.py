@@ -32,7 +32,7 @@ def handle_exceptions(method):
         try:
             return await method(self, model_meta, *args, **kwargs)
         except Exception as err:
-            await self._process_error(model_meta, err)
+            await self._process_exception(model_meta, err)
             raise
     return wrapper
 

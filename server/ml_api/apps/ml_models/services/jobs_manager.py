@@ -1,4 +1,5 @@
 from beanie import PydanticObjectId
+from fastapi import HTTPException
 
 from ml_api.apps.ml_models.model import ModelMetadata
 from ml_api.apps.ml_models.services.fit_predict_service import \
@@ -22,8 +23,10 @@ class ModelJobsManager(JobsManager):
         try:
             await ModelFitPredictService(
                 self._user_id).train_model(model_meta=model_meta)
+        except HTTPException as err:
+            job_info = await self._process_http_exception(err, job)
         except Exception as err:
-            job_info = await self._process_error(err, job)
+            job_info = await self._process_exception(err, job)
         else:
             job_info = await self.job_service.complete(job.id)
         self._publish_job(job_info)
@@ -41,8 +44,10 @@ class ModelJobsManager(JobsManager):
             await ModelFitPredictService(
                 self._user_id).train_composition(
                 composition_meta=composition_meta)
+        except HTTPException as err:
+            job_info = await self._process_http_exception(err, job)
         except Exception as err:
-            job_info = await self._process_error(err, job)
+            job_info = await self._process_exception(err, job)
         else:
             job_info = await self.job_service.complete(job.id)
         self._publish_job(job_info)
@@ -66,8 +71,10 @@ class ModelJobsManager(JobsManager):
                 model_id=model_id,
                 prediction_name=prediction_name,
                 apply_pipeline=apply_pipeline)
+        except HTTPException as err:
+            job_info = await self._process_http_exception(err, job)
         except Exception as err:
-            job_info = await self._process_error(err, job)
+            job_info = await self._process_exception(err, job)
         else:
             job_info = await self.job_service.complete(job.id)
         self._publish_job(job_info)

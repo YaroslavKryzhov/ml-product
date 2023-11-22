@@ -19,7 +19,7 @@ class ModelPredictorService:
         try:
             predictions = pd.Series(self.model.predict(features), name=self.target_column)
         except Exception as err:
-            print(traceback.format_exc())
+            # print(traceback.format_exc())
             error_type = type(err).__name__
             error_description = str(err)
             raise errors.ModelPredictionError(f"{error_type}: {error_description}")

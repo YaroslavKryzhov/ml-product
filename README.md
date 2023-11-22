@@ -31,16 +31,23 @@ make down
 ---
 ## После запуска сервисы доступны по:
 
-### API Swagger: http://localhost:6060/api/v1/docs
+### API Swagger: http://localhost:443/api/v1/docs
 
-### Интерфейс: http://localhost:6060
+### Интерфейс: http://localhost:443
 
-### Канал для вебсокета: ws://localhost:6060/centrifugo/connection/websocket
+### Канал для вебсокета: ws://localhost:443/centrifugo/connection/websocket
 
 ---
+### Используемые технологии:
 
-FastApiUsers: https://fastapi-users.github.io/fastapi-users/11.0/
-Beanie: https://beanie-odm.dev/tutorial/indexes/
+- FastAPI: https://fastapi.tiangolo.com/
+- FastApiUsers: https://fastapi-users.github.io/fastapi-users/11.0/
+- Beanie: https://beanie-odm.dev/tutorial/indexes/
+- Centrifugo: https://centrifugal.dev/
+- Docker: https://www.docker.com/
+- Docker-compose: https://docs.docker.com/compose/
+- Nginx: https://nginx.org/ru/
+- Poetry: https://python-poetry.org/
 
 Contacts: https://github.com/KirillKosvintsev
 

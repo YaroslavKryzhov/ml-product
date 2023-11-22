@@ -89,7 +89,7 @@ class DataFrameAlreadyRootError(HTTPException):
         )
 
 
-class TargetNotFoundSupervisedLearningError(HTTPException):
+class TargetNotFoundError(HTTPException):
     """
     Exception raised when a target column is required for an operation
     but not found in the dataframe metadata.
@@ -101,6 +101,18 @@ class TargetNotFoundSupervisedLearningError(HTTPException):
         )
 
 
+class TargetNotFoundSupervisedLearningCRITICALError(HTTPException):
+    """
+    Exception raised when a target column is required for an operation
+    but not found in the dataframe metadata.
+    """
+    def __init__(self, dataframe_id: PydanticObjectId):
+        super().__init__(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"CRITICAL: Dataframe with id {dataframe_id} returns empty target Series."
+        )
+
+
 class SetTargetNotFoundInMetadataError(HTTPException):
     """
     Exception raised when trying to set a target column
@@ -109,7 +121,7 @@ class SetTargetNotFoundInMetadataError(HTTPException):
     def __init__(self, dataframe_id: PydanticObjectId, target_name: str):
         super().__init__(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Cannot set target_column: Column {target_name} not found "
+            detail=f"Cannot set target_column: Column '{target_name}' not found "
                    f"in dataframe with id {dataframe_id}."
         )
 

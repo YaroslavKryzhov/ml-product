@@ -86,7 +86,6 @@ class BaggingClassifierParams(BaseModel):
 
 class XGBClassifierParams(BaseModel):
     booster: Literal['gbtree', 'gblinear', 'dart'] = 'gbtree'
-    verbosity: conint(ge=0, le=3) = 1
     # n_jobs: int = 1
     gamma: confloat(ge=0) = 0
     max_depth: conint(ge=1) = 6
@@ -122,7 +121,6 @@ class LGBMClassifierParams(BaseModel):
     reg_lambda: confloat(ge=0) = 0.0
     random_state: Optional[int] = None
     # n_jobs: int = -1
-    silent: bool = True
     importance_type: Literal['split', 'gain'] = 'split'
 
 
@@ -135,7 +133,6 @@ class CatBoostClassifierParams(BaseModel):
     rsm: Optional[confloat(ge=0, le=1)] = None
     loss_function: Literal['Logloss', 'CrossEntropy', 'MultiClass', 'MultiClassOneVsAll'] = 'Logloss'
     random_seed: Optional[int] = None
-    # verbose: Optional[bool] = None
     thread_count: Optional[int] = None
 
 
