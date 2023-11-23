@@ -47,12 +47,12 @@ class CompositionValidationService:
             except AttributeError:
                 return None
 
-    async def validate_composition(self, composition_meta, features, target) -> ModelTrainingResults:
+    def validate_composition(self, composition_meta, features, target) -> ModelTrainingResults:
         if self.task_type not in self._task_to_method_map.keys():
             raise errors.UnknownTaskTypeError(self.task_type.value)
         process_validation = self._task_to_method_map[self.task_type]
         try:
-            composition_validation_result = await process_validation(features, target)
+            composition_validation_result = process_validation(features, target)
         except Exception as err:
             # print(traceback.format_exc())
             error_type = type(err).__name__
@@ -60,7 +60,7 @@ class CompositionValidationService:
             raise errors.CompositionValidationError(f"{error_type}: {error_description}")
         return composition_validation_result
 
-    async def _process_classification(self, features, target) -> ModelTrainingResults:
+    def _process_classification(self, features, target) -> ModelTrainingResults:
         num_classes = target.nunique()
         if num_classes < 2:
             raise errors.OneClassClassificationError(self.dataframe_id)
@@ -90,7 +90,7 @@ class CompositionValidationService:
             results=[(report, results_df)],
         )
 
-    async def _process_regression(self, features, target) -> ModelTrainingResults:
+    def _process_regression(self, features, target) -> ModelTrainingResults:
         if self.composition_type == specs.AvailableModelTypes.STACKING_REGRESSOR:
             f_train, f_valid, t_train, t_valid = self._get_train_test_split(
                 features, target)

@@ -21,10 +21,12 @@ hyperopt = "^0.2.7"
 cent = "^4.1.0"
 starlette = "^0.16.0"
 pymongo = "^4.3.3"
-beanie = "^1.19.2"
+#beanie = "^1.19.2"
 xgboost = "^2.0.2"
 lightgbm = "^4.1.0"
 catboost = "^1.0.5"
+bunnet = "^1.2.0"
+celery = "^5.3.6"
 
 [build-system]
 requires = ["poetry-core"]

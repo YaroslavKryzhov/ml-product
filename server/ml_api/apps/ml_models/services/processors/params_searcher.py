@@ -3,7 +3,7 @@ import traceback
 from hyperopt import fmin, tpe, STATUS_OK, space_eval
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import silhouette_score
-from beanie.odm.fields import PydanticObjectId
+from bunnet import PydanticObjectId
 
 
 from ml_api.apps.ml_models import schemas, errors
@@ -40,9 +40,9 @@ class HyperoptService:
             TaskTypes.CLUSTERING: errors.UnknownClusteringModelError,
         }
 
-    async def search_params(self, task_type: TaskTypes,
+    def search_params(self, task_type: TaskTypes,
                             model_type: ModelTypes) -> schemas.ModelParams:
-        await self._prepare_data(task_type)
+        self._prepare_data(task_type)
 
         search_space = self.get_model_params_search_space(task_type, model_type)
 
@@ -61,13 +61,13 @@ class HyperoptService:
 
         return schemas.ModelParams(model_type=model_type, params=best_params)
 
-    async def _prepare_data(self, task_type: TaskTypes):
+    def _prepare_data(self, task_type: TaskTypes):
         if task_type in [TaskTypes.CLASSIFICATION,
                          TaskTypes.REGRESSION]:
-            self.features, self.target = await self.dataframe_service.\
+            self.features, self.target = self.dataframe_service.\
                 get_feature_target_df_supervised(self.dataframe_id)
         elif task_type == TaskTypes.CLUSTERING:
-            self.features, _ = await self.dataframe_service.\
+            self.features, _ = self.dataframe_service.\
                 get_feature_target_df(self.dataframe_id)
         elif task_type in [TaskTypes.OUTLIER_DETECTION,
                          TaskTypes.DIMENSIONALITY_REDUCTION]:

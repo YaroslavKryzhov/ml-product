@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from beanie import PydanticObjectId
+from bunnet import PydanticObjectId
 
 
 class JobNotFoundError(HTTPException):

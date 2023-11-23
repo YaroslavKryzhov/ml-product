@@ -16,6 +16,7 @@ class AvailableParamsTypes(Enum):
 
 
 class ModelStatuses(Enum):
+    WAITING = 'Waiting'
     BUILDING = 'Building'
     TRAINING = 'Training'
     TRAINED = 'Trained'

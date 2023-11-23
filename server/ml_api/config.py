@@ -18,15 +18,22 @@ if STAGE == 'PRODUCTION':
 
 MONGO_USER = config('MONGO_USER', cast=str)
 MONGO_PASSWORD = config('MONGO_PASSWORD', cast=str)
-MONGO_DEFAULT_DB_NAME = config('MONGO_INITDB_db', cast=str, default="ml_product_mongo")
-MONGO_DATABASE_URI = f'mongodb://{MONGO_USER}:{MONGO_PASSWORD}@mongo_db:27017/{MONGO_DEFAULT_DB_NAME}'
+MONGO_DB_NAME = config('MONGO_INITDB_db', cast=str, default="ml_product_mongo")
+MONGO_DATABASE_URI = f'mongodb://{MONGO_USER}:{MONGO_PASSWORD}@mongo_db:27017/{MONGO_DB_NAME}?authSource={MONGO_DB_NAME}'
 
 CENTRIFUGO_PUB_API = "http://centrifugo:8000/api"
 CENTRIFUDO_API_KEY = config("CENTRIFUDO_API_KEY", cast=str)
 CENTRIFUGO_HMAC = config("CENTRIFUGO_HMAC", cast=str)
 
+RABBITMQ_DEFAULT_USER = config('RABBITMQ_DEFAULT_USER', cast=str)
+RABBITMQ_DEFAULT_PASS = config('RABBITMQ_DEFAULT_PASS', cast=str)
+
+# Celery
+BROKER_URI = f"amqp://{RABBITMQ_DEFAULT_USER}:{RABBITMQ_DEFAULT_PASS}@rabbitmq:5672"
+BACKEND_URI = MONGO_DATABASE_URI
+
 USER_SECRET = config("USER_SECRET", cast=str)
 
 ROOT_DIR = '/data'
-RUN_ASYNC_TASKS = True
+USE_CELERY = True
 USE_HYPEROPT = False

@@ -1,14 +1,14 @@
 from typing import List, Optional
 
 import pandas as pd
-from beanie import PydanticObjectId
+from bunnet import PydanticObjectId
 
 from ml_api.apps.dataframes import specs, schemas, errors
 from ml_api.apps.dataframes.model import DataFrameMetadata
 from ml_api.apps.dataframes.repositories.repository_manager import \
     DataframeRepositoryManager
 from ml_api.apps.dataframes.services.processors.methods_applier import \
-    MethodsApplier
+    MethodsApplier, MethodsApplierValidator
 from ml_api.apps.dataframes.services.processors.feature_selector import \
     FeatureSelector
 from ml_api.apps.dataframes.services.dataframe_service import \
@@ -32,21 +32,21 @@ class DataframeMethodsService:
             raise errors.ColumnsNotEqualCriticalError(df_columns_list,
                                                       columns_list)
 
-    async def _get_df_and_meta(self, dataframe_id: PydanticObjectId):
-        dataframe_meta = await self.repository.get_dataframe_meta(dataframe_id)
-        df = await self.repository.read_pandas_dataframe(dataframe_id)
+    def _get_df_and_meta(self, dataframe_id: PydanticObjectId):
+        dataframe_meta = self.repository.get_dataframe_meta(dataframe_id)
+        df = self.repository.read_pandas_dataframe(dataframe_id)
         columns_list = dataframe_meta.feature_columns_types.numeric + \
-            dataframe_meta.feature_columns_types.categorical
+                       dataframe_meta.feature_columns_types.categorical
         self._check_columns_consistency(df, columns_list)
         return dataframe_meta, df
 
-    async def get_feature_target_column_names(self,
-                                              dataframe_id: PydanticObjectId
-                                              ) -> (List[str], Optional[str]):
+    def get_feature_target_column_names(self,
+                                        dataframe_id: PydanticObjectId
+                                        ) -> (List[str], Optional[str]):
         """Returns list of feature columns and target column name.
         If target column is not set, returns None instead of target column name.
         If feature columns contain categorical column, raises ColumnNotNumericError."""
-        dataframe_meta = await self.repository.get_dataframe_meta(dataframe_id)
+        dataframe_meta = self.repository.get_dataframe_meta(dataframe_id)
         column_types = dataframe_meta.feature_columns_types
         target_column = dataframe_meta.target_feature
         if target_column is not None:
@@ -62,26 +62,27 @@ class DataframeMethodsService:
             # если среди столбцов остались категориальные
             # (после удаления таргета) - поднимаем 500-ую
             raise errors.CategoricalColumnFoundCriticalError(dataframe_id,
-                column_types.categorical)
-        if len(column_types.categorical) == 0 and len(column_types.numeric) == 0:
+                                                             column_types.categorical)
+        if len(column_types.categorical) == 0 and len(
+                column_types.numeric) == 0:
             raise errors.ColumnTypesNotDefinedCriticalError(dataframe_id)
         return column_types.numeric, target_column
 
-    async def get_feature_target_df_supervised(self,
-                                               dataframe_id: PydanticObjectId
-                                               ) -> (pd.DataFrame, pd.Series):
-        await self.dataframe_service._check_for_target_feature(dataframe_id)
-        features, target = await self.get_feature_target_df(dataframe_id)
+    def get_feature_target_df_supervised(self,
+                                         dataframe_id: PydanticObjectId
+                                         ) -> (pd.DataFrame, pd.Series):
+        self.dataframe_service._check_for_target_feature(dataframe_id)
+        features, target = self.get_feature_target_df(dataframe_id)
         if target is None:
             raise errors.TargetNotFoundSupervisedLearningCRITICALError(
                 dataframe_id)
         return features, target
 
-    async def get_feature_target_df(self, dataframe_id: PydanticObjectId
-                                    ) -> (pd.DataFrame, Optional[pd.Series]):
-        feature_columns, target_column = await self.get_feature_target_column_names(
+    def get_feature_target_df(self, dataframe_id: PydanticObjectId
+                              ) -> (pd.DataFrame, Optional[pd.Series]):
+        feature_columns, target_column = self.get_feature_target_column_names(
             dataframe_id=dataframe_id)
-        df = await self.repository.read_pandas_dataframe(dataframe_id)
+        df = self.repository.read_pandas_dataframe(dataframe_id)
         if target_column is not None:
             # если есть таргет - возвращаем его отдельно
             df_columns_list = feature_columns + [target_column]
@@ -94,87 +95,83 @@ class DataframeMethodsService:
             self._check_columns_consistency(df, feature_columns)
             return df, None
 
-    async def process_feature_importances(
+    def _process_feature_importances(
             self,
             dataframe_id: PydanticObjectId,
             task_type: specs.FeatureSelectionTaskType,
-            feature_selection_params: List[schemas.SelectorMethodParams]
+            validated_params: List[schemas.SelectorMethodParams]
     ) -> schemas.FeatureSelectionSummary:
-        await self.dataframe_service._ensure_not_prediction(dataframe_id)
-        features, target = await self.get_feature_target_df_supervised(
+        features, target = self.get_feature_target_df_supervised(
             dataframe_id)
         selector = FeatureSelector(
-            features, target, task_type, feature_selection_params)
-        await self.repository.set_feature_importance_report(
+            features, target, task_type, validated_params)
+        self.repository.set_feature_importance_report(
             dataframe_id, selector.get_empty_summary())
         try:
             summary = selector.get_summary()
-            await self.repository.set_feature_importance_report(
+            self.repository.set_feature_importance_report(
                 dataframe_id, summary)
             return summary
         except Exception:
-            await self.repository.set_feature_importance_report(
+            self.repository.set_feature_importance_report(
                 dataframe_id, None)
             raise
 
-    async def apply_change_columns_type(self, dataframe_id: PydanticObjectId,
-                            method_params: List[schemas.ApplyMethodParams]
+    def change_columns_type(self, dataframe_id: PydanticObjectId,
+                            method_params: List[
+                                schemas.ApplyMethodParams]
                             ) -> DataFrameMetadata:
-        await self.dataframe_service._ensure_not_prediction(dataframe_id)
-        dataframe_meta, df = await self._get_df_and_meta(dataframe_id)
+        self.dataframe_service._ensure_not_prediction(dataframe_id)
+        validated_params = MethodsApplierValidator().validate_params(
+            method_params)
 
-        new_df, new_meta = await self._apply_methods_to_df(
-            df, dataframe_meta, method_params)
+        new_df, new_meta = self._apply_methods_to_df(
+            dataframe_id, validated_params)
 
-        await self.repository.save_pandas_dataframe(dataframe_id, new_df)
-        await self.repository.set_feature_column_types(
+        self.repository.save_pandas_dataframe(dataframe_id, new_df)
+        self.repository.set_feature_column_types(
             dataframe_id, new_meta.feature_columns_types)
-        return await self.repository.set_pipeline(
+        return self.repository.set_pipeline(
             dataframe_id, new_meta.pipeline)
 
-    async def apply_changing_methods(
-            self, dataframe_id: PydanticObjectId,
-            method_params: List[schemas.ApplyMethodParams],
-            new_filename: str = None) -> DataFrameMetadata:
-        await self.dataframe_service._ensure_not_prediction(dataframe_id)
-        await self.dataframe_service._check_filename_exists(new_filename)
-        dataframe_meta, df = await self._get_df_and_meta(dataframe_id)
+    def delete_column(self, dataframe_id: PydanticObjectId,
+                      method_params: List[
+                          schemas.ApplyMethodParams],
+                      new_filename: str = None
+                      ) -> DataFrameMetadata:
+        self.dataframe_service._ensure_not_prediction(dataframe_id)
+        validated_params = MethodsApplierValidator().validate_params(
+            method_params)
+        return self._process_changing_methods(
+            dataframe_id, validated_params, new_filename)
 
-        new_df, new_meta = await self._apply_methods_to_df(
-            df, dataframe_meta, method_params)
-
-        return await self.dataframe_service.save_transformed_dataframe(
-            changed_df_meta=new_meta, new_df=new_df, new_filename=new_filename)
-
-    async def _apply_methods_to_df(
+    def _process_changing_methods(
             self,
-            df: pd.DataFrame,
-            dataframe_meta: DataFrameMetadata,
-            method_params: List[schemas.ApplyMethodParams]
-    ) -> (pd.DataFrame, DataFrameMetadata):
-        methods_applier = MethodsApplier(df, dataframe_meta)
-        for method_params in method_params:
-            methods_applier.apply_method(method_params=method_params)
-        return methods_applier.get_df(), methods_applier.get_meta()
-
-    async def copy_pipeline(self, id_from: PydanticObjectId,
-                            id_to: PydanticObjectId,
-                            new_filename: str) -> DataFrameMetadata:
-        await self.dataframe_service._check_filename_exists(new_filename)
-        new_df, new_meta = await self._copy_pipeline_common(id_from, id_to)
-        return await self.dataframe_service.save_transformed_dataframe(
+            dataframe_id: PydanticObjectId,
+            validated_params: List[schemas.ApplyMethodParams],
+            new_filename: str = None) -> DataFrameMetadata:
+        new_df, new_meta = self._apply_methods_to_df(
+            dataframe_id, validated_params)
+        return self.dataframe_service.save_transformed_dataframe(
             changed_df_meta=new_meta, new_df=new_df, new_filename=new_filename)
 
-    async def copy_pipeline_for_prediction(self, id_from: PydanticObjectId,
-                            id_to: PydanticObjectId) -> pd.DataFrame:
-        new_df, new_meta = await self._copy_pipeline_common(id_from, id_to)
+    def copy_pipeline_for_prediction(self, id_from: PydanticObjectId,
+                                     id_to: PydanticObjectId) -> pd.DataFrame:
+        self.dataframe_service._ensure_not_prediction(id_from)
+        self.dataframe_service._ensure_not_prediction(id_to)
+        pipeline_from_source_df = self.repository.get_pipeline(id_from)
+        validated_params = MethodsApplierValidator().validate_params(
+            pipeline_from_source_df)
+        new_df, _ = self._apply_methods_to_df(
+            id_to, validated_params)
         return new_df
 
-    async def _copy_pipeline_common(self, id_from, id_to):
-        await self.dataframe_service._ensure_not_prediction(id_from)
-        await self.dataframe_service._ensure_not_prediction(id_to)
-        pipeline_from_source_df = await self.repository.get_pipeline(id_from)
-        dataframe_meta, df = await self._get_df_and_meta(id_to)
-        new_df, new_meta = await self._apply_methods_to_df(
-            df, dataframe_meta, pipeline_from_source_df)
-        return new_df, new_meta
+    def _apply_methods_to_df(
+            self,
+            dataframe_id: PydanticObjectId,
+            validated_params: List[schemas.ApplyMethodParams]
+    ) -> (pd.DataFrame, DataFrameMetadata):
+        dataframe_meta, df = self._get_df_and_meta(dataframe_id)
+        methods_applier = MethodsApplier(df, dataframe_meta, validated_params)
+        methods_applier.apply_methods()
+        return methods_applier.get_df(), methods_applier.get_meta()

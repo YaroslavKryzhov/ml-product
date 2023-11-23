@@ -15,7 +15,7 @@ class ModelPredictorService:
         self.feature_columns = model_meta.feature_columns
         self.target_column = model_meta.target_column
 
-    async def predict(self, features: pd.DataFrame):
+    def predict(self, features: pd.DataFrame):
         try:
             predictions = pd.Series(self.model.predict(features), name=self.target_column)
         except Exception as err:

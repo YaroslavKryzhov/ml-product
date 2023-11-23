@@ -1,6 +1,6 @@
 from typing import List
 
-from beanie import PydanticObjectId
+from bunnet import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from fastapi.responses import JSONResponse
 
@@ -20,7 +20,7 @@ models_file_router = APIRouter(
 
 
 @models_file_router.get("/download", summary="Скачать модель")
-async def download_model(
+def download_model(
     model_id: PydanticObjectId,
     user: User = Depends(current_active_user),
 ):
@@ -29,12 +29,12 @@ async def download_model(
 
         - **model_id**: ID модели
     """
-    return await ModelService(user.id).download_model(model_id)
+    return ModelService(user.id).download_model(model_id)
 
 
 @models_file_router.put("/rename", summary="Переименовать модель",
                    response_model=model.ModelMetadata)
-async def rename_model(
+def rename_model(
     model_id: PydanticObjectId,
     new_model_name: str,
     user: User = Depends(current_active_user),
@@ -45,13 +45,13 @@ async def rename_model(
         - **model_id**: ID модели
         - **new_model_name**: новое имя модели
     """
-    return await ModelService(user.id).set_filename(
+    return ModelService(user.id).set_filename(
         model_id, new_model_name)
 
 
 @models_file_router.delete("",  summary="Удалить модель",
                            response_model=model.ModelMetadata)
-async def delete_model(
+def delete_model(
     model_id: PydanticObjectId,
     user: User = Depends(current_active_user),
 ):
@@ -60,7 +60,7 @@ async def delete_model(
 
         - **model_id**: ID модели
     """
-    return await ModelService(user.id).delete_model(model_id)
+    return ModelService(user.id).delete_model(model_id)
 
 
 models_metadata_router = APIRouter(
@@ -72,7 +72,7 @@ models_metadata_router = APIRouter(
 
 @models_metadata_router.get("", response_model=model.ModelMetadata,
     summary="Получить информацию о модели")
-async def read_model_info(
+def read_model_info(
     model_id: PydanticObjectId,
     user: User = Depends(current_active_user),
 ):
@@ -81,22 +81,22 @@ async def read_model_info(
 
         - **model_id**: ID модели
     """
-    return await ModelService(user.id).get_model_meta(model_id)
+    return ModelService(user.id).get_model_meta(model_id)
 
 
 @models_metadata_router.get("/all", response_model=List[model.ModelMetadata],
     summary="Получить информацию обо всех моделях пользователя")
-async def read_all_user_models(user: User = Depends(current_active_user)):
+def read_all_user_models(user: User = Depends(current_active_user)):
     """
         Возвращает информацию обо всех моделях пользователя
     """
-    return await ModelService(user.id).get_all_models_meta()
+    return ModelService(user.id).get_all_models_meta()
 
 
 @models_metadata_router.get("/by_dataframe",
                             response_model=List[model.ModelMetadata],
     summary="Получить информацию обо всех моделях обученных на датафрейме")
-async def read_all_user_models_by_dataframe(
+def read_all_user_models_by_dataframe(
         dataframe_id: PydanticObjectId,
         user: User = Depends(current_active_user)
 ):
@@ -106,7 +106,7 @@ async def read_all_user_models_by_dataframe(
 
         - **dataframe_id**: ID датафрейма
     """
-    return await ModelService(
+    return ModelService(
         user.id).get_all_models_meta_by_dataframe(dataframe_id=dataframe_id)
 
 
@@ -118,7 +118,7 @@ models_processing_router = APIRouter(
 
 
 @models_processing_router.post("/train")
-async def train_model(model_name: str,
+def train_model(model_name: str,
                 dataframe_id: PydanticObjectId,
                 task_type: specs.AvailableTaskTypes,
                 model_params: schemas.ModelParams,
@@ -142,7 +142,7 @@ async def train_model(model_name: str,
     if not config.USE_HYPEROPT and params_type == specs.AvailableParamsTypes.HYPEROPT:
         raise errors.HyperoptNotAvailableError()
 
-    model_meta = await ModelService(user.id).create_model(
+    model_meta = ModelService(user.id).create_model(
         model_name=model_name,
         dataframe_id=dataframe_id,
         task_type=task_type,
@@ -151,30 +151,30 @@ async def train_model(model_name: str,
         test_size=test_size,
         stratify=stratify)
 
-    if config.RUN_ASYNC_TASKS:
+    if config.USE_CELERY:
         background_tasks.add_task(
-            ModelJobsManager(user.id).train_model_async, model_meta)
+            ModelJobsManager(user.id).process_train_model_async, model_meta)
         return JSONResponse(
             status_code=202,
             content={
                 "message": "Задача принята и выполняется в фоновом режиме"}
         )
     else:
-        return await ModelFitPredictService(
+        return ModelFitPredictService(
             user.id).train_model(model_meta=model_meta)
 
 
 @models_processing_router.post("/build_composition")
-async def build_composition(composition_name: str,
+def build_composition(composition_name: str,
                       model_ids: List[PydanticObjectId],
                       composition_params: schemas.ModelParams,
                 background_tasks: BackgroundTasks,
                 user: User = Depends(current_active_user)):
-    composition_meta = await ModelService(user.id).create_composition(
+    composition_meta = ModelService(user.id).create_composition(
         composition_name=composition_name, model_ids=model_ids,
         composition_params=composition_params)
 
-    if config.RUN_ASYNC_TASKS:
+    if config.USE_CELERY:
         background_tasks.add_task(
             ModelJobsManager(user.id).build_composition_async, composition_meta)
         return JSONResponse(
@@ -183,12 +183,12 @@ async def build_composition(composition_name: str,
                 "message": "Задача принята и выполняется в фоновом режиме"}
         )
     else:
-        return await ModelFitPredictService(
+        return ModelFitPredictService(
             user.id).train_composition(composition_meta=composition_meta)
 
 
 @models_processing_router.put("/predict")
-async def predict_on_model(dataframe_id: PydanticObjectId,
+def predict_on_model(dataframe_id: PydanticObjectId,
             model_id: PydanticObjectId,
             prediction_name: str,
             background_tasks: BackgroundTasks,
@@ -206,9 +206,9 @@ async def predict_on_model(dataframe_id: PydanticObjectId,
         оригинальной выборки перед предсказанием.
         Если данные уже предобработаны, можно поставить параметр = False.
     """
-    if config.RUN_ASYNC_TASKS:
-        await ModelService(user.id).get_model_meta(model_id)
-        await ModelFitPredictService(user.id).check_prediction_params(
+    if config.USE_CELERY:
+        ModelService(user.id).get_model_meta(model_id)
+        ModelFitPredictService(user.id).check_prediction_params(
             dataframe_id, prediction_name)
         background_tasks.add_task(
             ModelJobsManager(user.id).predict_on_model_async,
@@ -219,7 +219,7 @@ async def predict_on_model(dataframe_id: PydanticObjectId,
                 "message": "Задача принята и выполняется в фоновом режиме"}
         )
     else:
-        return await ModelFitPredictService(user.id).predict_on_model(
+        return ModelFitPredictService(user.id).predict_on_model(
             source_df_id=dataframe_id,
             model_id=model_id,
             prediction_name=prediction_name,

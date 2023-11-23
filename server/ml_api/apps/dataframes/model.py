@@ -2,8 +2,8 @@ from datetime import datetime
 from typing import List, Optional
 
 from pydantic import Field
-from beanie import Document
-from beanie.odm.fields import PydanticObjectId
+from bunnet import Document
+from bunnet import PydanticObjectId
 from pymongo import IndexModel, ASCENDING, HASHED
 
 from ml_api.apps.dataframes import schemas

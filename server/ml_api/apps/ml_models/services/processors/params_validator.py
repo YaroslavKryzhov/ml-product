@@ -117,22 +117,22 @@ class ParamsValidationService:
             TaskTypes.DIMENSIONALITY_REDUCTION: errors.UnknownDimensionalityReductionModelError,
         }
 
-    async def validate_params(self) -> schemas.ModelParams:
-        initial_params = await self._get_initial_params()
+    def validate_params(self) -> schemas.ModelParams:
+        initial_params = self._get_initial_params()
 
         validated_params = self._validate_params(initial_params)
 
         return schemas.ModelParams(model_type=self.model_type,
                                    params=validated_params)
 
-    async def _get_initial_params(self) -> Dict:
+    def _get_initial_params(self) -> Dict:
 
         if self.params_type == specs.AvailableParamsTypes.DEFAULT:
             return {}
         if self.params_type == specs.AvailableParamsTypes.CUSTOM:
             return self.model_params
         if self.params_type == specs.AvailableParamsTypes.HYPEROPT:
-            hyperopt_model_params = await HyperoptService(self._user_id, self.dataframe_id
+            hyperopt_model_params = HyperoptService(self._user_id, self.dataframe_id
                 ).search_params(self.task_type, self.model_type)
             return hyperopt_model_params.params
         raise errors.UnknownParamsTypeError(self.params_type)

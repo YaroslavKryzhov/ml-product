@@ -36,7 +36,7 @@ class CompositionParamsValidator:
             TaskTypes.REGRESSION: errors.UnknownRegressionCompositionError,
         }
 
-    async def validate_params(self) -> schemas.ModelParams:
+    def validate_params(self) -> schemas.ModelParams:
         if self.task_type not in self._task_to_compositions_params_map_map:
             raise errors.UnknownTaskTypeError(self.task_type.value)
         compositions_params_map = self._task_to_compositions_params_map_map[self.task_type]

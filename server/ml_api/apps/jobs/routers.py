@@ -1,6 +1,6 @@
 from typing import List
 
-from beanie import PydanticObjectId
+from bunnet import PydanticObjectId
 from fastapi import APIRouter, Depends
 
 from ml_api.apps.jobs import specs
@@ -18,7 +18,7 @@ jobs_router = APIRouter(
 
 @jobs_router.get("/", summary="Получить информацию о job",
                  response_model=BackgroundJob)
-async def get_job(
+def get_job(
         job_id: PydanticObjectId,
         user: User = Depends(current_active_user),
 ):
@@ -27,25 +27,25 @@ async def get_job(
 
         - **job_id**: ID отчета
     """
-    return await BackgroundJobsService(user.id).get(job_id)
+    return BackgroundJobsService(user.id).get(job_id)
 
 
 @jobs_router.get("/all",
                  summary="Получить информацию о всех jobs пользователя",
                  response_model=List[BackgroundJob])
-async def get_all_jobs(
+def get_all_jobs(
         user: User = Depends(current_active_user),
 ):
     """
         Возвращает список всех jobs.
     """
-    return await BackgroundJobsService(user.id).get_all()
+    return BackgroundJobsService(user.id).get_all()
 
 
 @jobs_router.get("/by_object", summary="Получить информацию обо всех jobs "
                                       "по объекту",
                  response_model=List[BackgroundJob])
-async def get_jobs_by_object(
+def get_jobs_by_object(
         object_type: specs.AvailableObjectTypes,
         object_id: PydanticObjectId,
         user: User = Depends(current_active_user),
@@ -56,7 +56,7 @@ async def get_jobs_by_object(
         - **object_type**: тип объекта: модель, датафрейм
         - **object_id**: ID объекта
     """
-    return await BackgroundJobsService(user.id).get_by_object(
+    return BackgroundJobsService(user.id).get_by_object(
         object_type, object_id)
 
 

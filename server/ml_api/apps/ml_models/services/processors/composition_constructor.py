@@ -32,7 +32,7 @@ class CompositionConstructorService:
             TaskTypes.REGRESSION: errors.UnknownRegressionCompositionError,
         }
 
-    async def get_composition(self, composition_meta: ModelMetadata,
+    def get_composition(self, composition_meta: ModelMetadata,
                         composition_params: schemas.ModelParams, estimators):
         composition_type = composition_params.model_type
         task_type = composition_meta.task_type

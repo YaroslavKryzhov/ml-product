@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 from fastapi.responses import FileResponse
-from beanie import PydanticObjectId
+from bunnet import PydanticObjectId
 
 from ml_api.common.file_manager.base import FileCRUD
 from ml_api.config import ROOT_DIR

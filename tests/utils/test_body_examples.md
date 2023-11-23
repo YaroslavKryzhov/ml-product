@@ -11,7 +11,7 @@
     {
       "method_name": "SelectKBest",
       "params": {
-        "k": 5
+        "k": 3
       }
     },
     {
@@ -41,7 +41,7 @@
     {
       "method_name": "RecursiveFeatureElimination",
       "params": {
-        "n_features_to_select": 5,
+        "n_features_to_select": 3,
         "step": 1,
         "estimator": "logistic_regression"
       }
@@ -49,14 +49,14 @@
     {
       "method_name": "SequentialForwardSelection",
       "params": {
-        "n_features_to_select": 5,
+        "n_features_to_select": 3,
         "estimator": "random_forest_classifier"
       }
     },
     {
       "method_name": "SequentialBackwardSelection",
       "params": {
-        "n_features_to_select": 5,
+        "n_features_to_select": 3,
         "estimator": "logistic_regression"
       }
     },
@@ -67,49 +67,6 @@
       }
     }
   ]
-```
-
-### Apply Methods for data_raw.csv
-
-```javascript
-[
-  {
-    "method_name": "fill_mean",
-    "columns": [
-      "days_employed", "total_income"
-    ],
-    "params": {}
-  },
-  {
-    "method_name": "one_hot_encoding",
-    "columns": [
-      "gender"
-    ],
-    "params": {}
-  },
-  {
-    "method_name": "ordinal_encoding",
-    "columns": [
-      "education_id", "family_status_id", "income_type"
-    ],
-    "params": {}
-  },
-	{
-    "method_name": "standard_scaler",
-    "columns": [
-      "days_employed",
-      "dob_years",
-      "total_income",
-      "gender_M",
-      "gender_XNA",
-      "education_id",
-      "family_status_id",
-      "income_type",
-      "children"
-    ],
-    "params": {}
-  }
-]
 ```
 
 ```javascript

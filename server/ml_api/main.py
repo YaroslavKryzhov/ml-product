@@ -1,8 +1,7 @@
-from fastapi import FastAPI, APIRouter, Request, status
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
-from beanie import init_beanie
-from motor.motor_asyncio import AsyncIOMotorClient
+from bunnet import init_bunnet
+from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
 
 from ml_api import config
@@ -54,12 +53,11 @@ app.add_middleware(
 
 
 @app.on_event("startup")
-async def app_init():
+def app_init():
     """Initialize application services"""
-    app.db = AsyncIOMotorClient(config.MONGO_DATABASE_URI,
-                                uuidRepresentation="standard")[config.MONGO_DEFAULT_DB_NAME]
+    app.db = MongoClient(config.MONGO_DATABASE_URI)[config.MONGO_DB_NAME]
     try:
-        await init_beanie(app.db,
+        init_bunnet(app.db,
             document_models=[User, DataFrameMetadata, ModelMetadata, Report,
                              BackgroundJob])
     except ServerSelectionTimeoutError as sste:

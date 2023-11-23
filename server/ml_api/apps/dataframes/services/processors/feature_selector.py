@@ -1,4 +1,3 @@
-import traceback
 from typing import List, Dict, Any, Callable, Optional
 
 import numpy as np
@@ -13,6 +12,48 @@ import pandas as pd
 
 from ml_api.apps.dataframes import schemas, specs, errors
 from ml_api.apps.dataframes.specs import FeatureSelectionMethods as fs
+
+
+class FeatureSelectorValidator:
+    """
+    Класс, отвечающий за валидацию параметров для отбора признаков.
+    """
+    def __init__(self):
+        self._selectors_list = [selector for selector in fs]
+        self._params_map = {
+            fs.VARIANCE_THRESHOLD: schemas.VarianceThresholdParams,
+            fs.SELECT_K_BEST: schemas.SelectKBestParams,
+            fs.SELECT_PERCENTILE: schemas.SelectPercentileParams,
+            fs.SELECT_FPR: schemas.SelectFprFdrFweParams,
+            fs.SELECT_FDR: schemas.SelectFprFdrFweParams,
+            fs.SELECT_FWE: schemas.SelectFprFdrFweParams,
+            fs.RECURSIVE_FEATURE_ELIMINATION: schemas.RFEParams,
+            fs.SELECT_FROM_MODEL: schemas.SelectFromModelParams,
+            fs.SEQUENTIAL_FORWARD_SELECTION: schemas.SfsSbsParams,
+            fs.SEQUENTIAL_BACKWARD_SELECTION: schemas.SfsSbsParams,
+        }
+
+    def _validate_params(self, method_name: fs, params: Optional[Dict[str, Any]]):
+        schema = self._params_map[method_name]
+        if params is None:
+            return schema()
+        else:
+            try:
+                return schema(**params)
+            except ValidationError as e:
+                raise errors.InvalidSelectorParamsError(method_name.value, str(e))
+
+    def validate_params(self, selector_params: List[schemas.SelectorMethodParams]):
+        validated_params = []
+        for method_param in selector_params:
+            method_name = method_param.method_name
+            params = method_param.params
+            if method_name not in self._selectors_list:
+                raise errors.SelectorMethodNotExistsError(method_name.value)
+            valid_params = self._validate_params(method_name, params)
+            validated_params.append(schemas.SelectorMethodParams(
+                method_name=method_name, params=valid_params))
+        return validated_params
 
 
 class FeatureSelector:
@@ -57,8 +98,8 @@ class FeatureSelector:
     def get_empty_summary(self) -> schemas.FeatureSelectionSummary:
         for method_param in self.params:
             method_name = method_param.method_name
-            if method_name not in self._methods_map:
-                raise errors.SelectorMethodNotExistsError(method_name.value)
+            # if method_name not in self._methods_map:
+            #     raise errors.SelectorMethodNotExistsError(method_name.value)
             self.summary[method_name.value] = None
         result = self.summary.to_dict(orient="index")
         return schemas.FeatureSelectionSummary(result=result)
@@ -67,8 +108,8 @@ class FeatureSelector:
         for method_param in self.params:
             method_name = method_param.method_name
             params = method_param.params
-            if method_name not in self._methods_map:
-                raise errors.SelectorMethodNotExistsError(method_name.value)
+            # if method_name not in self._methods_map:
+            #     raise errors.SelectorMethodNotExistsError(method_name.value)
             params = self._validate_params(method_name, params)
             try:
                 support = self._methods_map[method_name](params)
@@ -191,69 +232,3 @@ class FeatureSelector:
             n_features_to_select=params.n_features_to_select)
         selector.fit(self.X, self.y)
         return selector.get_support()
-
-
-# feature_selection_params_raw = [
-#     {
-#         "method_name": "variance_threshold",
-#         "params": {
-#             "threshold": 0.8
-#         }
-#     },
-#     {
-#         "method_name": "select_k_best",
-#         "params": {
-#             "score_func": "chi2",
-#             "k": 4
-#         }
-#     },
-#     {
-#         "method_name": "select_percentile",
-#         "params": {
-#             "score_func": "f_classif",
-#             "percentile": 10
-#         }
-#     },
-#     {
-#         "method_name": "select_fpr",
-#         "params": {
-#             "score_func": "f_classif",
-#             "alpha": 0.05
-#         }
-#     },
-#
-#     {
-#         "method_name": "recursive_feature_elimination",
-#         "params": {
-#             "estimator": "logistic_regression",
-#             "n_features_to_select": 3,
-#             "step": 1
-#         }
-#     },
-#     {
-#         "method_name": "select_from_model",
-#         "params": {
-#             "estimator": "random_forest_classifier"
-#         }
-#     },
-#     {
-#         "method_name": "sequential_forward_selection",
-#         "params": {
-#             "estimator": "logistic_regression",
-#             "n_features_to_select": 3
-#         }
-#     },
-#     {
-#         "method_name": "sequential_backward_selection",
-#         "params": {
-#             "estimator": "random_forest_classifier",
-#             "n_features_to_select": 3
-#         }
-#     }
-# ]
-#
-# feature_selection_params = []
-#
-# for method_param in feature_selection_params_raw:
-#     feature_selection_params.append(
-#         schemas.SelectorMethodParams(**method_param))

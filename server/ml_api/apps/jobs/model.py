@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import Dict
 
-from beanie import Document
-from beanie.odm.fields import PydanticObjectId
+from bunnet import Document
+from bunnet import PydanticObjectId
 from pymongo import IndexModel, ASCENDING
 from pydantic import Field
 
@@ -14,7 +14,7 @@ class BackgroundJob(Document):
     type: specs.AvailableJobTypes = None
     object_type: specs.AvailableObjectTypes = None
     object_id: PydanticObjectId = None
-    status: specs.JobStatuses = specs.JobStatuses.RUNNING
+    status: specs.JobStatuses = specs.JobStatuses.WAITING
     input_params: Dict = None
     output_message: str = None
 

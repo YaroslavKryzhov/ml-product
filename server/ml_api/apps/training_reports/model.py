@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import Dict
 
-from beanie import Document
-from beanie.odm.fields import PydanticObjectId
+from bunnet import Document
+from bunnet import PydanticObjectId
 from pymongo import IndexModel, ASCENDING, HASHED
 from pydantic import Field
 

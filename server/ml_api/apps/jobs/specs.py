@@ -2,8 +2,7 @@ from enum import Enum
 
 
 class AvailableJobTypes(Enum):
-    APPLY_METHOD = "apply_method"
-    COPY_PIPELINE = "copy_pipeline"
+    APPLY_METHODS = "apply_methods"
     FEATURE_IMPORTANCES = "feature_importances"
     TRAIN_MODEL = "train_model"
     BUILD_COMPOSITION = "build_composition"
@@ -16,6 +15,7 @@ class AvailableObjectTypes(Enum):
 
 
 class JobStatuses(Enum):
+    WAITING = 'waiting'
     RUNNING = 'running'
     COMPLETE = 'complete'
     ERROR = "error"

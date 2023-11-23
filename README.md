@@ -42,7 +42,7 @@ make down
 
 - FastAPI: https://fastapi.tiangolo.com/
 - FastApiUsers: https://fastapi-users.github.io/fastapi-users/11.0/
-- Beanie: https://beanie-odm.dev/tutorial/indexes/
+- bunnet: 
 - Centrifugo: https://centrifugal.dev/
 - Docker: https://www.docker.com/
 - Docker-compose: https://docs.docker.com/compose/

@@ -54,12 +54,12 @@ class ModelTrainerService:
             except AttributeError:
                 return None
 
-    async def train_model(self, features, target) -> ModelTrainingResults:
+    def train_model(self, features, target) -> ModelTrainingResults:
         if self.task_type not in self._task_to_method_map.keys():
             raise errors.UnknownTaskTypeError(self.task_type.value)
         process_train = self._task_to_method_map[self.task_type]
         try:
-            model_training_result = await process_train(features, target)
+            model_training_result = process_train(features, target)
         except Exception as err:
             # print(traceback.format_exc())
             error_type = type(err).__name__
@@ -67,7 +67,7 @@ class ModelTrainerService:
             raise errors.ModelTrainingError(f"{error_type}: {error_description}")
         return model_training_result
 
-    async def _process_classification(self, features, target) -> ModelTrainingResults:
+    def _process_classification(self, features, target) -> ModelTrainingResults:
         num_classes = target.nunique()
         if num_classes < 2:
             raise errors.OneClassClassificationError(self.dataframe_id)
@@ -102,7 +102,7 @@ class ModelTrainerService:
                      (valid_report, valid_results_df)],
         )
 
-    async def _process_regression(self, features, target) -> ModelTrainingResults:
+    def _process_regression(self, features, target) -> ModelTrainingResults:
         f_train, f_valid, t_train, t_valid = self._get_train_test_split(
             features, target)
         train_preds, valid_preds = self._fit_and_predict(f_train, t_train,
@@ -121,7 +121,7 @@ class ModelTrainerService:
                      (valid_report, valid_results_df)],
         )
 
-    async def _process_clustering(self, features, target) -> ModelTrainingResults:
+    def _process_clustering(self, features, target) -> ModelTrainingResults:
         self.model.fit(features)
         labels = pd.Series(self.model.labels_)
 
@@ -134,7 +134,7 @@ class ModelTrainerService:
             results=[(report, results_df)],
         )
 
-    async def _process_outlier_detection(self, features, target) -> ModelTrainingResults:
+    def _process_outlier_detection(self, features, target) -> ModelTrainingResults:
         outliers = self.model.fit_predict(features)
         outliers = pd.Series(outliers).replace({1: False, -1: True})
 
@@ -147,7 +147,7 @@ class ModelTrainerService:
             results=[(report, results_df)],
         )
 
-    async def _process_dimensionality_reduction(self, features, target) -> ModelTrainingResults:
+    def _process_dimensionality_reduction(self, features, target) -> ModelTrainingResults:
         reduced_features = self.model.fit_transform(features)
 
         if target is not None:

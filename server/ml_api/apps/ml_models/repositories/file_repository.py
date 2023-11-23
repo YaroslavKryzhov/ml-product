@@ -1,6 +1,6 @@
 from pathlib import Path
 import joblib
-from beanie import PydanticObjectId
+from bunnet import PydanticObjectId
 from fastapi.responses import FileResponse
 
 from ml_api.apps.ml_models import errors

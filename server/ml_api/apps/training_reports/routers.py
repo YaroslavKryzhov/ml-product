@@ -1,6 +1,6 @@
 from typing import List
 
-from beanie import PydanticObjectId
+from bunnet import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from ml_api.apps.training_reports import specs, schemas
@@ -19,7 +19,7 @@ reports_router = APIRouter(
 
 @reports_router.get("/", summary="Получить информацию об отчете об обучениии",
                     response_model=Report)
-async def read_report(
+def read_report(
     report_id: PydanticObjectId,
     user: User = Depends(current_active_user),
 ):
@@ -28,14 +28,14 @@ async def read_report(
 
         - **report_id**: ID отчета
     """
-    result = await TrainingReportCRUD(user.id).get(report_id)
+    result = TrainingReportCRUD(user.id).get(report_id)
     return result
 
 
 @reports_router.get("/by_dataframe", summary="Получить информацию об отчетах, "
                                  "полученных при обучении на данном датафрейме",
                     response_model=List[Report])
-async def read_reports_by_dataframe(
+def read_reports_by_dataframe(
     dataframe_id: PydanticObjectId,
     user: User = Depends(current_active_user),
 ):
@@ -45,7 +45,7 @@ async def read_reports_by_dataframe(
 
         - **dataframe_id**: ID датафрейма
     """
-    result = await TrainingReportCRUD(user.id).get_by_dataframe_id(
+    result = TrainingReportCRUD(user.id).get_by_dataframe_id(
         dataframe_id)
     return result
 
@@ -53,7 +53,7 @@ async def read_reports_by_dataframe(
 @reports_router.get("/by_model", summary="Получить информацию обо всех отчетах, "
                                  "полученных при обучении данной модели",
                     response_model=List[Report])
-async def read_reports_by_model(
+def read_reports_by_model(
     model_id: PydanticObjectId,
     user: User = Depends(current_active_user),
 ):
@@ -62,7 +62,7 @@ async def read_reports_by_model(
 
         - **model_id**: ID модели
     """
-    result = await TrainingReportCRUD(user.id).get_by_model_id(
+    result = TrainingReportCRUD(user.id).get_by_model_id(
         model_id)
     return result
 

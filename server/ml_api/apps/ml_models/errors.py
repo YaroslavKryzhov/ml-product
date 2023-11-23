@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 from fastapi import HTTPException, status
-from beanie import PydanticObjectId
+from bunnet import PydanticObjectId
 
 from ml_api.apps.ml_models import specs
 

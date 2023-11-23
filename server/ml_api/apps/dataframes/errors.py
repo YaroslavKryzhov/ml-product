@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import HTTPException, status
-from beanie import PydanticObjectId
+from bunnet import PydanticObjectId
 
 
 class WrongFileTypeError(HTTPException):
@@ -222,7 +222,7 @@ class ApplyingMethodNotExistsError(HTTPException):
     def __init__(self, method_name: str):
         super().__init__(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f'Unrecognized Apply Method: "{method_name}".'
+            detail=f"Unrecognized Apply Method: '{method_name}'."
         )
 
 

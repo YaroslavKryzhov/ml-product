@@ -1,17 +1,16 @@
 from typing import List, Dict
 
-from beanie import PydanticObjectId
-from fastapi import APIRouter, Depends, UploadFile, File, BackgroundTasks
-from fastapi.responses import JSONResponse
+from bunnet import PydanticObjectId
+from fastapi import APIRouter, Depends, UploadFile, File
 
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.model import User
 from ml_api.apps.dataframes.services.dataframe_service import DataframeService
 from ml_api.apps.dataframes.services.methods_service import \
     DataframeMethodsService
-from ml_api.apps.dataframes.services.jobs_manager import DataframeJobsManager
+from ml_api.apps.dataframes.services.methods_async_service import DataframeMethodsAsyncService
 from ml_api.apps.dataframes import schemas, model, specs, errors
-from ml_api import config
+
 
 dataframes_file_router = APIRouter(
     prefix="/dataframe",
@@ -22,7 +21,7 @@ dataframes_file_router = APIRouter(
 
 @dataframes_file_router.post("", summary="Загрузить csv-файл",
                              response_model=model.DataFrameMetadata)
-async def upload_dataframe(
+def upload_dataframe(
         filename: str,
         file: UploadFile = File(...),
         user: User = Depends(current_active_user),
@@ -35,12 +34,12 @@ async def upload_dataframe(
     """
     if file.content_type != "text/csv":
         raise errors.WrongFileTypeError(file.content_type)
-    return await DataframeService(user.id).upload_new_dataframe(
+    return DataframeService(user.id).upload_new_dataframe(
         file=file.file, filename=filename)
 
 
 @dataframes_file_router.get("/download", summary="Скачать csv-файл")
-async def download_dataframe(
+def download_dataframe(
         dataframe_id: PydanticObjectId,
         user: User = Depends(current_active_user),
 ):
@@ -49,13 +48,13 @@ async def download_dataframe(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeService(user.id).download_dataframe(dataframe_id)
+    return DataframeService(user.id).download_dataframe(dataframe_id)
 
 
 @dataframes_file_router.put("/rename",
                             summary="Переименовать csv-файл",
                             response_model=model.DataFrameMetadata)
-async def rename_dataframe(
+def rename_dataframe(
         dataframe_id: PydanticObjectId,
         new_filename: str,
         user: User = Depends(current_active_user),
@@ -66,13 +65,13 @@ async def rename_dataframe(
         - **dataframe_id**: ID csv-файла(датафрейма)
         - **new_filename**: новое имя файла
     """
-    return await DataframeService(user.id).set_filename(
+    return DataframeService(user.id).set_filename(
         dataframe_id, new_filename)
 
 
 @dataframes_file_router.delete("", summary="Удалить csv-файл",
                                response_model=model.DataFrameMetadata)
-async def delete_dataframe(
+def delete_dataframe(
         dataframe_id: PydanticObjectId,
         user: User = Depends(current_active_user),
 ):
@@ -81,13 +80,13 @@ async def delete_dataframe(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeService(user.id).delete_dataframe(dataframe_id)
+    return DataframeService(user.id).delete_dataframe(dataframe_id)
 
 
 @dataframes_file_router.delete("/prediction",
                                summary="Удалить предсказание модели",
                                response_model=model.DataFrameMetadata)
-async def delete_model_prediction(
+def delete_model_prediction(
         model_id: PydanticObjectId,
         prediction_id: PydanticObjectId,
         user: User = Depends(current_active_user),
@@ -97,7 +96,7 @@ async def delete_model_prediction(
 
         - **model_id**: ID модели
     """
-    return await DataframeService(user.id).delete_prediction(
+    return DataframeService(user.id).delete_prediction(
         model_id, prediction_id)
 
 
@@ -110,7 +109,7 @@ dataframes_metadata_router = APIRouter(
 
 @dataframes_metadata_router.get("", response_model=model.DataFrameMetadata,
                                 summary="Получить информацию о csv-файле (датафрейме)")
-async def read_dataframe_info(
+def read_dataframe_info(
         dataframe_id: PydanticObjectId,
         user: User = Depends(current_active_user),
 ):
@@ -119,17 +118,17 @@ async def read_dataframe_info(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeService(user.id).get_dataframe_meta(dataframe_id)
+    return DataframeService(user.id).get_dataframe_meta(dataframe_id)
 
 
 @dataframes_metadata_router.get("/all",
                                 response_model=List[model.DataFrameMetadata],
                                 summary="Получить информацию обо всех csv-файлах (датафреймах)")
-async def read_all_user_dataframes(user: User = Depends(current_active_user)):
+def read_all_user_dataframes(user: User = Depends(current_active_user)):
     """
         Возвращает информацию обо всех датафреймах пользователя
     """
-    return await DataframeService(user.id).get_active_dataframes_meta()
+    return DataframeService(user.id).get_active_dataframes_meta()
 
 
 dataframes_content_router = APIRouter(
@@ -141,7 +140,7 @@ dataframes_content_router = APIRouter(
 @dataframes_content_router.get("",
                                response_model=schemas.ReadDataFrameResponse,
                                summary="Прочитать датафрейм")
-async def read_dataframe_with_pagination(
+def read_dataframe_with_pagination(
         dataframe_id: PydanticObjectId,
         page: int = 1,
         rows_on_page: int = 50,
@@ -154,7 +153,7 @@ async def read_dataframe_with_pagination(
         - **page**: номер cтраницы (default=1)
         - **rows_on_page**: кол-во строк датафрейма на cтраницу (default=1)
     """
-    return await DataframeService(
+    return DataframeService(
         user.id).get_dataframe_with_pagination(
         dataframe_id, page, rows_on_page)
 
@@ -162,7 +161,7 @@ async def read_dataframe_with_pagination(
 @dataframes_content_router.get("/statistics",
                                response_model=List[schemas.ColumnDescription],
                                summary="Получить описание столбцов")
-async def dataframe_columns_stat_info(
+def dataframe_columns_stat_info(
         dataframe_id: PydanticObjectId,
         user: User = Depends(current_active_user),
 ):
@@ -181,35 +180,35 @@ async def dataframe_columns_stat_info(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeService(
+    return DataframeService(
         user.id).get_dataframe_column_statistics(dataframe_id)
 
 
 @dataframes_content_router.get("/column_types",
                                response_model=schemas.ColumnTypes,
                                summary="Получить списки типов столбцов")
-async def get_column_types(dataframe_id: PydanticObjectId,
-                           user: User = Depends(current_active_user)):
+def get_column_types(dataframe_id: PydanticObjectId,
+                     user: User = Depends(current_active_user)):
     """
         Возвращает списки типов столбцов датафрейма.
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeService(
+    return DataframeService(
         user.id).get_feature_column_types(dataframe_id)
 
 
 @dataframes_content_router.get("/corr_matrix",
                                response_model=Dict[str, Dict[str, float]],
                                summary="Получить матрицу корреляций")
-async def get_correlation_matrix(dataframe_id: PydanticObjectId,
-                                 user: User = Depends(current_active_user)):
+def get_correlation_matrix(dataframe_id: PydanticObjectId,
+                           user: User = Depends(current_active_user)):
     """
         Возвращает матрицу корреляций для численных столбцов датафрейма.
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeService(
+    return DataframeService(
         user.id).get_correlation_matrix(dataframe_id)
 
 
@@ -223,52 +222,52 @@ dataframes_methods_router = APIRouter(
 @dataframes_methods_router.put("/target",
                                summary="Задать целевой признак",
                                response_model=model.DataFrameMetadata)
-async def set_target_feature(dataframe_id: PydanticObjectId,
-                             target_column: str,
-                             user: User = Depends(current_active_user)):
+def set_target_feature(dataframe_id: PydanticObjectId,
+                       target_column: str,
+                       user: User = Depends(current_active_user)):
     """
         Помечает столбец датафрейма как целевой (Y).
 
         - **dataframe_id**: ID csv-файла(датафрейма)
         - **target_column**: имя целевого столбца
     """
-    return await DataframeService(
+    return DataframeService(
         user.id).set_target_feature(dataframe_id, target_column)
 
 
 @dataframes_methods_router.delete("/target",
                                   summary="Очистить выбор целевого признака",
                                   response_model=model.DataFrameMetadata)
-async def unset_target_feature(dataframe_id: PydanticObjectId,
-                               user: User = Depends(current_active_user)):
+def unset_target_feature(dataframe_id: PydanticObjectId,
+                         user: User = Depends(current_active_user)):
     """
         Убирает отметку столбца датафрейма как целевого (Y).
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeService(
+    return DataframeService(
         user.id).unset_target_feature(dataframe_id=dataframe_id)
 
 
 @dataframes_methods_router.put("/move_to_root",
                                summary="Переместить в корень интерфейса",
                                response_model=model.DataFrameMetadata)
-async def move_to_root(dataframe_id: PydanticObjectId,
-                       new_filename: str,
-                       user: User = Depends(current_active_user)):
+def move_to_root(dataframe_id: PydanticObjectId,
+                 new_filename: str,
+                 user: User = Depends(current_active_user)):
     """
         Переносит датафрейм из вложенного уровня в корень интерфейса.
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeService(user.id).move_dataframe_to_root(
+    return DataframeService(user.id).move_dataframe_to_root(
         dataframe_id, new_filename)
 
 
 @dataframes_methods_router.put("/move_to_active",
                                summary="Переместить предсказание в активные",
                                response_model=model.DataFrameMetadata)
-async def move_to_active(
+def move_to_active(
         model_id: PydanticObjectId,
         dataframe_id: PydanticObjectId,
         new_filename: str,
@@ -278,20 +277,19 @@ async def move_to_active(
 
         - **dataframe_id**: ID csv-файла(датафрейма)
     """
-    return await DataframeService(user.id).move_prediction_to_active(model_id,
-                                                                     dataframe_id,
-                                                                     new_filename)
+    return DataframeService(user.id).move_prediction_to_active(model_id,
+                                                               dataframe_id,
+                                                               new_filename)
 
 
 @dataframes_methods_router.post("/feature_importances",
                                 summary="Провести отбор признаков",
                                 response_model=schemas.FeatureSelectionSummary)
-async def feature_importances(dataframe_id: PydanticObjectId,
-                              task_type: specs.FeatureSelectionTaskType,
-                              selection_params: List[
-                                  schemas.SelectorMethodParams],
-                              background_tasks: BackgroundTasks,
-                              user: User = Depends(current_active_user)):
+def feature_importances(dataframe_id: PydanticObjectId,
+                        task_type: specs.FeatureSelectionTaskType,
+                        selection_params: List[
+                            schemas.SelectorMethodParams],
+                        user: User = Depends(current_active_user)):
     """
         Применяет методы отбора признаков к датафрейму. Возвращает таблицу результатов.
         На основе её, пользователь может выбрать какие признаки стоит удалять
@@ -319,31 +317,17 @@ async def feature_importances(dataframe_id: PydanticObjectId,
         * 'select_from_model: 'estimator'
 
     """
-    if config.RUN_ASYNC_TASKS:
-        await DataframeService(user.id).get_dataframe_meta(dataframe_id)
-        await DataframeService(user.id)._ensure_not_prediction(
-            dataframe_id)
-        await DataframeService(user.id)._check_for_target_feature(dataframe_id)
-        background_tasks.add_task(
-            DataframeJobsManager(user.id).process_feature_importances_async,
-            dataframe_id, task_type, selection_params)
-        return JSONResponse(
-            status_code=202,
-            content={
-                "message": "Задача принята и выполняется в фоновом режиме"}
-        )
-    else:
-        return await DataframeMethodsService(
-            user.id).process_feature_importances(
-            dataframe_id, task_type, selection_params)
+    return DataframeMethodsAsyncService(
+        user.id).run_feature_importances(
+        dataframe_id, task_type, selection_params)
 
 
 @dataframes_methods_router.delete("/columns", summary="Удалить столбцы",
                                   response_model=model.DataFrameMetadata)
-async def delete_column(dataframe_id: PydanticObjectId,
-                        column_names: List[str],
-                        new_filename: str,
-                        user: User = Depends(current_active_user)):
+def delete_column(dataframe_id: PydanticObjectId,
+                  column_names: List[str],
+                  new_filename: str,
+                  user: User = Depends(current_active_user)):
     """
         Удаляет столбцы из датафрейма.
         *То же самое, что /apply_method?drop_columns*
@@ -355,17 +339,17 @@ async def delete_column(dataframe_id: PydanticObjectId,
         method_name=specs.AvailableMethods.DROP_COLUMNS,
         columns=column_names
     )
-    return await DataframeMethodsService(user.id).apply_changing_methods(
+    return DataframeMethodsService(user.id).delete_column(
         dataframe_id, [method_params], new_filename)
 
 
 @dataframes_methods_router.put("/change_columns_type",
                                summary="Сменить тип столбцов",
                                response_model=model.DataFrameMetadata)
-async def change_columns_type(dataframe_id: PydanticObjectId,
-                             column_names: List[str],
-                             new_type: specs.ColumnType,
-                             user: User = Depends(current_active_user)):
+def change_columns_type(dataframe_id: PydanticObjectId,
+                        column_names: List[str],
+                        new_type: specs.ColumnType,
+                        user: User = Depends(current_active_user)):
     """
         Изменяет тип столбцов на заданный (числовой/категориальный).
         *То же самое, что /apply_method?change_columns_type*
@@ -379,16 +363,15 @@ async def change_columns_type(dataframe_id: PydanticObjectId,
         columns=column_names,
         params={'new_type': new_type}
     )
-    return await DataframeMethodsService(user.id).apply_change_columns_type(
+    return DataframeMethodsService(user.id).change_columns_type(
         dataframe_id, [method_params])
 
 
 @dataframes_methods_router.post("/apply_method")
-async def apply_method(dataframe_id: PydanticObjectId,
-                       method_params: List[schemas.ApplyMethodParams],
-                       new_filename: str,
-                       background_tasks: BackgroundTasks,
-                       user: User = Depends(current_active_user)):
+def apply_method(dataframe_id: PydanticObjectId,
+                 method_params: List[schemas.ApplyMethodParams],
+                 new_filename: str,
+                 user: User = Depends(current_active_user)):
     """
         Применяет метод обработки к датафрейму.
 
@@ -418,55 +401,23 @@ async def apply_method(dataframe_id: PydanticObjectId,
         - **min_max_scaler** - Scale features to a given range
         - **robust_scaler** - Scale features using statistics that are robust to outliers
     """
-    if config.RUN_ASYNC_TASKS:
-        await DataframeService(user.id).get_dataframe_meta(dataframe_id)
-        await DataframeService(user.id)._check_filename_exists(new_filename)
-        await DataframeService(user.id)._ensure_not_prediction(
-            dataframe_id)
-        background_tasks.add_task(
-            DataframeJobsManager(user.id).apply_changing_methods_async,
-            dataframe_id, method_params, new_filename)
-        return JSONResponse(
-            status_code=202,
-            content={
-                "message": "Задача принята и выполняется в фоновом режиме"}
-        )
-    else:
-        return await DataframeMethodsService(user.id).apply_changing_methods(
-            dataframe_id, method_params, new_filename)
+    return DataframeMethodsAsyncService(user.id).apply_changing_methods(
+        dataframe_id, method_params, new_filename)
 
 
 @dataframes_methods_router.post("/copy_pipeline")
-async def copy_pipeline(dataframe_id_from: PydanticObjectId,
-                        dataframe_id_to: PydanticObjectId,
-                        new_filename: str,
-                        background_tasks: BackgroundTasks,
-                        user: User = Depends(current_active_user)):
+def copy_pipeline(dataframe_id_from: PydanticObjectId,
+                  dataframe_id_to: PydanticObjectId,
+                  new_filename: str,
+                  user: User = Depends(current_active_user)):
     """
         Применяет пайплайн от одного документа к другому.
 
         - **dataframe_id**: ID csv-файла(датафрейма) с которого копируется пайплайн
         - **dataframe_id**: ID csv-файла(датафрейма) на который применяется пайплайн
     """
-    if config.RUN_ASYNC_TASKS:
-        await DataframeService(user.id).get_dataframe_meta(dataframe_id_from)
-        await DataframeService(user.id).get_dataframe_meta(dataframe_id_to)
-        await DataframeService(user.id)._check_filename_exists(new_filename)
-        await DataframeService(user.id)._ensure_not_prediction(
-            dataframe_id_from)
-        await DataframeService(user.id)._ensure_not_prediction(
-            dataframe_id_to)
-        background_tasks.add_task(
-            DataframeJobsManager(user.id).copy_pipeline_async,
-            dataframe_id_from, dataframe_id_to, new_filename)
-        return JSONResponse(
-            status_code=202,
-            content={
-                "message": "Задача принята и выполняется в фоновом режиме"}
-        )
-    else:
-        return await DataframeMethodsService(user.id).copy_pipeline(
-            dataframe_id_from, dataframe_id_to, new_filename)
+    return DataframeMethodsAsyncService(user.id).copy_pipeline(
+        dataframe_id_from, dataframe_id_to, new_filename)
 
 
 dataframes_specs_router = APIRouter(

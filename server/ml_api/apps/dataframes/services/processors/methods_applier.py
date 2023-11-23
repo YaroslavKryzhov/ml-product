@@ -1,4 +1,3 @@
-import traceback
 from typing import List, Any, Callable, Dict, Optional
 
 import pandas as pd
@@ -11,15 +10,72 @@ from ml_api.apps.dataframes import model, schemas, specs, errors
 from ml_api.apps.dataframes.specs import AvailableMethods as Methods
 
 
+class MethodsApplierValidator:
+    """
+    Класс, отвечающий за применение методов.
+    """
+
+    def __init__(self):
+        self._methods_list = [method for method in Methods]
+        self._params_map: Dict[Methods, Callable] = {
+            Methods.CHANGE_COLUMNS_TYPE: schemas.ChangeColumnsTypeParams,
+            Methods.FILL_CUSTOM_VALUE: schemas.FillCustomValueParams,
+            Methods.LEAVE_N_VALUES_ENCODING: schemas.LeaveNValuesParams,
+            Methods.ONE_HOT_ENCODING: schemas.OneHotEncoderParams,
+            Methods.ORDINAL_ENCODING: schemas.OrdinalEncodingParams,
+            Methods.STANDARD_SCALER: schemas.StandardScalerParams,
+            Methods.MIN_MAX_SCALER: schemas.MinMaxScalerParams,
+            Methods.ROBUST_SCALER: schemas.RobustScalerParams,
+        }
+        self._current_method_name: Methods = None
+
+    def _validate_params(self, method_name: Methods,
+                         params: Optional[Dict[str, Any]]):
+        if params is None or params == {}:
+            if method_name == Methods.FILL_CUSTOM_VALUE:
+                err_desc = "Parameter 'value' is required"
+                raise errors.InvalidMethodParamsError(method_name.value, err_desc)
+            elif method_name == Methods.LEAVE_N_VALUES_ENCODING:
+                err_desc = "Parameter 'values_to_keep' is required"
+                raise errors.InvalidMethodParamsError(method_name.value, err_desc)
+            else:
+                return None
+        if method_name in self._params_map:
+            schema = self._params_map[method_name]
+            try:
+                return schema(**params)
+            except ValidationError as e:
+                raise errors.InvalidMethodParamsError(method_name.value, str(e))
+        else:
+            return None
+
+    def validate_params(self, methods_params: List[schemas.ApplyMethodParams]):
+        validated_params = []
+        for method_param in methods_params:
+            method_name = method_param.method_name
+            columns = method_param.columns
+            params = method_param.params
+            if method_name not in self._methods_list:
+                raise errors.ApplyingMethodNotExistsError(method_name.value)
+            self._current_method_name = method_name
+            params = self._validate_params(method_name, params)
+            validated_params.append(schemas.ApplyMethodParams(
+                method_name=method_name, columns=columns, params=params))
+        return validated_params
+
+
 class MethodsApplier:
     """
     Класс, отвечающий за применение методов.
     """
 
-    def __init__(self, df: pd.DataFrame,
-                 dataframe_meta: model.DataFrameMetadata):
+    def __init__(self, 
+                 df: pd.DataFrame,
+                 dataframe_meta: model.DataFrameMetadata,
+                 methods_params: List[schemas.ApplyMethodParams]):
         self._df: pd.DataFrame = df
         self._meta: model.DataFrameMetadata = dataframe_meta
+        self.params = methods_params
         self._methods_map: Dict[Methods, Callable] = {
             Methods.DROP_DUPLICATES: self._drop_duplicates,
             Methods.DROP_COLUMNS: self._drop_columns,
@@ -61,33 +117,63 @@ class MethodsApplier:
             raise errors.ColumnsNotEqualCriticalError(df_columns_list,
                                                       columns_list)
 
-    def apply_method(self, method_params: schemas.ApplyMethodParams):
-        method_name = method_params.method_name
-        method_columns = method_params.columns
-        params = method_params.params
+    def _validate_selected_columns(self, method_columns: List[str]):
+        column_list = set(self._get_column_list())
+        df_columns = self._df.columns
+        for column in method_columns:
+            if column not in column_list:
+                raise errors.ColumnNotFoundInMetadataError(
+                    column, self._current_method_name.value)
+            if column not in df_columns:
+                raise errors.ColumnNotFoundInDataFrameError(
+                    column, self._current_method_name.value)
 
-        if method_name not in self._methods_map:
-            raise errors.ApplyingMethodNotExistsError(method_name.value)
-        self._current_method_name = method_name
-        self._validate_columns(method_columns)
-        validated_params = self._validate_params(method_name, params)
-
-        try:
-            final_params = self._methods_map[method_name](
-                method_columns, validated_params)
-        except Exception as err:
-            # print(traceback.format_exc())
-            error_type = type(err).__name__
-            error_description = str(err)
-            raise errors.ApplyingMethodError(
-                method_name.value, f"{error_type}: {error_description}")
-        self._meta.pipeline.append(
-            schemas.ApplyMethodParams(
-                method_name=method_params.method_name,
-                columns=method_columns,
-                params=final_params.dict() if final_params is not None else None
+    def apply_methods(self):
+        for method_param in self.params:
+            method_name = method_param.method_name
+            method_columns = method_param.columns
+            params = method_param.params
+            # if method_name not in self._methods_map:
+            #     raise errors.ApplyingMethodNotExistsError(method_name.value)
+            validated_params = self._validate_params(method_name, params)
+            self._current_method_name = method_name
+            self._validate_selected_columns(method_columns)
+            try:
+                final_params = self._methods_map[method_name](
+                    method_columns, params)
+            except Exception as err:
+                # print(traceback.format_exc())
+                error_type = type(err).__name__
+                error_description = str(err)
+                raise errors.ApplyingMethodError(
+                    method_name.value, f"{error_type}: {error_description}")
+            self._meta.pipeline.append(
+                schemas.ApplyMethodParams(
+                    method_name=method_name,
+                    columns=method_columns,
+                    params=final_params.dict() if final_params is not None else None
+                )
             )
-        )
+
+    def _validate_params(self, method_name: Methods,
+                         params: Optional[Dict[str, Any]]):
+        if params is None or params == {}:
+            if method_name == Methods.FILL_CUSTOM_VALUE:
+                err_desc = "Parameter 'value' is required"
+                raise errors.InvalidMethodParamsError(method_name.value, err_desc)
+            elif method_name == Methods.LEAVE_N_VALUES_ENCODING:
+                err_desc = "Parameter 'values_to_keep' is required"
+                raise errors.InvalidMethodParamsError(method_name.value, err_desc)
+            else:
+                return None
+        if method_name in self._params_map:
+            schema = self._params_map[method_name]
+            try:
+                return schema(**params)
+            except ValidationError as e:
+                raise errors.InvalidMethodParamsError(method_name.value, str(e))
+        else:
+            return None
 
     def get_df(self) -> pd.DataFrame:
         return self._df
@@ -119,37 +205,6 @@ class MethodsApplier:
     def _get_column_list(self) -> List[str]:
         column_types = self._get_column_types()
         return column_types.numeric + column_types.categorical
-
-    def _validate_columns(self, method_columns: List[str]):
-        column_list = set(self._get_column_list())
-        df_columns = self._df.columns
-        for column in method_columns:
-            if column not in column_list:
-                raise errors.ColumnNotFoundInMetadataError(
-                    column, self._current_method_name.value)
-            if column not in df_columns:
-                raise errors.ColumnNotFoundInDataFrameError(
-                    column, self._current_method_name.value)
-
-    def _validate_params(self, method_name: Methods,
-                         params: Optional[Dict[str, Any]]):
-        if params is None or params == {}:
-            if method_name == Methods.FILL_CUSTOM_VALUE:
-                err_desc = "Parameter 'value' is required"
-                raise errors.InvalidMethodParamsError(method_name.value, err_desc)
-            elif method_name == Methods.LEAVE_N_VALUES_ENCODING:
-                err_desc = "Parameter 'values_to_keep' is required"
-                raise errors.InvalidMethodParamsError(method_name.value, err_desc)
-            else:
-                return None
-        if method_name in self._params_map:
-            schema = self._params_map[method_name]
-            try:
-                return schema(**params)
-            except ValidationError as e:
-                raise errors.InvalidMethodParamsError(method_name.value, str(e))
-        else:
-            return None
 
     def _check_for_numeric_type(self, columns: List[str]):
         column_types = self._get_column_types()

@@ -15,22 +15,40 @@ services:
       - ./server:/server
     depends_on:
       - mongo_db
-      - centrifugo
+      - worker
     networks:
       - ml-net
     restart: unless-stopped
 
-  mongo_db:
-    container_name: "ml-product-mongo"
+  worker:
+    container_name: "ml-product-worker"
     build:
-      context: ./deploy/mongodb
+      context: ./server
       dockerfile: Dockerfile
+    command: "poetry run celery -A ml_api.celery_worker.app_celery worker --loglevel=info"
     env_file:
       - .env
     volumes:
-      - ./volumes/mongo_data:/data/db
+      - ./volumes/server_data:/data/
+      - ./server:/server
+    depends_on:
+      - rabbitmq
+      - mongo_db
+      - centrifugo
+    networks:
+      - ml-net
+
+  rabbitmq:
+    container_name: "ml-product-rabbitmq"
+    image: "rabbitmq:3-management"
+    environment:
+      # TODO: try .env
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS}"
     ports:
-      - "${MONGO_PORT_OUT}:27017"
+      - "15672:15672"
+    volumes:
+      - ./volumes/rabbitmq_data:/var/lib/rabbitmq
     networks:
       - ml-net
     restart: unless-stopped
@@ -49,6 +67,21 @@ services:
         hard: 65535
     networks:
       - ml-net
+
+  mongo_db:
+    container_name: "ml-product-mongo"
+    build:
+      context: ./deploy/mongodb
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    volumes:
+      - ./volumes/mongo_data:/data/db
+    ports:
+      - "${MONGO_PORT_OUT}:27017"
+    networks:
+      - ml-net
+    restart: unless-stopped
 
   #  client:
 #    container_name: "ml-product-client"

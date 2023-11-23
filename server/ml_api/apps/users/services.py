@@ -1,6 +1,6 @@
 from typing import Optional
 
-from beanie import PydanticObjectId
+from bunnet import PydanticObjectId
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, FastAPIUsers
 from fastapi_users.authentication import (
@@ -8,10 +8,11 @@ from fastapi_users.authentication import (
     BearerTransport,
     JWTStrategy,
 )
-from fastapi_users.db import BeanieUserDatabase, ObjectIDIDMixin
 
 from ml_api import config
 from ml_api.apps.users.model import User
+from ml_api.apps.users.repository import BunnetUserDatabase, ObjectIDIDMixin
+
 
 SECRET = config.USER_SECRET
 
@@ -35,10 +36,10 @@ class UserManager(ObjectIDIDMixin, BaseUserManager[User, PydanticObjectId]):
 
 
 async def get_user_db():
-    yield BeanieUserDatabase(User)
+    yield BunnetUserDatabase(User)
 
 
-async def get_user_manager(user_db: BeanieUserDatabase = Depends(get_user_db)):
+async def get_user_manager(user_db: BunnetUserDatabase = Depends(get_user_db)):
     yield UserManager(user_db)
 
 

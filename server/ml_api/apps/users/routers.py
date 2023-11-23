@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends
-from fastapi.responses import JSONResponse
 
 from ml_api.apps.users.schemas import UserCreate, UserRead, JWTToken, GetId
 from ml_api.apps.users.model import User
@@ -24,7 +23,7 @@ def get_centrifugo_token(user: User = Depends(current_active_user)):
 
 
 @users_router.get("/user_id", response_model=GetId)
-async def get_id(user: User = Depends(current_active_user)):
+def get_id(user: User = Depends(current_active_user)):
     """
         Возвращает id пользователя
     """
@@ -38,13 +37,3 @@ users_router.include_router(
 users_router.include_router(
     fastapi_users.get_register_router(UserRead, UserCreate)
 )
-
-# users_router.include_router(
-#     fastapi_users.get_reset_password_router(), prefix="/auth",
-# )
-# users_router.include_router(
-#     fastapi_users.get_verify_router(UserRead), prefix="/auth",
-# )
-# users_router.include_router(
-#     fastapi_users.get_users_router(UserRead, UserUpdate), prefix="/users",
-# )

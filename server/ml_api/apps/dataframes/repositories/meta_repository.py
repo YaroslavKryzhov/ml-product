@@ -1,6 +1,6 @@
 from typing import List, Dict
 
-from beanie import PydanticObjectId
+from bunnet import PydanticObjectId
 from pymongo.errors import DuplicateKeyError
 
 from ml_api.apps.dataframes import schemas, errors
@@ -11,38 +11,38 @@ class DataFrameMetaCRUD:
     def __init__(self, user_id: PydanticObjectId):
         self.user_id = user_id
 
-    async def get(self, dataframe_id: PydanticObjectId) -> DataFrameMetadata:
-        dataframe_meta = await DataFrameMetadata.get(dataframe_id)
+    def get(self, dataframe_id: PydanticObjectId) -> DataFrameMetadata:
+        dataframe_meta = DataFrameMetadata.get(dataframe_id).run()
         if dataframe_meta is None:
             raise errors.DataFrameNotFoundError(dataframe_id)
         return dataframe_meta
 
-    async def get_active(self) -> List[DataFrameMetadata]:
-        dataframe_metas = await DataFrameMetadata.find(
+    def get_active(self) -> List[DataFrameMetadata]:
+        dataframe_metas = DataFrameMetadata.find(
             DataFrameMetadata.user_id == self.user_id).find(
             DataFrameMetadata.is_prediction == False).to_list()
         return dataframe_metas
 
-    async def get_predictions(self) -> List[DataFrameMetadata]:
-        dataframe_metas = await DataFrameMetadata.find(
+    def get_predictions(self) -> List[DataFrameMetadata]:
+        dataframe_metas = DataFrameMetadata.find(
             DataFrameMetadata.user_id == self.user_id).find(
             DataFrameMetadata.is_prediction == True).to_list()
         return dataframe_metas
 
-    async def get_by_parent_id(self, parent_id: PydanticObjectId
+    def get_by_parent_id(self, parent_id: PydanticObjectId
                                ) -> List[DataFrameMetadata]:
-        dataframe_metas = await DataFrameMetadata.find(
+        dataframe_metas = DataFrameMetadata.find(
             DataFrameMetadata.user_id == self.user_id).find(
             DataFrameMetadata.parent_id == parent_id).to_list()
         return dataframe_metas
 
-    async def get_by_filename(self, filename: str) -> DataFrameMetadata:
-        dataframe_meta = await DataFrameMetadata.find_one(
+    def get_by_filename(self, filename: str) -> DataFrameMetadata:
+        dataframe_meta = DataFrameMetadata.find_one(
             DataFrameMetadata.filename == filename,
-            DataFrameMetadata.user_id == self.user_id)
+            DataFrameMetadata.user_id == self.user_id).run()
         return dataframe_meta
 
-    async def create(
+    def create(
             self,
             filename: str,
             parent_id: PydanticObjectId = None,
@@ -63,24 +63,24 @@ class DataFrameMetaCRUD:
             pipeline=pipeline,
             feature_importance_report=feature_importance_report)
         try:
-            await new_obj.insert()
+            new_obj.insert()
         except DuplicateKeyError:
             raise errors.FilenameExistsUserError(filename)
         return new_obj
 
-    async def update(self, dataframe_id: PydanticObjectId, query: Dict
+    def update(self, dataframe_id: PydanticObjectId, query: Dict
                      ) -> DataFrameMetadata:
-        dataframe_meta = await DataFrameMetadata.get(dataframe_id)
+        dataframe_meta = DataFrameMetadata.get(dataframe_id).run()
         if not dataframe_meta:
             raise errors.DataFrameNotFoundError(dataframe_id)
-        await dataframe_meta.update(query)
-        dataframe_meta_updated = await DataFrameMetadata.get(dataframe_id)
+        dataframe_meta.update(query)
+        dataframe_meta_updated = DataFrameMetadata.get(dataframe_id).run()
         return dataframe_meta_updated
 
-    async def delete(self,
+    def delete(self,
                      dataframe_id: PydanticObjectId) -> DataFrameMetadata:
-        dataframe_meta = await DataFrameMetadata.get(dataframe_id)
+        dataframe_meta = DataFrameMetadata.get(dataframe_id).run()
         if not dataframe_meta:
             raise errors.DataFrameNotFoundError(dataframe_id)
-        await dataframe_meta.delete()
+        dataframe_meta.delete()
         return dataframe_meta
