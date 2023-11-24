@@ -5,6 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from fastapi.responses import JSONResponse
 
 from ml_api import config
+from ml_api.apps.ml_models.services.fit_predict_async_service import \
+    ModelFitPredictAsyncService
 from ml_api.apps.users.routers import current_active_user
 from ml_api.apps.users.model import User
 from ml_api.apps.ml_models import schemas, specs, model, errors
@@ -123,7 +125,6 @@ def train_model(model_name: str,
                 task_type: specs.AvailableTaskTypes,
                 model_params: schemas.ModelParams,
                 params_type: specs.AvailableParamsTypes,
-                background_tasks: BackgroundTasks,
                 test_size: float = None,
                 stratify: bool = None,
                 user: User = Depends(current_active_user)):
@@ -150,48 +151,26 @@ def train_model(model_name: str,
         params_type=params_type,
         test_size=test_size,
         stratify=stratify)
-
-    if config.USE_CELERY:
-        background_tasks.add_task(
-            ModelJobsManager(user.id).process_train_model_async, model_meta)
-        return JSONResponse(
-            status_code=202,
-            content={
-                "message": "Задача принята и выполняется в фоновом режиме"}
-        )
-    else:
-        return ModelFitPredictService(
-            user.id).train_model(model_meta=model_meta)
+    return ModelFitPredictAsyncService(user.id).process_model_training(
+        model_meta=model_meta)
 
 
 @models_processing_router.post("/build_composition")
 def build_composition(composition_name: str,
                       model_ids: List[PydanticObjectId],
                       composition_params: schemas.ModelParams,
-                background_tasks: BackgroundTasks,
-                user: User = Depends(current_active_user)):
+                      user: User = Depends(current_active_user)):
     composition_meta = ModelService(user.id).create_composition(
         composition_name=composition_name, model_ids=model_ids,
         composition_params=composition_params)
-
-    if config.USE_CELERY:
-        background_tasks.add_task(
-            ModelJobsManager(user.id).build_composition_async, composition_meta)
-        return JSONResponse(
-            status_code=202,
-            content={
-                "message": "Задача принята и выполняется в фоновом режиме"}
-        )
-    else:
-        return ModelFitPredictService(
-            user.id).train_composition(composition_meta=composition_meta)
+    return ModelFitPredictAsyncService(user.id).process_composition_training(
+        composition_meta=composition_meta)
 
 
 @models_processing_router.put("/predict")
 def predict_on_model(dataframe_id: PydanticObjectId,
             model_id: PydanticObjectId,
             prediction_name: str,
-            background_tasks: BackgroundTasks,
             apply_pipeline: bool = True,
             user: User = Depends(current_active_user)):
     """
@@ -206,24 +185,11 @@ def predict_on_model(dataframe_id: PydanticObjectId,
         оригинальной выборки перед предсказанием.
         Если данные уже предобработаны, можно поставить параметр = False.
     """
-    if config.USE_CELERY:
-        ModelService(user.id).get_model_meta(model_id)
-        ModelFitPredictService(user.id).check_prediction_params(
-            dataframe_id, prediction_name)
-        background_tasks.add_task(
-            ModelJobsManager(user.id).predict_on_model_async,
-            dataframe_id, model_id, prediction_name, apply_pipeline)
-        return JSONResponse(
-            status_code=202,
-            content={
-                "message": "Задача принята и выполняется в фоновом режиме"}
-        )
-    else:
-        return ModelFitPredictService(user.id).predict_on_model(
-            source_df_id=dataframe_id,
-            model_id=model_id,
-            prediction_name=prediction_name,
-            apply_pipeline=apply_pipeline)
+    return ModelFitPredictAsyncService(user.id).process_prediction(
+        source_df_id=dataframe_id,
+        model_id=model_id,
+        prediction_name=prediction_name,
+        apply_pipeline=apply_pipeline)
 
 
 models_specs_router = APIRouter(
@@ -253,6 +219,11 @@ def get_available_model_types():
     return [model.value for model in specs.AvailableModelTypes]
 
 
+@models_specs_router.get("/composition_types")
+def get_available_composition_types():
+    return [composition.value for composition in specs.AvailableCompositionTypes]
+
+
 @models_specs_router.get("/model_types/parameters/{model_type}")
 def get_parameters_for_model_type(model_type: specs.AvailableModelTypes):
     from ml_api.apps.ml_models.models_specs.validation_params import (
@@ -261,8 +232,6 @@ def get_parameters_for_model_type(model_type: specs.AvailableModelTypes):
         clustering_models_params,
         dimensionality_reduction_models_params,
         outlier_detection_models_params,
-        classification_compositions_params,
-        regression_compositions_params
     )
     # Classification models
     if model_type == specs.AvailableModelTypes.DECISION_TREE_CLASSIFIER:
@@ -393,23 +362,31 @@ def get_parameters_for_model_type(model_type: specs.AvailableModelTypes):
         return dimensionality_reduction_models_params.NMFParams.schema()
     elif model_type == specs.AvailableModelTypes.TRUNCATED_SVD:
         return dimensionality_reduction_models_params.TruncatedSVDParams.schema()
-
-    # Classification composition models
-    elif model_type == specs.AvailableModelTypes.VOTING_CLASSIFIER:
-        return classification_compositions_params.VotingClassifierParams.schema()
-    elif model_type == specs.AvailableModelTypes.STACKING_CLASSIFIER:
-        return classification_compositions_params.StackingClassifierParams.schema()
-
-    # Regression composition models
-    elif model_type == specs.AvailableModelTypes.VOTING_REGRESSOR:
-        return regression_compositions_params.VotingRegressorParams.schema()
-    elif model_type == specs.AvailableModelTypes.STACKING_REGRESSOR:
-        return regression_compositions_params.StackingRegressorParams.schema()
-
     else:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Unrecognized model type: '{model_type}'."
         )
 
+@models_specs_router.get("/model_types/parameters/{model_type}")
+def get_parameters_for_model_type(composition_type: specs.AvailableModelTypes):
+    from ml_api.apps.ml_models.models_specs.validation_params import (
+        classification_compositions_params,
+        regression_compositions_params
+    )
+    # Classification composition models
+    if composition_type == specs.AvailableCompositionTypes.VOTING_CLASSIFIER:
+        return classification_compositions_params.VotingClassifierParams.schema()
+    elif composition_type == specs.AvailableCompositionTypes.STACKING_CLASSIFIER:
+        return classification_compositions_params.StackingClassifierParams.schema()
 
+    # Regression composition models
+    elif composition_type == specs.AvailableCompositionTypes.VOTING_REGRESSOR:
+        return regression_compositions_params.VotingRegressorParams.schema()
+    elif composition_type == specs.AvailableCompositionTypes.STACKING_REGRESSOR:
+        return regression_compositions_params.StackingRegressorParams.schema()
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Unrecognized composition type: '{composition_type}'."
+        )

@@ -13,10 +13,11 @@ class PubSub:
         self.client = Client(address=api_url, api_key=api_key)
         self.channel_name: str = "INFO"
 
-    def _publish(self, channel_name: str, user_id: str, job_type: str,
-                 object_id: str, status: str, message: str) -> None:
+    def _publish(self, channel_name: str, user_id: str, job_id: str,
+                 job_type: str, object_id: str, status: str, message: str):
         channel = f"{channel_name}#{user_id}"
         data = {
+            "job_id": job_id,
             "job_type": job_type,
             "object_id": object_id,
             "status": status,
@@ -32,6 +33,7 @@ class PubSub:
         self._publish(
             channel_name=self.channel_name,
             user_id=str(job_info.user_id),
+            job_id=str(job_info.id),
             job_type=job_info.type.value,
             object_id=str(job_info.object_id),
             status=job_info.status.value,

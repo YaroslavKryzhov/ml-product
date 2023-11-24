@@ -1,7 +1,7 @@
-try:
-	#docker-compose up --build --force-recreate --remove-orphans
-	docker-compose up --build -d --force-recreate
-	docker-compose logs -f server
+debug:
+	docker-compose up --build --force-recreate --remove-orphans
+#	docker-compose up --build -d --force-recreate
+#	docker-compose logs -f server
 
 up:
 	docker-compose up --build -d --force-recreate

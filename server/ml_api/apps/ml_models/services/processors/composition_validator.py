@@ -2,7 +2,7 @@ from pydantic import ValidationError
 
 from ml_api.apps.ml_models import schemas, errors
 from ml_api.apps.ml_models.model import ModelMetadata
-from ml_api.apps.ml_models.specs import AvailableModelTypes as Models
+from ml_api.apps.ml_models.specs import AvailableCompositionTypes as Compositions
 from ml_api.apps.ml_models.specs import AvailableTaskTypes as TaskTypes
 from ml_api.apps.ml_models.models_specs.validation_params import \
     classification_compositions_params as classif_params, \
@@ -17,13 +17,13 @@ class CompositionParamsValidator:
         self.composition_params = composition_meta.model_params.params
 
         self._classification_compositions_params_map = {
-            Models.VOTING_CLASSIFIER: classif_params.VotingClassifierParams,
-            Models.STACKING_CLASSIFIER: classif_params.StackingClassifierParams,
+            Compositions.VOTING_CLASSIFIER: classif_params.VotingClassifierParams,
+            Compositions.STACKING_CLASSIFIER: classif_params.StackingClassifierParams,
         }
 
         self._regression_compositions_params_map = {
-            Models.VOTING_REGRESSOR: regr_params.VotingRegressorParams,
-            Models.STACKING_REGRESSOR: regr_params.StackingRegressorParams,
+            Compositions.VOTING_REGRESSOR: regr_params.VotingRegressorParams,
+            Compositions.STACKING_REGRESSOR: regr_params.StackingRegressorParams,
         }
 
         self._task_to_compositions_params_map_map = {

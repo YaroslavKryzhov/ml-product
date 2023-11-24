@@ -5,7 +5,7 @@ from sklearn import ensemble, linear_model
 
 from ml_api.apps.ml_models import schemas, errors
 from ml_api.apps.ml_models.model import ModelMetadata
-from ml_api.apps.ml_models.specs import AvailableModelTypes as Models
+from ml_api.apps.ml_models.specs import AvailableCompositionTypes as Compositions
 from ml_api.apps.ml_models.specs import AvailableTaskTypes as TaskTypes
 
 
@@ -13,13 +13,13 @@ class CompositionConstructorService:
     def __init__(self):
 
         self._classification_composition_map = {
-            Models.VOTING_CLASSIFIER: self._get_voting_classifier,
-            Models.STACKING_CLASSIFIER: self._get_stacking_classifier,
+            Compositions.VOTING_CLASSIFIER: self._get_voting_classifier,
+            Compositions.STACKING_CLASSIFIER: self._get_stacking_classifier,
         }
 
         self._regression_composition_map = {
-            Models.VOTING_REGRESSOR: self._get_voting_regressor,
-            Models.STACKING_REGRESSOR: self._get_stacking_regressor,
+            Compositions.VOTING_REGRESSOR: self._get_voting_regressor,
+            Compositions.STACKING_REGRESSOR: self._get_stacking_regressor,
         }
 
         self._task_to_composition_map_map = {

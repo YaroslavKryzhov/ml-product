@@ -37,7 +37,7 @@ class ModelFitPredictAsyncService:
         return CompositionParamsValidator(
             composition_meta).validate_params()
 
-    def prepare_model_training(self, model_meta: ModelMetadata):
+    def process_model_training(self, model_meta: ModelMetadata):
         self._set_status(model_meta, specs.ModelStatuses.WAITING)
         validated_params = self._prepare_params(model_meta)
         model_meta = self.repository.set_model_params(
@@ -48,7 +48,7 @@ class ModelFitPredictAsyncService:
         else:
             return self.fit_predict_service.train_model(model_meta.id)
 
-    def prepare_composition_training(self, composition_meta: ModelMetadata):
+    def process_composition_training(self, composition_meta: ModelMetadata):
         self._set_status(composition_meta, specs.ModelStatuses.WAITING)
         validated_params = self._prepare_composition_params(
             composition_meta)
@@ -61,7 +61,7 @@ class ModelFitPredictAsyncService:
             return self.fit_predict_service.train_composition(
                 composition_meta.id)
 
-    def prepare_prediction(self,
+    def process_prediction(self,
                            dataframe_id: PydanticObjectId,
                            model_id: PydanticObjectId,
                            prediction_name: str,

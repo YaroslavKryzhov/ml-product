@@ -100,6 +100,13 @@ class AvailableModelTypes(Enum):
     TRUNCATED_SVD = 'TruncatedSVD'
 
     # Ensembling methods
+    # VOTING_CLASSIFIER = 'VotingClassifier'
+    # VOTING_REGRESSOR = 'VotingRegressor'
+    # STACKING_CLASSIFIER = 'StackingClassifier'
+    # STACKING_REGRESSOR = 'StackingRegressor'
+
+
+class AvailableCompositionTypes(Enum):
     VOTING_CLASSIFIER = 'VotingClassifier'
     VOTING_REGRESSOR = 'VotingRegressor'
     STACKING_CLASSIFIER = 'StackingClassifier'

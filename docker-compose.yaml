@@ -6,8 +6,8 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    command: "poetry run uvicorn ml_api.main:app --workers 17 --host 0.0.0.0 --port 8006 --reload"
-#    command: "poetry run gunicorn -w 6 -k uvicorn.workers.UvicornWorker ml_api.main:app --bind 0.   0.0.0:8006 --reload"
+    command: "poetry run uvicorn ml_api.main:app --workers 4 --host 0.0.0.0 --port 8006 --reload"
+#    command: "poetry run gunicorn -k uvicorn.workers.UvicornWorker ml_api.main:app --bind 0.0.0.0:8006 --workers 4"
     env_file:
       - .env
     volumes:
@@ -25,7 +25,7 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    command: "poetry run celery -A ml_api.celery_worker.app_celery worker --loglevel=info"
+    command: "poetry run celery -A ml_api.celery_worker.app_celery worker --loglevel=info -c 4"
     env_file:
       - .env
     volumes:
@@ -41,10 +41,11 @@ services:
   rabbitmq:
     container_name: "ml-product-rabbitmq"
     image: "rabbitmq:3-management"
-    environment:
-      # TODO: try .env
-      RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER}"
-      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS}"
+#    environment:
+#      RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER}"
+#      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS}"
+    env_file:
+      - .env
     ports:
       - "15672:15672"
     volumes:

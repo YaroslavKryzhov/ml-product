@@ -1,4 +1,4 @@
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Union
 
 from pydantic import BaseModel
 
@@ -7,7 +7,7 @@ from ml_api.apps.training_reports.model import Report
 
 
 class ModelParams(BaseModel):
-    model_type: specs.AvailableModelTypes
+    model_type: Union[specs.AvailableModelTypes, specs.AvailableCompositionTypes]
     params: Dict[str, Any]
 
 

@@ -69,7 +69,6 @@ class CompositionValidationService:
                 num_classes, self.dataframe_id)
 
         # can be joined with ModelTrainer
-
         f_train, f_valid, t_train, t_valid = self._get_train_test_split(
                 features, target)
         self.composition.fit(f_train, t_train)
@@ -91,14 +90,9 @@ class CompositionValidationService:
         )
 
     def _process_regression(self, features, target) -> ModelTrainingResults:
-        if self.composition_type == specs.AvailableModelTypes.STACKING_REGRESSOR:
-            f_train, f_valid, t_train, t_valid = self._get_train_test_split(
-                features, target)
-            self.composition.fit(f_train, t_train)
-        elif self.composition_type == specs.AvailableModelTypes.VOTING_REGRESSOR:
-            f_valid, t_valid = features, target
-        else:
-            raise errors.UnknownCompositionTypeError(self.composition_type.value)
+        f_train, f_valid, t_train, t_valid = self._get_train_test_split(
+            features, target)
+        self.composition.fit(f_train, t_train)
 
         preds = pd.Series(self.composition.predict(f_valid),
                           name=self.target_column)
