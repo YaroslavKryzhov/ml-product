@@ -1,4 +1,5 @@
 from math import sqrt
+from typing import Dict, List
 
 from sklearn.metrics import (
     accuracy_score, recall_score, precision_score, f1_score,
@@ -131,11 +132,12 @@ class ReportCreatorService:
             silhouette_score=silhouette_score(features, labels),
             davies_bouldin_score=davies_bouldin_score(features, labels),
             two_dim_representation=self._get_two_dim_representation(
-                features, labels)
+                features, labels),
+            cluster_means=self._get_cluster_feature_means(features, labels)
         )
         return model.Report(task_type=AvailableTaskTypes.CLUSTERING,
-                             report_type=report_type,
-                             body=body)
+                            report_type=report_type,
+                            body=body)
 
     def score_outlier_detection(self, features, outliers, is_train=False
                                 ) -> model.Report:
@@ -161,12 +163,20 @@ class ReportCreatorService:
     def _get_two_dim_representation(self, features, target) -> schemas.TwoDimRepresentation:
         # Двухмерное представление данных для визуализации
         pca = PCA(n_components=2)
-        two_dim_representation = pca.fit_transform(features)
+        two_dim_representation = pd.DataFrame(
+            pca.fit_transform(features), columns=['first_dim', 'second_dim'])
         two_dim_representation = pd.concat(
             [two_dim_representation.reset_index(drop=True),
              target.reset_index(drop=True)], axis=1)
-        two_dim_representation.columns = ['first_dim', 'second_dim', 'target']
         return schemas.TwoDimRepresentation(**two_dim_representation.to_dict('list'))
+
+    def _get_cluster_feature_means(self, features, labels
+                                   ) -> Dict[str, Dict[str, float]]:
+        df = pd.DataFrame(features)
+        df['_cluster_label'] = labels
+        # Расчет средних значений признаков для каждого кластера
+        cluster_means = df.groupby('_cluster_label').mean()
+        return cluster_means.to_dict('index')
 
     def get_error_report(self, task_type, error_description):
         body = schemas.ErrorReport(error_description=error_description)

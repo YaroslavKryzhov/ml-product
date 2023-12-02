@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from pydantic import BaseModel
 
@@ -44,6 +44,7 @@ class ClusteringReport(BaseModel):
     silhouette_score: float
     davies_bouldin_score: float
     two_dim_representation: TwoDimRepresentation
+    cluster_means: Dict[str, Dict[str, float]]
 
 
 class OutlierDetectionReport(BaseModel):
