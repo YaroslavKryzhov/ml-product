@@ -69,6 +69,26 @@ class DataframeService:
     def get_active_dataframes_meta(self) -> List[DataFrameMetadata]:
         return self.repository.get_active_dataframes_meta()
 
+    def get_dataframes_trees(self) -> List[schemas.DataFrameNode]:
+        dataframes = self.get_active_dataframes_meta()
+        # Словарь для хранения узлов по их ID
+        nodes = {str(df.id): schemas.DataFrameNode(
+                id=str(df.id), filename=df.filename) for df in dataframes}
+
+        roots = []
+
+        for df in dataframes:
+            node = nodes[str(df.id)]
+            if df.parent_id is None or str(df.parent_id) not in nodes:
+                # Если у узла нет родителя, то он корневой
+                roots.append(node)
+            else:
+                # Иначе добавляем узел к его родителю
+                parent_node = nodes[str(df.parent_id)]
+                parent_node.children.append(node)
+
+        return roots
+
     def get_feature_column_types(self, dataframe_id):
         return self.repository.get_feature_column_types(dataframe_id)
 

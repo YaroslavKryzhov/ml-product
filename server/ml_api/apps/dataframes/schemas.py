@@ -1,8 +1,18 @@
 from typing import List, Dict, Union, Optional, Any
 
 from pydantic import BaseModel, Field
+from bunnet import PydanticObjectId
 from ml_api.apps.dataframes.specs import FeatureSelectionMethods, \
     BaseSklearnModels, AvailableMethods, ColumnType
+
+
+class DataFrameNode(BaseModel):
+    id: PydanticObjectId
+    filename: str
+    children: List['DataFrameNode'] = []
+
+
+DataFrameNode.update_forward_refs()
 
 
 class ColumnTypes(BaseModel):

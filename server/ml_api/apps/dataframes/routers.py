@@ -131,6 +131,16 @@ def read_all_user_dataframes(user: User = Depends(current_active_user)):
     return DataframeService(user.id).get_active_dataframes_meta()
 
 
+@dataframes_metadata_router.get("/trees",
+                                response_model=List[schemas.DataFrameNode],
+                                summary="Получить дерево датафреймов")
+def read_dataframes_trees(user: User = Depends(current_active_user)):
+    """
+        Возвращает информацию обо всех датафреймах пользователя в виде дерева связей
+    """
+    return DataframeService(user.id).get_dataframes_trees()
+
+
 dataframes_content_router = APIRouter(
     prefix="/dataframe/content",
     tags=["Dataframe Content"],

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from ml_api.apps.users.schemas import UserCreate, UserRead, JWTToken, GetId
+from ml_api.apps.users.schemas import UserCreate, UserRead, JWTToken
 from ml_api.apps.users.model import User
 from ml_api.apps.users.services import fastapi_users, auth_backend, current_active_user
 from ml_api.common.pubsub.token_utils import create_centrifugo_token
