@@ -99,15 +99,84 @@ class AvailableModelTypes(Enum):
     NMF = 'NMF'
     TRUNCATED_SVD = 'TruncatedSVD'
 
-    # Ensembling methods
-    # VOTING_CLASSIFIER = 'VotingClassifier'
-    # VOTING_REGRESSOR = 'VotingRegressor'
-    # STACKING_CLASSIFIER = 'StackingClassifier'
-    # STACKING_REGRESSOR = 'StackingRegressor'
-
 
 class AvailableCompositionTypes(Enum):
     VOTING_CLASSIFIER = 'VotingClassifier'
     VOTING_REGRESSOR = 'VotingRegressor'
     STACKING_CLASSIFIER = 'StackingClassifier'
     STACKING_REGRESSOR = 'StackingRegressor'
+
+
+classification_models = [
+    AvailableModelTypes.DECISION_TREE_CLASSIFIER,
+    AvailableModelTypes.RANDOM_FOREST_CLASSIFIER,
+    AvailableModelTypes.EXTRA_TREES_CLASSIFIER,
+    AvailableModelTypes.GRADIENT_BOOSTING_CLASSIFIER,
+    AvailableModelTypes.ADABOOST_CLASSIFIER,
+    AvailableModelTypes.BAGGING_CLASSIFIER,
+    AvailableModelTypes.XGB_CLASSIFIER,
+    AvailableModelTypes.LGBM_CLASSIFIER,
+    AvailableModelTypes.CATBOOST_CLASSIFIER,
+    AvailableModelTypes.SGD_CLASSIFIER,
+    AvailableModelTypes.LINEAR_SVC,
+    AvailableModelTypes.SVC,
+    AvailableModelTypes.LOGISTIC_REGRESSION,
+    AvailableModelTypes.PASSIVE_AGGRESSIVE_CLASSIFIER,
+    AvailableModelTypes.KNEIGHBORS_CLASSIFIER,
+    AvailableModelTypes.RADIUS_NEIGHBORS_CLASSIFIER,
+    AvailableModelTypes.MLP_CLASSIFIER
+]
+
+regression_models = [
+    AvailableModelTypes.DECISION_TREE_REGRESSOR,
+    AvailableModelTypes.RANDOM_FOREST_REGRESSOR,
+    AvailableModelTypes.EXTRA_TREES_REGRESSOR,
+    AvailableModelTypes.GRADIENT_BOOSTING_REGRESSOR,
+    AvailableModelTypes.ADABOOST_REGRESSOR,
+    AvailableModelTypes.BAGGING_REGRESSOR,
+    AvailableModelTypes.XGB_REGRESSOR,
+    AvailableModelTypes.LGBM_REGRESSOR,
+    AvailableModelTypes.CATBOOST_REGRESSOR,
+    AvailableModelTypes.SGD_REGRESSOR,
+    AvailableModelTypes.LINEAR_SVR,
+    AvailableModelTypes.SVR,
+    AvailableModelTypes.LINEAR_REGRESSION,
+    AvailableModelTypes.RIDGE,
+    AvailableModelTypes.LASSO,
+    AvailableModelTypes.ELASTIC_NET,
+    AvailableModelTypes.PASSIVE_AGGRESSIVE_REGRESSOR,
+    AvailableModelTypes.K_NEIGHBORS_REGRESSOR,
+    AvailableModelTypes.RADIUS_NEIGHBORS_REGRESSOR,
+    AvailableModelTypes.MLP_REGRESSOR
+]
+
+clustering_models = [
+    AvailableModelTypes.KMEANS,
+    AvailableModelTypes.MINI_BATCH_KMEANS,
+    AvailableModelTypes.AFFINITY_PROPAGATION,
+    AvailableModelTypes.MEAN_SHIFT,
+    AvailableModelTypes.SPECTRAL_CLUSTERING,
+    AvailableModelTypes.WARD,
+    AvailableModelTypes.AGGLOMERATIVE_CLUSTERING,
+    AvailableModelTypes.DBSCAN,
+    AvailableModelTypes.OPTICS,
+    AvailableModelTypes.BIRCH,
+    AvailableModelTypes.GAUSSIAN_MIXTURE
+]
+
+anomaly_detection_models = [
+    AvailableModelTypes.ONE_CLASS_SVM,
+    AvailableModelTypes.SGD_ONE_CLASS_SVM,
+    AvailableModelTypes.ELLIPTIC_ENVELOPE,
+    AvailableModelTypes.LOCAL_OUTLIER_FACTOR,
+    AvailableModelTypes.ISOLATION_FOREST
+]
+
+dimensionality_reduction_models = [
+    AvailableModelTypes.PCA,
+    AvailableModelTypes.LINEAR_DISCRIMINANT_ANALYSIS,
+    AvailableModelTypes.TSNE,
+    AvailableModelTypes.ISOMAP,
+    AvailableModelTypes.NMF,
+    AvailableModelTypes.TRUNCATED_SVD
+]

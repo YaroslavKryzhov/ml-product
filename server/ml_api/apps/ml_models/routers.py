@@ -215,8 +215,17 @@ def get_model_statuses():
 
 
 @models_specs_router.get("/model_types")
-def get_available_model_types():
-    return [model.value for model in specs.AvailableModelTypes]
+def get_available_model_types(task_type: specs.AvailableTaskTypes):
+    if task_type == specs.AvailableTaskTypes.CLASSIFICATION:
+        return [model.value for model in specs.classification_models]
+    if task_type == specs.AvailableTaskTypes.REGRESSION:
+        return [model.value for model in specs.regression_models]
+    if task_type == specs.AvailableTaskTypes.CLUSTERING:
+        return [model.value for model in specs.clustering_models]
+    if task_type == specs.AvailableTaskTypes.OUTLIER_DETECTION:
+        return [model.value for model in specs.anomaly_detection_models]
+    if task_type == specs.AvailableTaskTypes.DIMENSIONALITY_REDUCTION:
+        return [model.value for model in specs.dimensionality_reduction_models]
 
 
 @models_specs_router.get("/composition_types")
@@ -234,8 +243,6 @@ def get_parameters_for_model_type(model_type: specs.AvailableModelTypes):
         outlier_detection_models_params,
     )
     # Classification models
-    if model_type == specs.AvailableModelTypes.DECISION_TREE_CLASSIFIER:
-           return classification_models_params.DecisionTreeClassifierParams.schema()
     if model_type == specs.AvailableModelTypes.DECISION_TREE_CLASSIFIER:
         return classification_models_params.DecisionTreeClassifierParams.schema()
     elif model_type == specs.AvailableModelTypes.RANDOM_FOREST_CLASSIFIER:
