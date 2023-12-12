@@ -31,9 +31,6 @@ class UserUpdate(CreateUpdateDictModel):
 
 class JWTToken(BaseModel):
     token: str
-
-
-class GetId(BaseModel):
     user_id: str
 
 # from fastapi_users import schemas

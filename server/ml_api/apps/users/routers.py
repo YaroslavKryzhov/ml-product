@@ -19,15 +19,7 @@ def get_centrifugo_token(user: User = Depends(current_active_user)):
         Возращает токен для подключения к каналам Centrifugo
     """
     jwt_token = create_centrifugo_token(str(user.id))
-    return JWTToken(token=jwt_token)
-
-
-@users_router.get("/user_id", response_model=GetId)
-def get_id(user: User = Depends(current_active_user)):
-    """
-        Возвращает id пользователя
-    """
-    return GetId(user_id=str(user.id))
+    return JWTToken(token=jwt_token, user_id=str(user.id))
 
 
 users_router.include_router(
