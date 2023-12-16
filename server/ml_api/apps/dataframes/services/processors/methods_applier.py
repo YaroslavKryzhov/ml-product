@@ -135,7 +135,7 @@ class MethodsApplier:
             params = method_param.params
             # if method_name not in self._methods_map:
             #     raise errors.ApplyingMethodNotExistsError(method_name.value)
-            validated_params = self._validate_params(method_name, params)
+            params = self._validate_params(method_name, params)
             self._current_method_name = method_name
             self._validate_selected_columns(method_columns)
             try:
