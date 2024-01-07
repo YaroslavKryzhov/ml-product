@@ -375,7 +375,7 @@ class MethodsApplier:
             encoder._infrequent_enabled = params.infrequent_enabled
             encoder._n_features_outs = params.n_features_outs
         new_cols = encoder.get_feature_names_out(columns)
-        self._df[new_cols] = encoder.transform(self._df[columns]).toarray()
+        self._df[new_cols] = encoder.transform(self._df[columns]).toarray().astype(int)
         self._df.drop(columns, axis=1, inplace=True)
 
         column_types = self._get_column_types()
@@ -398,7 +398,7 @@ class MethodsApplier:
         else:
             encoder.categories_ = [np.array(cat) for cat in params.categories_]
             encoder._missing_indices = params.missing_indices
-        self._df[columns] = encoder.transform(self._df[columns])
+        self._df[columns] = encoder.transform(self._df[columns]).astype(int)
 
         column_types = self._get_column_types()
         self._remove_columns_from_column_types(column_types, columns)

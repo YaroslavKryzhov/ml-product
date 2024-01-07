@@ -186,7 +186,7 @@ def predict_on_model(dataframe_id: PydanticObjectId,
         Если данные уже предобработаны, можно поставить параметр = False.
     """
     return ModelFitPredictAsyncService(user.id).process_prediction(
-        source_df_id=dataframe_id,
+        dataframe_id=dataframe_id,
         model_id=model_id,
         prediction_name=prediction_name,
         apply_pipeline=apply_pipeline)
