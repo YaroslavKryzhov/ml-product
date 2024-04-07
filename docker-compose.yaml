@@ -84,17 +84,17 @@ services:
       - ml-net
     restart: unless-stopped
 
-  #  client:
-#    container_name: "ml-product-client"
-#    build:
-#      context: ./client
-#      dockerfile: Dockerfile
-#    volumes:
-#      - ./volumes/client:/build_results/build/
-#    command: "/bin/sh -c 'cp -r /app/build /build_results/'"
-#    networks:
-#      - ml-net
-#
+  client:
+  container_name: "ml-product-client"
+  build:
+    context: ./client
+    dockerfile: Dockerfile
+  volumes:
+    - ./volumes/client:/build_results/build/
+  command: "/bin/sh -c 'cp -r /app/build /build_results/'"
+  networks:
+    - ml-net
+
   nginx:
     build:
       context: ./deploy/nginx
