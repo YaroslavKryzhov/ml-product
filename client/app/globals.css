@@ -1,0 +1,48 @@
+/* SYSTEM */
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.noScrollBar::-webkit-scrollbar {
+  display: none;
+}
+/*::-webkit-scrollbar-track {}*/
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.15);
+  border-radius: 20px;
+}
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+html, main, header, footer {
+  background: white;
+}
+
+/* MISC */
+.mainBlueColor {
+  color: rgba(83, 133, 229, 1);
+}
+
+.input-file {
+  width: 535px;
+}
+
+.input-file input[type=file] {
+	position: absolute;
+	z-index: -1;
+	opacity: 0;
+	display: block;
+	width: 0;
+	height: 0;
+}
+
+.input-file span {
+  cursor: pointer;
+}

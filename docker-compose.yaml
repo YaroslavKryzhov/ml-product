@@ -91,7 +91,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./volumes/client:/build_results/build/
-    command: "/bin/sh -c 'cp -r /app/build /build_results/'"
+    command: "/bin/sh -c 'cp -r app/build /build_results/'"
     networks:
      - ml-net
 
