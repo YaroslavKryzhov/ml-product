@@ -91,7 +91,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./volumes/client:/build_results/build/
-    # command: "/bin/sh -c 'cp -r /app /build_results/'"
+    # command: "/bin/sh -c 'cp -r /app/build /build_results/'"
     command: "pwd"    
     networks:
      - ml-net
@@ -114,6 +114,13 @@ services:
       - "${API_PORT_OUT}:80"
     networks:
       - ml-net
+  
+  front:
+    build: ./client
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+  
 
 networks:
   ml-net:
