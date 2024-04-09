@@ -1,9 +1,0 @@
-version: '3.9'
-name: 'ml'
-
-services:
-  front:
-    build: ./
-    restart: unless-stopped
-    ports:
-      - "3001:3000"
