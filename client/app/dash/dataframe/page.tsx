@@ -192,7 +192,7 @@ export default function DataframePage() {
 
     const CategoricalBlock = ({ i }: { i: number }) => {
         const d = details[i];
-        const data = d.data.slice(-5);
+        const data = d.data.slice(-5);        
 
         return <HStack key={i} w='100%' h='400px' p='20px' justify='space-between' bg='white'>
             <VStack w='48%' h='100%' spacing='20px' pos='relative'>
@@ -236,6 +236,7 @@ export default function DataframePage() {
                     <Text>Тип данных: {d.data_type}</Text>
                     <Text>Непустые: {d.not_null_count}</Text>
                     <Text>Отсутствуют значения: {d.null_count}</Text>
+                    <Text>Кол-во категорий: {d.data.length}</Text>
                 </VStack>
 
                 <VStack w='100%' pr='20%' spacing='10px' align='start' fontWeight={400}>
@@ -249,6 +250,8 @@ export default function DataframePage() {
                     <HStack w='100%' justify='space-between' px='6px'>
                         {['Частота', ...data.map((x: any) => `${Math.round(x.value * 10000) / 10000}`)].map((p: string, i: number) => <Text key={i} w={`${100 / (data.length + 1) - 1}%`}>{p}</Text>)}
                     </HStack>
+
+
 
                     <Divider border='1px solid black' opacity={0.1} />
                 </VStack>
