@@ -192,7 +192,8 @@ export default function DataframePage() {
 
     const CategoricalBlock = ({ i }: { i: number }) => {
         const d = details[i];
-        const data = d.data.slice(-5);        
+        // const data = d.data.slice(0, 5); //Пять самых часто встречающихся    
+        const data = d.data;
 
         return <HStack key={i} w='100%' h='400px' p='20px' justify='space-between' bg='white'>
             <VStack w='48%' h='100%' spacing='20px' pos='relative'>
@@ -241,6 +242,7 @@ export default function DataframePage() {
 
                 <VStack w='100%' pr='20%' spacing='10px' align='start' fontWeight={400}>
                     <Text fontSize='18px' fontWeight={600}>Наиболее частые значения</Text>
+{/* 
                     <HStack w='100%' justify='space-between' px='6px'>
                         {['Значение', ...data.map((x: any) => x.name)].map((p: string, i: number) => <Text key={i} w={`${100 / (data.length + 1) - 1}%`}>{p}</Text>)}
                     </HStack>
@@ -249,7 +251,21 @@ export default function DataframePage() {
 
                     <HStack w='100%' justify='space-between' px='6px'>
                         {['Частота', ...data.map((x: any) => `${Math.round(x.value * 10000) / 10000}`)].map((p: string, i: number) => <Text key={i} w={`${100 / (data.length + 1) - 1}%`}>{p}</Text>)}
-                    </HStack>
+                    </HStack> */}
+
+                    <VStack w='100%' spacing='8px' align='flex-start' px='6px'>
+                    {[...data.map((x: any) => x.name)].reduce((acc: any[], curr: string, i: number) => {
+                        if (i % 5 === 0) acc.push([]);
+                        acc[acc.length - 1].push(curr);
+                        return acc;
+                    }, [[]]).map((column: string[], columnIndex: number) => (
+                        <VStack key={columnIndex} spacing='8px'>
+                        {column.map((p: string, i: number) => (
+                            <Text key={i}>{p}</Text>
+                        ))}
+                        </VStack>
+                    ))}
+                    </VStack>
 
 
 
