@@ -14,10 +14,35 @@ import { DeleteIconButton } from "@/components";
 import { ApplyMethodModal, ModelCreateModal } from "@/components/dash";
 import { tableViews } from "@/utils/enums";
 import { AiOutlineClose } from "react-icons/ai";
-import { Suspense } from 'react';
+import { Suspense, React } from 'react';
+import { ReactDOM } from 'react-dom';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip as ChartTooltip, XAxis, YAxis } from 'recharts';
 import Link from "next/link";
 import { FaArrowRight, FaCheck, FaRegCircleXmark } from "react-icons/fa6";
+
+function freq_scroller({ data }) {
+    return (
+      <div style={{ overflowX: 'auto' }}> {/* Добавляем горизонтальный скроллер */}
+        <table>
+          <thead>
+            <tr>
+              <th>Значение</th> {/* Заголовок первого столбца */}
+              <th>Частота</th> {/* Заголовок второго столбца */}
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((item, index) => (
+              <tr key={index}>
+                <td>{item.name}</td> {/* Первый столбец */}
+                <td>{Math.round(item.value * 10000) / 10000}</td> {/* Второй столбец */}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
 
 function getCellColor(n: string) {
     if (isNaN(parseInt(n))) return 'none';
@@ -192,8 +217,8 @@ export default function DataframePage() {
 
     const CategoricalBlock = ({ i }: { i: number }) => {
         const d = details[i];
-        // const data = d.data.slice(0, 5); //Пять самых часто встречающихся    
-        const data = d.data;
+        const data = d.data.slice(0, 5); //Пять самых часто встречающихся    
+        // const data = d.data;
 
         return <HStack key={i} w='100%' h='400px' p='20px' justify='space-between' bg='white'>
             <VStack w='48%' h='100%' spacing='20px' pos='relative'>
@@ -240,9 +265,15 @@ export default function DataframePage() {
                     <Text>Кол-во категорий: {d.data.length}</Text>
                 </VStack>
 
-                <VStack w='100%' pr='20%' spacing='10px' align='start' fontWeight={400}>
+                ReactDOM.render(
+                    <React.StrictMode>
+                        <freq_scroller data={data} />
+                    </React.StrictMode>,
+                    document.getElementById('root')
+                );
+                {/* <VStack w='100%' pr='20%' spacing='10px' align='start' fontWeight={400}>
                     <Text fontSize='18px' fontWeight={600}>Наиболее частые значения</Text>
-{/* 
+
                     <HStack w='100%' justify='space-between' px='6px'>
                         {['Значение', ...data.map((x: any) => x.name)].map((p: string, i: number) => <Text key={i} w={`${100 / (data.length + 1) - 1}%`}>{p}</Text>)}
                     </HStack>
@@ -251,26 +282,13 @@ export default function DataframePage() {
 
                     <HStack w='100%' justify='space-between' px='6px'>
                         {['Частота', ...data.map((x: any) => `${Math.round(x.value * 10000) / 10000}`)].map((p: string, i: number) => <Text key={i} w={`${100 / (data.length + 1) - 1}%`}>{p}</Text>)}
-                    </HStack> */}
+                    </HStack>
 
-                    <VStack w='100%' spacing='8px' align='flex-start' px='6px'>
-                    {[...data.map((x: any) => x.name)].reduce((acc: any[], curr: string, i: number) => {
-                        if (i % 5 === 0) acc.push([]);
-                        acc[acc.length - 1].push(curr);
-                        return acc;
-                    }, [[]]).map((column: string[], columnIndex: number) => (
-                        <VStack key={columnIndex} spacing='8px'>
-                        {column.map((p: string, i: number) => (
-                            <Text key={i}>{p}</Text>
-                        ))}
-                        </VStack>
-                    ))}
-                    </VStack>
 
 
 
                     <Divider border='1px solid black' opacity={0.1} />
-                </VStack>
+                </VStack> */}
             </VStack>
         </HStack>;
     };
