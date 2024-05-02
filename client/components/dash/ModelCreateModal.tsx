@@ -90,7 +90,7 @@ export function ModelCreateModal({ onClose, dfID }: { onClose: any, dfID: string
                         </VStack>
                         <VStack align='start' w='24%' spacing='20px' opacity={[0, 1].includes(taskType) ? 1 : 0} pointerEvents={[0, 1].includes(taskType) ? 'auto' : 'none'}>
                             <Text>Соотношение train/test</Text>
-                            <Slider aria-label='train/test' value={sliderValue} onChange={setSliderValue}>
+                            <Slider aria-label='train/test' value={100-sliderValue} onChange={setSliderValue}>
                                 <SliderTrack>
                                     <SliderFilledTrack />
                                 </SliderTrack>

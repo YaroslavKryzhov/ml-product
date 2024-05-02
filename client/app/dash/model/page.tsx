@@ -143,7 +143,7 @@ export default function ModelPage() {
                                                 <Bar dataKey="value" fill="#6f97e5" barSize={40} />
                                             </BarChart> */}
 
-                                            <LineChart width={500} height={300} data={reports[report].fpr.map((x: number) => ({ name: 'fpr', value: x }))} style={{ fontWeight: 400 }}>
+                                            <LineChart width={500} height={300} data={reports[report].fpr?.map((x: number) => ({ name: 'fpr', value: x }))} style={{ fontWeight: 400 }}>
                                                 <XAxis dataKey="name" />
                                                 <YAxis />
                                                 <CartesianGrid strokeDasharray="3 3" />
