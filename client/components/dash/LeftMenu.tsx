@@ -68,7 +68,8 @@ const TreeNode = ({ sdf, parents, misc }: { sdf: ISimpleDataframe, parents: stri
                 transition='0.1s'
             >
                 <Box w='100%' h='100%' bg={queryIsCurrent ? 'main.200' : 'main.100'} pos='absolute' borderRadius='10px' left={0} zIndex={1} />
-                {parents.length > 0 && <Box borderRadius='0 0 0 5px' borderBottom='1px solid rgba(0,0,0,0.25)' borderLeft='1px solid rgba(0,0,0,0.25)' pos='absolute' top='-22px' left='-23px' w='24px' h='37px' />}
+                {parents.length > 0 && <Box borderRadius='0 0 0 5px' borderBottom='1px solid rgba(0,0,0,0.25)' borderLeft='1px solid rgba(0,0,0,0.25)' pos='absolute' top='-21px' left='-23px' w='24px' h='38px' />}
+                {parents.length > 1 && <Box borderLeft='1px solid rgba(0,0,0,0.25)' pos='absolute' top='-21px' left={`-${(parents.length - 1) * 40 + 23}px`} w='24px' h='34px' />}
 
                 <Icon zIndex={1} as={sdf.children.length > 0 ? (show || lastChildParents.includes(sdf.filename)) ? FaChevronDown : FaChevronUp : queryIsCurrent ? GoDotFill : GoDot} boxSize='10px' transform={`scale(${sdf.children.length > 0 ? 1 : 1.7})`} />
                 <Text zIndex={1} userSelect='none'>{sdf.filename}</Text>

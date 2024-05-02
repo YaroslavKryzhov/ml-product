@@ -39,10 +39,10 @@ dependencies:
     specifier: 14.0.1
     version: 14.0.1(react-dom@18.2.0)(react@18.2.0)
   react:
-    specifier: ^18
+    specifier: ^18.2.0
     version: 18.2.0
   react-dom:
-    specifier: ^18
+    specifier: ^18.2.0
     version: 18.2.0(react@18.2.0)
   react-draggable:
     specifier: ^4.4.6
@@ -59,22 +59,22 @@ dependencies:
 
 devDependencies:
   '@types/node':
-    specifier: ^20
+    specifier: ^20.8.10
     version: 20.8.10
   '@types/react':
-    specifier: ^18
+    specifier: ^18.2.34
     version: 18.2.34
   '@types/react-dom':
-    specifier: ^18
+    specifier: ^18.2.14
     version: 18.2.14
   eslint:
-    specifier: ^8
+    specifier: ^8.52.0
     version: 8.52.0
   eslint-config-next:
     specifier: 14.0.1
     version: 14.0.1(eslint@8.52.0)(typescript@5.2.2)
   typescript:
-    specifier: ^5
+    specifier: ^5.2.2
     version: 5.2.2
 
 packages:
@@ -2019,8 +2019,8 @@ packages:
     resolution: {integrity: sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==}
     engines: {node: '>=6'}
 
-  /caniuse-lite@1.0.30001559:
-    resolution: {integrity: sha512-cPiMKZgqgkg5LY3/ntGeLFUpi6tzddBNS58A4tnTgQw1zON7u2sZMU7SzOeVH4tj20++9ggL+V6FDOFMTaFFYA==}
+  /caniuse-lite@1.0.30001612:
+    resolution: {integrity: sha512-lFgnZ07UhaCcsSZgWW0K5j4e69dK1u/ltrL9lTUiFOwNHs12S3UMIEYgBV0Z6C6hRDev7iRnMzzYmKabYdXF9g==}
     dev: false
 
   /centrifuge@2.7.3:
@@ -3410,7 +3410,7 @@ packages:
       '@next/env': 14.0.1
       '@swc/helpers': 0.5.2
       busboy: 1.6.0
-      caniuse-lite: 1.0.30001559
+      caniuse-lite: 1.0.30001612
       postcss: 8.4.31
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)

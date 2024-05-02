@@ -153,7 +153,7 @@ export function ModelCreateModal({ onClose, dfID }: { onClose: any, dfID: string
                         params_type: paramsType ? (paramsType as HTMLSelectElement).value : ''
                     };
 
-                    if (task_type === 'classification') Object.assign(query, { test_size: (1 - sliderValue / 100), stratify: startCheck ? (startCheck as any).checked : '' });
+                    if (task_type === 'classification') Object.assign(query, { test_size: sliderValue / 100, stratify: startCheck ? (startCheck as any).checked : '' });
 
                     const body = {
                         model_type: modelType ? (modelType as HTMLInputElement).value : '',

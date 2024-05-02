@@ -25,6 +25,7 @@ export function JobsMenu() {
     const query = useSearchParams();
     const dispatch = useDispatch();
     const [mode, setMode] = useState('All');
+    const [type, setType] = useState('All');
     const { Authorization } = useSelector(state => state.misc);
     const { DFsList, modelsList, jobs } = useSelector(state => state.dataframe);
 
@@ -38,7 +39,10 @@ export function JobsMenu() {
         if (query.has('dataframe_id')) setMode(query.get('dataframe_id') ?? 'All');
     }, [Authorization, dispatch, query, upd]);
 
-    const filteredJobs = (mode === 'All' ? jobs : jobs.filter((job: IJob) => job.object_id === mode)).toReversed();
+    const filteredJobs = jobs
+        .filter((job: IJob) => mode === 'All' ? true : job.object_id === mode)
+        .filter((job: IJob) => type === 'All' ? true : job.type === type)
+        .toReversed();
 
     return <>
         <Flex
@@ -64,7 +68,7 @@ export function JobsMenu() {
                 <DrawerHeader bg='main.100'>
                     <HStack>
                         {/* <Tooltip label='Закрыть меню'> */}
-                            <IconButton icon={<FaChevronRight />} onClick={onClose} fontSize='24px' aria-label='close jobs menu' bg='none' color='main.400' />
+                        <IconButton icon={<FaChevronRight />} onClick={onClose} fontSize='24px' aria-label='close jobs menu' bg='none' color='main.400' />
                         {/* </Tooltip> */}
                         <Tooltip label='Обновить список'>
                             <IconButton icon={<IoReload id='updButton' />} onClick={() => {
@@ -80,10 +84,19 @@ export function JobsMenu() {
 
                 <DrawerBody bg='main.100'>
                     <VStack w='100%' spacing='16px'>
-                        <Select value={mode} bg='white' onChange={(e: any) => setMode(e.target.value)}>
-                            <option value='All'>All</option>
-                            {DFsList.map((df: IDataframe, i: number) => <option key={i} value={df._id}>{df.filename}</option>)}
-                        </Select>
+                        <VStack w='100%' align='start'>
+                            <Text>Dataframe</Text>
+                            <Select value={mode} bg='white' onChange={(e: any) => setMode(e.target.value)}>
+                                <option value='All'>All</option>
+                                {DFsList.map((df: IDataframe, i: number) => <option key={i} value={df._id}>{df.filename}</option>)}
+                            </Select>
+
+                            <Text>Job type</Text>
+                            <Select value={type} bg='white' onChange={(e: any) => setType(e.target.value)}>
+                                <option value='All'>All</option>
+                                {Array.from(new Set(jobs.map(x => x.type))).map((type: string, i: number) => <option key={i} value={type}>{type}</option>)}
+                            </Select>
+                        </VStack>
 
                         {filteredJobs.length > 0
                             ? filteredJobs.map((job: IJob, i: number) => {
