@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { BiSolidRightArrow } from "react-icons/bi";
 import { FaCheck } from "react-icons/fa6";
-import { CartesianGrid, ResponsiveContainer, XAxis, YAxis, Bar, BarChart, Line, LineChart } from "recharts";
+import { CartesianGrid, ResponsiveContainer, XAxis, YAxis, Bar, BarChart, Line, LineChart, Legend, Tooltip, Brush, ReferenceLine } from "recharts";
 
 export default function ModelPage() {
     const { DFsList, currentModel: model, modelsList } = useSelector(({ dataframe }) => dataframe);
@@ -134,14 +134,14 @@ export default function ModelPage() {
                                                 .map((value: any, i: number) => <Text key={i} p='6px' border='1px solid lightgray' textAlign='center' fontWeight={400}>{Math.round(value * 10000) / 10000}</Text>)}
                                         </SimpleGrid>
 
-                                        <ResponsiveContainer width='100%' height='500px' style={{ fontWeight: 400, marginLeft: '-40px' }}>
-                                            {/* <BarChart data={reports[report].fpr.map((x: number) => ({ name: 'fpr', value: x }))}>
+                                        {/* <ResponsiveContainer width='100%' height='500px' style={{ fontWeight: 400, marginLeft: '-40px' }}>
+                                            <BarChart data={reports[report].fpr.map((x: number) => ({ name: 'fpr', value: x }))}>
                                                 <CartesianGrid strokeDasharray="3 3" />
                                                 <XAxis dataKey="name" />
                                                 <YAxis />
                                                 <ChartTooltip />
                                                 <Bar dataKey="value" fill="#6f97e5" barSize={40} />
-                                            </BarChart> */}
+                                            </BarChart>
 
                                             <LineChart width={500} height={300} data={reports[report].fpr?.map((x: number) => ({ name: 'fpr', value: x }))} style={{ fontWeight: 400 }}>
                                                 <XAxis dataKey="name" />
@@ -150,7 +150,36 @@ export default function ModelPage() {
                                                 <Line type="monotone" dataKey="value" stroke="#8884d8" />
                                                 <Line type="monotone" dataKey="value" stroke="#82ca9d" />
                                             </LineChart>
+                                        </ResponsiveContainer>  */}
+                                        <ResponsiveContainer width={500} height={300}>
+                                            <LineChart data={reports[report].fpr?.map((x: number, index: number) => ({ name: index, fpr: x, tpr: reports[report].tpr[index] }))}>
+                                                <XAxis scale="linear" />
+                                                <YAxis scale="linear" />
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <Line type="monotone" dataKey="tpr" stroke="#8884d8" />
+                                                <ReferenceLine stroke="green" strokeDasharray="3 3" segment={[{ x: 0, y: 0 }, { x: 1, y: 1 }]} />
+                                                <Tooltip labelFormatter={(value) => Name: ${value}} formatter={(value) => [TPR: ${value}]} />
+                                            </LineChart>
                                         </ResponsiveContainer>
+                                         {/* <VStack w='100%' spacing='10px' fontWeight={400} align='start'>
+                                            <Text>fpr: {reports[report].fpr_micro}</Text>
+                                            <Text>tpr: {reports[report].fpr_micro}</Text>
+                                        </VStack> */}
+                                        {/* <ResponsiveContainer width='100%' height={500}>
+                                            <LineChart data={reports[report].fpr_micro?.map((x: number, index: number) => ({ fpr_micro: x, tpr_micro: reports[report].tpr_micro[index] }))}>
+                                                <XAxis type="number" dataKey="fpr" label={{ value: 'False Positive Rate (FPR)', position: 'bottom' }} />
+                                                <YAxis type="number" dataKey="tpr" label={{ value: 'True Positive Rate (TPR)', angle: -90, position: 'insideLeft' }} />
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <Line type="monotone" dataKey="tpr_micro" stroke="#8884d8" name="ROC Curve" />
+                                                <Legend />
+                                                <Tooltip />
+                                                <Brush />
+                                                <ReferenceLine x={0} stroke='red' />
+                                                <ReferenceLine y={1} stroke='red' />
+                                            </LineChart>
+                                        </ResponsiveContainer> */}
+
+
                                     </VStack>
                                     : <Spinner size='md' />}
                             </AccordionPanel>
