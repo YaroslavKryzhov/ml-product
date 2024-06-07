@@ -151,21 +151,18 @@ export default function ModelPage() {
                                                 <Line type="monotone" dataKey="value" stroke="#82ca9d" />
                                             </LineChart>
                                         </ResponsiveContainer>  */}
-                                        <ResponsiveContainer width={500} height={300}>
-                                            <LineChart data={reports[report].fpr?.map((x: number, index: number) => ({ name: index, fpr: x, tpr: reports[report].tpr[index] }))}>
-                                                <XAxis scale="linear" range={[0, 1]} />
-                                                <YAxis scale="linear" />
+                                        <ResponsiveContainer width={700} height={500}>
+                                            <LineChart data={(reports[report].fpr? reports[report].fpr : reports[report].fpr_micro).map((x: number, index: number) => ({ fpr: x.toFixed(3), tpr: (reports[report].tpr? reports[report].tpr[index].toFixed(3) : reports[report].tpr_micro[index].toFixed(3))}))}>
+                                                <XAxis dataKey='fpr' type="number" />
+                                                <YAxis dataKey='tpr' type="number" />
                                                 <CartesianGrid strokeDasharray="3 3" />
+                                                <Tooltip />
+                                                <Legend />
                                                 <Line type="monotone" dataKey="tpr" stroke="#8884d8" />
                                                 <ReferenceLine stroke="green" strokeDasharray="3 3" segment={[{ x: 0, y: 0 }, { x: 1, y: 1 }]} />
-                                                <Text>fpr: {reports[report].fpr}</Text>
-                                                <Text>tpr: {reports[report].tpr}</Text>
                                             </LineChart>
-                                            <VStack w='100%' spacing='10px' fontWeight={400} align='start'>
-                                                <Text>fpr: {reports[report].fpr_micro}</Text>
-                                                <Text>tpr: {reports[report].fpr_micro}</Text>
-                                            </VStack>
                                         </ResponsiveContainer>
+
                                          {/* <VStack w='100%' spacing='10px' fontWeight={400} align='start'>
                                             <Text>fpr: {reports[report].fpr_micro}</Text>
                                             <Text>tpr: {reports[report].fpr_micro}</Text>
