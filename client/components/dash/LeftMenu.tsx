@@ -248,12 +248,12 @@ export function LeftMenu() {
                         {predictionList.length > 0
                             ? <VStack bg='white' borderRadius={6} spacing={0} overflowX='auto' align='start' w='100%'>
                                 <HStack pl='8px'>
-                                    {['ID'].map((x: string, i: number) => <Text key={i} w='150px' fontSize='16px' letterSpacing='1px' lineHeight='100%' py='8px'>{x}</Text>)}
+                                    {['Name', 'ID'].map((x: string, i: number) => <Text key={i} w='205px' fontSize='16px' letterSpacing='1px' lineHeight='100%' py='8px'>{x}</Text>)}
                                 </HStack>
 
                                 {predictionList.map((pred: any, i) => <Link key={i} href={`/dash/prediction?prediction_id=${pred.prediction_id}&model_id=${pred.model_id}`}>
                                     <HStack pl='8px' justify='space-between' bg={predID === pred.prediction_id ? 'main.100' : 'none'} color={predID === pred.prediction_id ? 'main.400' : 'black'} _hover={{ cursor: 'pointer', color: 'main.400' }} transition='0.05s'>
-                                        {[pred.prediction_id].map((y: string, j: number) => <Text key={j} w='150px' fontSize='16px' textAlign='left' fontWeight={300} lineHeight='16px' py='12px' letterSpacing='1px'>{y}</Text>)}
+                                        {['Prediction_'+(i+1),pred.prediction_id].map((y: string, j: number) => <Text key={j} w='205px' fontSize='16px' textAlign='left' fontWeight={300} lineHeight='16px' py='12px' letterSpacing='1px'>{y}</Text>)}
                                     </HStack>
                                 </Link>)}
                             </VStack>

@@ -152,7 +152,7 @@ export default function ModelPage() {
                                             </LineChart>
                                         </ResponsiveContainer>  */}
                                         <ResponsiveContainer width={700} height={500}>
-                                            <LineChart data={(reports[report].fpr? reports[report].fpr : reports[report].fpr_micro).map((x: number, index: number) => ({ fpr: x.toFixed(3), tpr: (reports[report].tpr? reports[report].tpr[index].toFixed(3) : reports[report].tpr_micro[index].toFixed(3))}))}>
+                                            <LineChart data={(reports[report].fpr? reports[report].fpr : reports[report].fpr_micro).map((x: number, index: number) => ({ fpr: x.toFixed(5), tpr: (reports[report].tpr? reports[report].tpr[index].toFixed(5) : reports[report].tpr_micro[index].toFixed(5))}))}>
                                                 <XAxis dataKey='fpr' type="number" />
                                                 <YAxis dataKey='tpr' type="number" />
                                                 <CartesianGrid strokeDasharray="3 3" />

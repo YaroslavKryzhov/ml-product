@@ -147,7 +147,7 @@ export function ModelCreateModal({ onClose, dfID }: { onClose: any, dfID: string
                     const task_type = taskTypeSelect ? (taskTypeSelect as HTMLSelectElement).value : '';
 
                     const query = {
-                        model_name: genHash(10),
+                        model_name: dataframe.filename.split('.')[0] + '_' + task_type.slice(0, 4) + '_' + genHash(3),
                         dataframe_id: dataframe._id,
                         task_type,
                         params_type: paramsType ? (paramsType as HTMLSelectElement).value : ''
