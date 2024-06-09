@@ -4,7 +4,7 @@ import { Box, Button, Checkbox, Divider, Flex, HStack, Icon, IconButton, Tooltip
 import { BiSolidRightArrow } from "react-icons/bi";
 import { DefaultButton } from "@/components/Common";
 import { HiOutlineDownload } from "react-icons/hi";
-import { api, arrToChunks, errToast, getCustomDate, successToast } from "@/utils/misc";
+import { api, arrToChunks, errToast, genHash, getCustomDate, successToast } from "@/utils/misc";
 import { nextPage, prevPage, renameDataframe, setCorrMatrix, setCurrentValues, setJobs, setPage, setTargetFeature, setTree } from "@/redux/dataframeSlice";
 import { IColumn, IDataframe, IParam } from "@/utils/types";
 import { useCallback, useEffect, useState } from "react";
@@ -404,6 +404,11 @@ export default function DataframePage() {
                 >
                     <VStack key={view} w='100%' spacing='24px' align='start' overflowX='auto'>
                         {['Детально', 'Компактно'].includes(view) && <HStack spacing={0} align='start'>
+
+                            <VStack w='110px' align='start' bg='white' transition='0.1s' p='9px'>
+                                
+                            </VStack>
+
                             {details.map((x: any, i: number) => {
                                 const isBlue = dataframe.target_feature === x.name;
 
@@ -659,7 +664,7 @@ export default function DataframePage() {
                                 {DFsList.map((df: IDataframe, i: number) => <option key={i} value={df._id}>{df.filename}</option>)}
                             </Select>
 
-                            <Input w='100%' placeholder='new filename' defaultValue={`${query.get('dataframe_id')}_piped`} id='newPipedDfFilename' />
+                            <Input w='100%' placeholder='new filename' defaultValue={`from_${dataframe.filename.split('.')[0]}_piped`} id='newPipedDfFilename' />
 
                             {/* @ts-ignore */}
                             <DefaultButton isDisabled={selectedDF === ''} onClick={() => {

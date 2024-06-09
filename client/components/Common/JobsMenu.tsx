@@ -125,7 +125,10 @@ export function JobsMenu() {
                                         <Text fontSize='22px' fontWeight={600}>Params</Text>
 
                                         {job.input_params.method_params.map((method: any, i: number) => <VStack key={i} align='start' spacing='4px'>
-                                            {Object.keys(method).map((key: string, j: number) => <Text key={j}>{key}: {method[key]}</Text>)}
+                                            {Object.keys(method).map((key: string, j: number) => {
+                                                const value = typeof method[key] === 'object' ? JSON.stringify(method[key]) : method[key];
+                                                return <Text key={j}>{key}: {value}</Text>;
+                                            })}
                                         </VStack>)}
                                     </VStack>}
 

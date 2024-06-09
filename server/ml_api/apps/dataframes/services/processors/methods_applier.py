@@ -309,7 +309,16 @@ class MethodsApplier:
             column_dtype = str(self._df[column].dtype)
             value = params.values_to_fill[i]
             try:
-                pd.Series([value]).astype(column_dtype)
+                if column_dtype.startswith('int'):
+                    value = int(value)
+                elif column_dtype.startswith('float'):
+                    value = float(value)
+                elif column_dtype.startswith('datetime'):
+                    value = pd.to_datetime(value)
+                
+                else:
+                    value = str(value)
+
             except ValueError:
                 raise errors.FillCustomValueWrongDTypeError(
                     column, column_dtype, value, type(value))
