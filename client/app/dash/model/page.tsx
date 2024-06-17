@@ -113,7 +113,7 @@ export default function ModelPage() {
                                         return init;
                                     }));
                             }} bg={i % 2 === 0 && model.metrics_report_ids.length > 2 ? 'main.200' : 'none'} justifyContent='space-between'>
-                                <Text>{report}</Text>
+                                <Text>{i === 0 ? 'report_train' : i === 1 ? 'report_test' : `report_${i}`}</Text>
                                 <AccordionIcon />
                             </AccordionButton>
 
