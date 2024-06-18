@@ -76,7 +76,8 @@ export function ApplyMethodModal({ features, df_name, onClose }: { features: any
                     <DefaultButton isDisabled={res.length <= 0} mt='10px' onClick={() => {
                         api.post(
                             '/dataframe/edit/apply_method?' + `dataframe_id=${query.get('dataframe_id')}&new_filename=${(document.getElementById('modifiedDFname') as HTMLInputElement | undefined)?.value ?? ''}`,
-                            res.map((m: IAppliedMethod) => ({ method_name: m.method_name, columns: m.columns, params: { values_to_fill: [parseInt((document.getElementById('customValue') as HTMLInputElement)?.value)] } })),
+                            res.map((m: IAppliedMethod) => ({ method_name: m.method_name, columns: m.columns, params: {} })),
+                            // res.map((m: IAppliedMethod) => ({ method_name: m.method_name, columns: m.columns, params: { values_to_fill: [parseInt((document.getElementById('customValue') as HTMLInputElement)?.value)] } })),
                             { headers: { Authorization } }
                         )
                             .then(res => {
