@@ -7,7 +7,7 @@ services:
       context: ./server
       dockerfile: Dockerfile
     command: "poetry run uvicorn ml_api.main:app --workers 4 --host 0.0.0.0 --port 8006 --reload"
-#    command: "poetry run gunicorn -k uvicorn.workers.UvicornWorker ml_api.main:app --bind 0.0.0.0:8006 --workers 4"
+    # command: "poetry run gunicorn -k uvicorn.workers.UvicornWorker ml_api.main:app --bind 0.0.0.0:8006 --workers 4"
     env_file:
       - .env
     volumes:
@@ -19,6 +19,8 @@ services:
     networks:
       - ml-net
     restart: unless-stopped
+    ports:
+      - "8006:8006"
 
   worker:
     container_name: "ml-product-worker"
@@ -84,17 +86,18 @@ services:
       - ml-net
     restart: unless-stopped
 
-  #  client:
-#    container_name: "ml-product-client"
-#    build:
-#      context: ./client
-#      dockerfile: Dockerfile
-#    volumes:
-#      - ./volumes/client:/build_results/build/
-#    command: "/bin/sh -c 'cp -r /app/build /build_results/'"
-#    networks:
-#      - ml-net
-#
+  # client:
+  #   container_name: "ml-product-client"
+  #   build:
+  #     context: ./client
+  #     dockerfile: Dockerfile
+  #   volumes:
+  #     - ./volumes/client:/build_results/build/
+  #   command: "/bin/sh -c 'cp -r /app/build /build_results/'"
+
+  #   networks:
+  #    - ml-net
+
   nginx:
     build:
       context: ./deploy/nginx
@@ -104,7 +107,6 @@ services:
       - .env
     depends_on:
       - server
-#      - client
     volumes:
       - ./deploy/nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf
       - ./volumes/client:/usr/share/nginx/html:ro
@@ -113,6 +115,13 @@ services:
       - "${API_PORT_OUT}:80"
     networks:
       - ml-net
+  
+  front:
+    build: ./client
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+  
 
 networks:
   ml-net:
