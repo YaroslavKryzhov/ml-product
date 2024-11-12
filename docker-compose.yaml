@@ -19,6 +19,8 @@ services:
     networks:
       - ml-net
     restart: unless-stopped
+    ports:
+      - "8006:8006"
 
   worker:
     container_name: "ml-product-worker"
@@ -105,7 +107,6 @@ services:
       - .env
     depends_on:
       - server
-      # - client
     volumes:
       - ./deploy/nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf
       - ./volumes/client:/usr/share/nginx/html:ro
