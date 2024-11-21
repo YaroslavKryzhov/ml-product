@@ -2,11 +2,10 @@ import axios from "axios";
 
 export const ease = [0.410, 0.030, 0.000, 0.995];
 
-// export const baseURL = true
-//     ? 'http://127.0.0.1:8006/api/v1'
-//     : 'http://demo-ml-app.winnerok.tk:8006/api/v1';
-export const baseURL = 'http://127.0.0.1:8006/api/v1';
-
+export const baseURL = true
+    ? 'http://127.0.0.1:8006/api/v1'
+    : 'http://demo-ml-app.winnerok.tk:8006/api/v1';
+    // export const baseURL = 'http://127.0.0.1:8006/api/v1'
 
 export const api = {
     get: async (url: string, config: any = {}) => await axios.get(baseURL + url, config),

@@ -106,11 +106,12 @@ services:
     env_file:
       - .env
     depends_on:
+      - front
       - server
     volumes:
       - ./deploy/nginx/nginx.conf:/etc/nginx/conf.d/nginx.conf
       - ./volumes/client:/usr/share/nginx/html:ro
-    command: "/bin/sh -c 'while :; do sleep 5h & wait $${!}; nginx -s reload; done & nginx-debug -g \"daemon off;\"'"
+    command: /bin/sh -c "until nc -z front 3000; do echo waiting for front; sleep 5; done; nginx -s reload; nginx-debug -g 'daemon off;'"
     ports:
       - "${API_PORT_OUT}:80"
     networks:
@@ -121,6 +122,8 @@ services:
     restart: unless-stopped
     ports:
       - "3001:3000"
+    networks:
+      - ml-net      
   
 
 networks:

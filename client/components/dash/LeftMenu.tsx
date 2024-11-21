@@ -110,6 +110,10 @@ export function LeftMenu() {
 
     const dfID = query.get('dataframe_id');
     const modelID = query.get('model_id');
+
+    console.log("dfID" + dfID);
+    console.log("modelID:" + modelID); ///////////////////////////////////////////////////////////
+
     const predID = query.get('prediction_id');
 
     const updTree = useCallback(() => {
